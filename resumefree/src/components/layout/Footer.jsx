@@ -2,10 +2,10 @@
 import { Link } from "react-router-dom";
 
 const LINKS = [
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms of Use", href: "/terms" },
+  { label: "How It Works", href: "#how-it-works", internal: false },
+  { label: "Pricing", href: "#pricing", internal: false },
+  { label: "Privacy Policy", href: "/privacy", internal: true },
+  { label: "Terms of Use", href: "/terms", internal: true },
 ];
 
 export default function Footer() {
@@ -32,18 +32,29 @@ export default function Footer() {
             </span>
           </Link>
 
-          {/* Nav links — wrap on mobile */}
+          {/* Nav links */}
           <nav className="flex flex-wrap gap-x-5 gap-y-2">
-            {LINKS.map(({ label, href }) => (
-              <a
-                key={label}
-                href={href}
-                className="text-sm text-[#F6F4EF]/50 hover:text-[#F6F4EF] transition-colors"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
-                {label}
-              </a>
-            ))}
+            {LINKS.map(({ label, href, internal }) =>
+              internal ? (
+                <Link
+                  key={label}
+                  to={href}
+                  className="text-sm text-[#F6F4EF]/50 hover:text-[#F6F4EF] transition-colors"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  {label}
+                </Link>
+              ) : (
+                <a
+                  key={label}
+                  href={href}
+                  className="text-sm text-[#F6F4EF]/50 hover:text-[#F6F4EF] transition-colors"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  {label}
+                </a>
+              )
+            )}
           </nav>
         </div>
 
@@ -65,6 +76,7 @@ export default function Footer() {
             © {new Date().getFullYear()} ResumeFree
           </p>
         </div>
+
       </div>
     </footer>
   );

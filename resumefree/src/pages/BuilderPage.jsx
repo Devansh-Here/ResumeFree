@@ -7,6 +7,8 @@ import ExperienceForm from "../components/builder/ExperienceForm";
 import SkillsForm from "../components/builder/SkillsForm";
 import ProjectsForm from "../components/builder/ProjectsForm";
 import ResumePreview from "../components/builder/ResumePreview";
+import DownloadButton from "../components/DownloadButton";
+import ATSCheckPanel from "../components/ATSCheckPanel";
 
 const SECTIONS = [
   { id: "personal",   label: "Personal"   },
@@ -39,9 +41,10 @@ export default function BuilderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F4EF] flex flex-col">
+    <div className="h-screen bg-[#F6F4EF] flex flex-col overflow-hidden">
       <Navbar />
 
+      {/* ── Mobile tab switcher ── */}
       <div className="lg:hidden flex border-b border-[#DDD6C8] bg-white sticky top-14 z-40">
         {["form", "preview"].map((tab) => (
           <button
@@ -60,13 +63,20 @@ export default function BuilderPage() {
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className={`w-full lg:w-[52%] flex flex-col bg-[#F6F4EF] border-r border-[#DDD6C8] ${mobileTab === "preview" ? "hidden lg:flex" : "flex"}`}>
-          <div className="flex overflow-x-auto border-b border-[#DDD6C8] bg-white">
+
+        {/* ── LEFT: Form Panel ── */}
+        <div className={`w-full lg:w-[52%] flex flex-col bg-[#F6F4EF] border-r border-[#DDD6C8] ${
+          mobileTab === "preview" ? "hidden lg:flex" : "flex"
+        }`}>
+
+          {/* Section tabs */}
+          <div className="flex overflow-x-auto border-b border-[#DDD6C8] bg-white [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
             {SECTIONS.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
-                className={`flex-shrink-0 px-4 py-3 text-xs font-semibold transition-colors whitespace-nowrap border-b-2 -mb-px ${
+                className={`flex-shrink-0 px-4 py-3 text-xs font-semibold transition-colors
+                             whitespace-nowrap border-b-2 -mb-px ${
                   activeSection === id
                     ? "text-[#161A2E] border-[#161A2E]"
                     : "text-[#161A2E]/40 border-transparent hover:text-[#161A2E]/70"
@@ -78,46 +88,78 @@ export default function BuilderPage() {
             ))}
           </div>
 
+          {/* Form content */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             {FORM_MAP[activeSection]}
           </div>
 
-          <div className="border-t border-[#DDD6C8] bg-white px-4 sm:px-6 py-3 flex items-center justify-between">
-            <button onClick={goPrev} disabled={currentIdx === 0}
-              className="text-sm text-[#161A2E]/50 hover:text-[#161A2E] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}>
+          {/* Prev / Next footer */}
+          <div className="border-t border-[#DDD6C8] bg-white px-4 sm:px-6 py-3
+                           flex items-center justify-between">
+            <button
+              onClick={goPrev}
+              disabled={currentIdx === 0}
+              className="text-sm text-[#161A2E]/50 hover:text-[#161A2E]
+                         disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
               ← Prev
             </button>
             <div className="flex items-center gap-1.5">
               {SECTIONS.map(({ id }, i) => (
-                <span key={id} className={`w-1.5 h-1.5 rounded-full ${id === activeSection ? "bg-[#1E8E5A]" : i < currentIdx ? "bg-[#161A2E]/30" : "bg-[#DDD6C8]"}`} />
+                <span
+                  key={id}
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                    id === activeSection
+                      ? "bg-[#1E8E5A]"
+                      : i < currentIdx
+                      ? "bg-[#161A2E]/30"
+                      : "bg-[#DDD6C8]"
+                  }`}
+                />
               ))}
             </div>
-            <button onClick={goNext} disabled={currentIdx === SECTIONS.length - 1}
-              className="text-sm font-semibold text-[#1E8E5A] disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}>
+            <button
+              onClick={goNext}
+              disabled={currentIdx === SECTIONS.length - 1}
+              className="text-sm font-semibold text-[#1E8E5A]
+                         disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
               Next →
             </button>
           </div>
         </div>
 
-        <div className={`w-full lg:w-[48%] bg-[#E8E5DF] flex flex-col ${mobileTab === "form" ? "hidden lg:flex" : "flex"}`}>
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#DDD6C8] bg-white/60">
-            <span className="font-mono text-[10px] tracking-widest text-[#161A2E]/40 uppercase"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}>Live Preview</span>
-            <button
-              className="bg-[#161A2E] text-[#F6F4EF] text-xs font-semibold px-4 py-1.5 rounded hover:bg-[#1E8E5A] transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}>
-              ↓ Download PDF
-            </button>
+        {/* ── RIGHT: Preview Panel ── */}
+        <div className={`w-full lg:w-[48%] flex flex-col bg-[#EDEAE4] ${
+          mobileTab === "form" ? "hidden lg:flex" : "flex"
+        }`}>
+
+          {/* Single compact action bar */}
+          <div className="flex items-center gap-2 px-4 py-2.5
+                           border-b border-[#DDD6C8] bg-white/70 backdrop-blur-sm">
+            <span
+              className="text-[10px] tracking-widest text-[#161A2E]/35 uppercase mr-auto"
+              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            >
+              Live Preview
+            </span>
+            <ATSCheckPanel />
+            <DownloadButton />
           </div>
+
+          {/* Resume preview */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex justify-center">
             <div className="w-full max-w-[680px]">
               <ResumePreview />
             </div>
           </div>
         </div>
+
       </div>
+
+      
     </div>
   );
 }

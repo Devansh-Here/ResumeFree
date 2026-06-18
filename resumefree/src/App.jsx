@@ -5,6 +5,9 @@ import Hero from "./components/landing/Hero";
 import HowItWorks from "./components/landing/HowItWorks";
 import Testimonials from "./components/landing/Testimonials";
 import BuilderPage from "./pages/BuilderPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from './pages/TermsPage'
+
 
 function LandingPage() {
   return (
@@ -24,6 +27,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/builder" element={<BuilderPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms"   element={<TermsPage />} />
       </Routes>
     </BrowserRouter>
   );
