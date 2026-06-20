@@ -1,6 +1,7 @@
 // src/store/resumeStore.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useAuthStore } from "./authStore";
 
 const DEFAULT_RESUME = {
   personal: {
@@ -238,11 +239,14 @@ export const useResumeStore = create(
           },
         })),
 
-      // ── AI Usage (free tier: 3 max) ─────────────────────
+      // ── AI Usage (free tier: 3 max, unlimited for Premium) ──
       incrementAiUsage: () =>
         set((state) => ({ aiUsageCount: state.aiUsageCount + 1 })),
 
-      canUseAi: () => get().aiUsageCount < 3,
+      canUseAi: () => {
+        if (useAuthStore.getState().isPremium()) return true;
+        return get().aiUsageCount < 3;
+      },
 
       // ── Reset ───────────────────────────────────────────
       resetResume: () =>

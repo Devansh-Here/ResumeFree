@@ -1,6 +1,7 @@
 // src/components/builder/ProjectsForm.jsx
 import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
+import { useAuthStore } from "../../store/authStore";
 
 const inputClass =
   "w-full bg-white border border-[#DDD6C8] rounded-lg px-3 py-2.5 text-sm text-[#161A2E] placeholder:text-[#161A2E]/30 focus:outline-none focus:border-[#161A2E] focus:ring-1 focus:ring-[#161A2E]/10 transition-colors";
@@ -228,6 +229,7 @@ export default function ProjectsForm() {
   } = useResumeStore();
 
   const entries = resume.projects;
+  const isPremium = useAuthStore((s) => s.isPremium());
   const aiLeft = 3 - aiUsageCount;
 
   return (
@@ -253,13 +255,13 @@ export default function ProjectsForm() {
         {/* AI usage badge */}
         <div
           className={`flex-shrink-0 text-[10px] font-mono px-2.5 py-1.5 rounded-full border whitespace-nowrap ${
-            aiLeft > 0
+            isPremium || aiLeft > 0
               ? "text-[#1E8E5A] border-[#1E8E5A]/30 bg-[#1E8E5A]/8"
               : "text-[#E2A33B] border-[#E2A33B]/30 bg-[#E2A33B]/8"
           }`}
           style={{ fontFamily: "'IBM Plex Mono', monospace" }}
         >
-          {aiLeft > 0 ? `✨ ${aiLeft} AI left` : "🔒 Upgrade for more AI"}
+          {isPremium ? "✨ Unlimited AI" : aiLeft > 0 ? `✨ ${aiLeft} AI left` : "🔒 Upgrade for more AI"}
         </div>
       </div>
 
