@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { runATSCheck, getScoreLabel, CATEGORY_LABELS } from '../utils/atsCheck'
 import { useResumeStore } from '../store/resumeStore'
+import { useAuthStore } from '../store/authStore'
+import UpgradeModal from './premium/UpgradeModal'
 
 export default function ATSCheckPanel() {
   const resumeData = useResumeStore((s) => s.resume)
+  const isPremium = useAuthStore((s) => s.isPremium())
   const [loading, setLoading] = useState(false)
   const [result, setResult]   = useState(null)
   const [open, setOpen]       = useState(false)
   const [showAll, setShowAll] = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   function handleClick() {
     if (result) { setOpen((p) => !p); return }
@@ -81,7 +85,10 @@ export default function ATSCheckPanel() {
                 {result.score}/100 — {si.label}
               </p>
               <p className="text-xs text-[#161A2E]/40 mt-1">
-                {result.matched.length} of {result.matched.length + result.missing.length} keywords found
+                {result.matched.length} of {result.matched.length + result.missing.length} common keywords found
+              </p>
+              <p className="text-[10px] text-[#161A2E]/30 mt-0.5">
+                Generic check — use JD Match for job-specific accuracy
               </p>
             </div>
             <button onClick={() => setOpen(false)}
@@ -152,7 +159,7 @@ export default function ATSCheckPanel() {
             )}
 
             {/* Premium nudge */}
-            {result.score < 80 && (
+            {result.score < 80 && !isPremium && (
               <div className="bg-[#F6F4EF] border border-[#DDD6C8] rounded-lg px-3 py-2.5">
                 <p className="text-xs font-semibold text-[#161A2E] mb-0.5">
                   Reach 90+ with Premium
@@ -160,7 +167,9 @@ export default function ATSCheckPanel() {
                 <p className="text-[11px] text-[#161A2E]/50 leading-relaxed">
                   Paste any job description — we scan for that exact role's keywords.
                 </p>
-                <button className="mt-2 px-3 py-1.5 bg-[#161A2E] text-white text-[11px]
+                <button
+                  onClick={() => setUpgradeOpen(true)}
+                  className="mt-2 px-3 py-1.5 bg-[#161A2E] text-white text-[11px]
                                    font-semibold rounded-lg hover:bg-[#161A2E]/80 transition-colors">
                   Upgrade — ₹199/month
                 </button>
@@ -176,6 +185,8 @@ export default function ATSCheckPanel() {
           </div>
         </div>
       )}
+
+      {upgradeOpen && <UpgradeModal onClose={() => setUpgradeOpen(false)} />}
     </div>
   )
 }

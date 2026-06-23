@@ -9,6 +9,7 @@ import ProjectsForm from "../components/builder/ProjectsForm";
 import ResumePreview from "../components/builder/ResumePreview";
 import DownloadButton from "../components/DownloadButton";
 import ATSCheckPanel from "../components/ATSCheckPanel";
+import JDMatcherPanel from "../components/premium/JDMatcherPanel";
 
 const SECTIONS = [
   { id: "personal",   label: "Personal"   },
@@ -146,6 +147,7 @@ export default function BuilderPage() {
               Live Preview
             </span>
             <ATSCheckPanel />
+            <JDMatcherPanel />
             <DownloadButton />
           </div>
 

@@ -1,5 +1,6 @@
 // src/components/premium/UpgradeModal.jsx
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useResumeStore } from "../../store/resumeStore";
 import { supabase } from "../../utils/supabaseClient";
 
@@ -95,7 +96,7 @@ export default function UpgradeModal({ onClose }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#161A2E]/60 px-4">
       <div className="bg-[#F6F4EF] rounded-lg max-w-md w-full p-6 relative border border-[#DDD6C8]">
         <button
@@ -186,6 +187,7 @@ export default function UpgradeModal({ onClose }) {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

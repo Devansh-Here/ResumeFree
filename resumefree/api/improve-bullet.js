@@ -1,5 +1,5 @@
 // api/improve-bullet.js
-// Vercel Serverless Function — API key never exposed to browser
+
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
