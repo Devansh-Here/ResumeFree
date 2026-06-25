@@ -85,10 +85,10 @@ export default function ATSCheckPanel() {
                 {result.score}/100 — {si.label}
               </p>
               <p className="text-xs text-[#161A2E]/40 mt-1">
-                {result.matched.length} of {result.matched.length + result.missing.length} common keywords found
+                {result.matched.length} relevant keywords found
               </p>
               <p className="text-[10px] text-[#161A2E]/30 mt-0.5">
-                Generic check — use JD Match for job-specific accuracy
+                Role detected: {result.roleLabel} · Use JD Match for job-specific accuracy
               </p>
             </div>
             <button onClick={() => setOpen(false)}
@@ -102,14 +102,15 @@ export default function ATSCheckPanel() {
 
             {/* Category bars */}
             <div className="space-y-1.5">
-              {Object.entries(result.categoryBreakdown).map(([cat, { found, total }]) => (
-                <div key={cat} className="flex items-center gap-2">
+              {Object.entries(result.categoryBreakdown).map(([cat, { found, total, relevant }]) => (
+                <div key={cat} className={`flex items-center gap-2 ${!relevant ? 'opacity-30' : ''}`}>
                   <span className="text-[11px] text-[#161A2E]/40 w-28 shrink-0 truncate">
                     {CATEGORY_LABELS[cat]}
+                    {!relevant && <span className="ml-1 text-[9px]">(n/a)</span>}
                   </span>
                   <div className="flex-1 h-1 bg-[#E8E5DF] rounded-full overflow-hidden">
                     <div className="h-full bg-[#161A2E] rounded-full"
-                      style={{ width: `${Math.round((found / total) * 100)}%` }}/>
+                      style={{ width: total > 0 ? `${Math.round((found / total) * 100)}%` : '0%' }}/>
                   </div>
                   <span className="text-[11px] text-[#161A2E]/30 w-7 text-right shrink-0">
                     {found}/{total}
@@ -170,7 +171,7 @@ export default function ATSCheckPanel() {
                 <button
                   onClick={() => setUpgradeOpen(true)}
                   className="mt-2 px-3 py-1.5 bg-[#161A2E] text-white text-[11px]
-                                   font-semibold rounded-lg hover:bg-[#161A2E]/80 transition-colors">
+                             font-semibold rounded-lg hover:bg-[#161A2E]/80 transition-colors">
                   Upgrade — ₹199/month
                 </button>
               </div>
