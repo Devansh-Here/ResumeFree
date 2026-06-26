@@ -1,6 +1,4 @@
 // api/jd-match.js — Vercel Serverless Function
-// Premium feature: scores resume bullets against a job description and
-// suggests tailored rewrites. Calls Groq — never sees personal info.
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -16,26 +14,63 @@ export default async function handler(req, res) {
   }
 
   const bulletLines = bullets.map((b) => `${b.label}: ${b.text}`).join("\n");
-  const skillsLine = (skills || []).join(", ") || "(none listed)";
+  const skillsLine  = (skills || []).join(", ") || "(none listed)";
 
-  const prompt = `You are an expert resume-to-job-description matcher for Indian tech job applications.
+  // ── Client-side match score (deterministic, not AI-generated) ────────────
+  // We compute this ourselves so it cannot be hallucinated.
+  // Extract tech keywords from JD (words 2+ chars, likely technical terms)
+  const jdWords = new Set(
+    jobDescription
+      .toLowerCase()
+      .split(/[\s,.()\[\]{};:!"'\/\\|<>]+/)
+      .filter((w) => w.length >= 3)
+  );
+
+  const resumeWords = new Set(
+    [...skills, ...bullets.map((b) => b.text)]
+      .join(" ")
+      .toLowerCase()
+      .split(/[\s,.()\[\]{};:!"'\/\\|<>]+/)
+      .filter((w) => w.length >= 3)
+  );
+
+  // Overlap ratio — how many JD words appear in resume
+  let overlap = 0;
+  jdWords.forEach((w) => { if (resumeWords.has(w)) overlap++; });
+  const clientScore = Math.min(100, Math.round((overlap / Math.max(jdWords.size, 1)) * 200));
+  // *2 scaling because JD always has filler words; 100% overlap unrealistic
+
+  const prompt = `You are a strict, accurate resume reviewer. Your job is to help a student improve their resume for a specific job.
 
 RESUME SKILLS:
 ${skillsLine}
 
-RESUME BULLETS:
+RESUME BULLETS (label: text):
 ${bulletLines}
 
 JOB DESCRIPTION:
 ${jobDescription.slice(0, 4000)}
 
-Task:
-1. Score how well this resume matches the job description, 0-100.
-2. List up to 10 important keywords/skills from the job description that are MISSING from the resume skills and bullets.
-3. Pick at most 5 of the most relevant resume bullets and rewrite each to better match the job description's language and requirements — keep the same underlying facts, just reframe the wording, under 150 characters each.
+YOUR TASKS:
 
-Return ONLY valid JSON, no markdown, no code fences, matching exactly this shape:
-{"matchScore": <integer>, "missingKeywords": [<string>, ...], "suggestions": [{"label": "<bullet label>", "tailored": "<rewritten bullet>"}]}`;
+TASK 1 — MISSING KEYWORDS:
+List up to 8 specific technical skills, tools, or technologies mentioned in the job description that are genuinely absent from the resume skills and bullets above.
+Rules:
+- Only list concrete technical terms (e.g. "Kubernetes", "Spring Boot", "SQL") — never soft skills like "communication" or vague terms like "experience" or "ability"
+- A keyword is only "missing" if it literally does not appear anywhere in the resume skills or bullets
+- Never invent keywords not in the job description
+
+TASK 2 — BULLET REWRITES:
+Pick at most 4 resume bullets that are most relevant to this job and rewrite them to better match the job description language.
+STRICT RULES for rewrites:
+- You may only use facts, numbers, technologies, and achievements that already exist in the original bullet
+- NEVER add new metrics, percentages, or achievements that are not in the original bullet
+- NEVER add technologies not mentioned in the original bullet
+- Only rephrase using keywords from the job description — the substance must be identical
+- Keep under 150 characters
+
+Return ONLY a raw JSON object (no markdown, no explanation):
+{"missingKeywords": [<string>, ...], "suggestions": [{"label": "<label>", "original": "<original bullet text>", "tailored": "<rewritten bullet>"}]}`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -46,13 +81,12 @@ Return ONLY valid JSON, no markdown, no code fences, matching exactly this shape
       },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 900,
-        temperature: 0.4,
+        max_tokens: 1000,
+        temperature: 0.2, // lower = more conservative, less hallucination
         messages: [
           {
             role: "system",
-            content:
-              "You are a precise JSON-only API. Never include markdown formatting, code fences, or commentary — output only the raw JSON object.",
+            content: "You are a strict JSON-only API. Output ONLY a raw JSON object. No markdown, no code fences, no explanation. Never add facts not present in the input.",
           },
           { role: "user", content: prompt },
         ],
@@ -66,7 +100,7 @@ Return ONLY valid JSON, no markdown, no code fences, matching exactly this shape
       return res.status(502).json({ error: "No response from AI. Try again." });
     }
 
-    // Strip markdown code fences in case the model added them anyway
+    // Strip markdown fences if model added them anyway
     raw = raw
       .replace(/^```json\s*/i, "")
       .replace(/^```\s*/i, "")
@@ -78,22 +112,48 @@ Return ONLY valid JSON, no markdown, no code fences, matching exactly this shape
       parsed = JSON.parse(raw);
     } catch {
       const start = raw.indexOf("{");
-      const end = raw.lastIndexOf("}");
+      const end   = raw.lastIndexOf("}");
       if (start === -1 || end === -1) {
         return res.status(502).json({ error: "Could not read the AI response. Try again." });
       }
       parsed = JSON.parse(raw.slice(start, end + 1));
     }
 
-    const matchScore = Math.max(0, Math.min(100, Math.round(Number(parsed.matchScore) || 0)));
-    const missingKeywords = Array.isArray(parsed.missingKeywords)
-      ? parsed.missingKeywords.slice(0, 10)
-      : [];
-    const suggestions = Array.isArray(parsed.suggestions)
-      ? parsed.suggestions.filter((s) => s && s.label && s.tailored).slice(0, 5)
-      : [];
+    // ── Validate + sanitize AI output ────────────────────────────────────────
 
-    return res.status(200).json({ matchScore, missingKeywords, suggestions });
+    // Missing keywords: filter out anything not actually in the JD
+    const rawMissing = Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords : [];
+    const missingKeywords = rawMissing
+      .filter((kw) => {
+        if (typeof kw !== "string" || kw.trim().length < 2) return false;
+        // Keyword must actually appear in the JD (prevents hallucination)
+        return jobDescription.toLowerCase().includes(kw.toLowerCase());
+      })
+      .slice(0, 8);
+
+    // Suggestions: validate that tailored version doesn't add new numbers/% not in original
+    const rawSuggestions = Array.isArray(parsed.suggestions) ? parsed.suggestions : [];
+    const suggestions = rawSuggestions
+      .filter((s) => s && s.label && s.tailored && s.original)
+      .filter((s) => {
+        // Extract all numbers from original and tailored
+        const origNumbers = (s.original.match(/\d+/g) || []).sort().join(",");
+        const tailoredNumbers = (s.tailored.match(/\d+/g) || []).sort().join(",");
+        // Reject if tailored has numbers not in original (hallucinated metrics)
+        const tailoredExtra = (s.tailored.match(/\d+/g) || []).filter(
+          (n) => !(s.original.match(/\d+/g) || []).includes(n)
+        );
+        return tailoredExtra.length === 0;
+      })
+      .slice(0, 4);
+
+    // Use our deterministic client score, not AI-generated
+    return res.status(200).json({
+      matchScore: clientScore,
+      missingKeywords,
+      suggestions,
+    });
+
   } catch (error) {
     console.error("jd-match error:", error);
     return res.status(500).json({ error: "Something went wrong. Try again." });

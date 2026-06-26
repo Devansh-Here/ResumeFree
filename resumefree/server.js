@@ -31,7 +31,6 @@ try {
 const app = express();
 app.use(express.json());
 
-// CORS for local dev
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Content-Type");
@@ -40,67 +39,39 @@ app.use((req, res, next) => {
   next();
 });
 
-// Test route
 app.get("/api/test", (req, res) => {
   res.json({ status: "API server working!" });
 });
 
 // POST /api/improve-bullet
 app.post("/api/improve-bullet", async (req, res) => {
-  console.log("✅ Request received:", req.body);
-
   const { bullet } = req.body;
-
   if (!bullet || bullet.trim().length < 5) {
     return res.status(400).json({ error: "Invalid bullet text" });
   }
-
-  // Sanitize PII
   const sanitized = bullet
     .replace(/[\w.-]+@[\w.-]+\.\w+/g, "[email]")
     .replace(/(\+91[\s-]?)?\d{10}/g, "[phone]")
     .trim();
-
-  console.log("🔄 Calling Groq with:", sanitized);
-
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         max_tokens: 150,
         temperature: 0.7,
         messages: [
-          {
-            role: "system",
-            content: "You are an expert resume writer for Indian college students applying to TCS, Infosys, and startups.",
-          },
-          {
-            role: "user",
-            content: `Improve this resume bullet: "${sanitized}". Add metrics, strong action verbs, keep under 150 chars, focus on impact. Return ONLY the improved bullet, nothing else.`,
-          },
+          { role: "system", content: "You are an expert resume writer for Indian college students applying to TCS, Infosys, and startups." },
+          { role: "user", content: `Improve this resume bullet: "${sanitized}". Add metrics, strong action verbs, keep under 150 chars, focus on impact. Return ONLY the improved bullet, nothing else.` },
         ],
       }),
     });
-
     const data = await response.json();
-    console.log("📦 Groq response:", JSON.stringify(data, null, 2));
-
     const improved = data.choices?.[0]?.message?.content?.trim();
-
-    if (!improved) {
-      return res.status(502).json({ error: "No improvement returned." });
-    }
-
-    console.log(`✅ Improved: "${bullet}" → "${improved}"`);
+    if (!improved) return res.status(502).json({ error: "No improvement returned." });
     return res.json({ improved });
-
   } catch (err) {
-    console.error("❌ Error:", err.message);
     return res.status(500).json({ error: "Something went wrong." });
   }
 });
@@ -110,16 +81,10 @@ app.post("/api/create-order", async (req, res) => {
   const { plan } = req.body || {};
   const AMOUNTS = { monthly: 19900, yearly: 49900 };
   const amount = AMOUNTS[plan];
-
   if (!amount) return res.status(400).json({ error: "Invalid plan" });
-
   const keyId = process.env.VITE_RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-  if (!keyId || !keySecret) {
-    return res.status(500).json({ error: "Razorpay keys not configured" });
-  }
-
+  if (!keyId || !keySecret) return res.status(500).json({ error: "Razorpay keys not configured" });
   try {
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
     const response = await fetch("https://api.razorpay.com/v1/orders", {
@@ -128,9 +93,7 @@ app.post("/api/create-order", async (req, res) => {
       body: JSON.stringify({ amount, currency: "INR", receipt: `rcpt_${Date.now()}`, notes: { plan } }),
     });
     const order = await response.json();
-    if (!response.ok) {
-      return res.status(502).json({ error: order.error?.description || "Razorpay order creation failed" });
-    }
+    if (!response.ok) return res.status(502).json({ error: order.error?.description || "Razorpay order creation failed" });
     return res.status(200).json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -139,72 +102,41 @@ app.post("/api/create-order", async (req, res) => {
 
 // POST /api/verify-payment
 app.post("/api/verify-payment", async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email, name, plan, amount } =
-    req.body || {};
-
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email, name, plan, amount } = req.body || {};
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !email || !plan) {
     return res.status(400).json({ error: "Missing required fields" });
   }
-
   const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-  const expectedSignature = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(body)
-    .digest("hex");
-
+  const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET).update(body).digest("hex");
   if (expectedSignature !== razorpay_signature) {
     return res.status(400).json({ error: "Payment verification failed — signature mismatch" });
   }
-
   try {
-    const supabaseAdmin = createClient(
-      process.env.VITE_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
+    const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
     let userId;
     const { data: existingUsers, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
     if (listErr) throw listErr;
     const existing = existingUsers.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-
     if (existing) {
       userId = existing.id;
     } else {
-      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        email_confirm: true,
-      });
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true });
       if (createErr) throw createErr;
       userId = created.user.id;
     }
-
     const expiresAt = new Date();
     if (plan === "yearly") expiresAt.setFullYear(expiresAt.getFullYear() + 1);
     else expiresAt.setMonth(expiresAt.getMonth() + 1);
-
     const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
-      id: userId,
-      email,
-      name: name || null,
-      is_premium: true,
-      premium_plan: plan,
-      premium_expires_at: expiresAt.toISOString(),
+      id: userId, email, name: name || null, is_premium: true, premium_plan: plan, premium_expires_at: expiresAt.toISOString(),
     });
     if (profileErr) throw profileErr;
-
     const { error: paymentErr } = await supabaseAdmin.from("payments").insert({
-      profile_id: userId,
-      razorpay_order_id,
-      razorpay_payment_id,
-      amount: amount || 0,
-      plan,
-      status: "success",
+      profile_id: userId, razorpay_order_id, razorpay_payment_id, amount: amount || 0, plan, status: "success",
     });
     if (paymentErr) throw paymentErr;
-
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error("verify-payment error:", err);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -212,7 +144,6 @@ app.post("/api/verify-payment", async (req, res) => {
 // POST /api/jd-match
 app.post("/api/jd-match", async (req, res) => {
   const { bullets, skills, jobDescription } = req.body || {};
-
   if (!Array.isArray(bullets) || bullets.length === 0) {
     return res.status(400).json({ error: "Add at least one bullet to your resume first." });
   }
@@ -221,83 +152,80 @@ app.post("/api/jd-match", async (req, res) => {
   }
 
   const bulletLines = bullets.map((b) => `${b.label}: ${b.text}`).join("\n");
-  const skillsLine = (skills || []).join(", ") || "(none listed)";
+  const skillsLine  = (skills || []).join(", ") || "(none listed)";
 
-  const prompt = `You are an expert resume-to-job-description matcher for Indian tech job applications.
+  const jdWords = new Set(jobDescription.toLowerCase().split(/[\s,.()\[\]{};:!"'\/\\|<>]+/).filter(w => w.length >= 3));
+  const resumeWords = new Set([...skills, ...bullets.map(b => b.text)].join(" ").toLowerCase().split(/[\s,.()\[\]{};:!"'\/\\|<>]+/).filter(w => w.length >= 3));
+  let overlap = 0;
+  jdWords.forEach(w => { if (resumeWords.has(w)) overlap++; });
+  const clientScore = Math.min(100, Math.round((overlap / Math.max(jdWords.size, 1)) * 200));
+
+  const prompt = `You are a strict, accurate resume reviewer. Your job is to help a student improve their resume for a specific job.
 
 RESUME SKILLS:
 ${skillsLine}
 
-RESUME BULLETS:
+RESUME BULLETS (label: text):
 ${bulletLines}
 
 JOB DESCRIPTION:
 ${jobDescription.slice(0, 4000)}
 
-Task:
-1. Score how well this resume matches the job description, 0-100.
-2. List up to 10 important keywords/skills from the job description that are MISSING from the resume skills and bullets.
-3. Pick at most 5 of the most relevant resume bullets and rewrite each to better match the job description's language and requirements — keep the same underlying facts, just reframe the wording, under 150 characters each.
+YOUR TASKS:
 
-Return ONLY valid JSON, no markdown, no code fences, matching exactly this shape:
-{"matchScore": <integer>, "missingKeywords": [<string>, ...], "suggestions": [{"label": "<bullet label>", "tailored": "<rewritten bullet>"}]}`;
+TASK 1 — MISSING KEYWORDS:
+List up to 8 specific technical skills, tools, or technologies mentioned in the job description that are genuinely absent from the resume skills and bullets above.
+Rules:
+- Only list concrete technical terms (e.g. "Kubernetes", "Spring Boot", "SQL") — never soft skills like "communication" or vague terms like "experience" or "ability"
+- A keyword is only "missing" if it literally does not appear anywhere in the resume skills or bullets
+- Never invent keywords not in the job description
+
+TASK 2 — BULLET REWRITES:
+Pick at most 4 resume bullets that are most relevant to this job and rewrite them to better match the job description language.
+STRICT RULES for rewrites:
+- You may only use facts, numbers, technologies, and achievements that already exist in the original bullet
+- NEVER add new metrics, percentages, or achievements that are not in the original bullet
+- NEVER add technologies not mentioned in the original bullet
+- Only rephrase using keywords from the job description — the substance must be identical
+- Keep under 150 characters
+
+Return ONLY a raw JSON object (no markdown, no explanation):
+{"missingKeywords": [<string>, ...], "suggestions": [{"label": "<label>", "original": "<original bullet text>", "tailored": "<rewritten bullet>"}]}`;
 
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
-        max_tokens: 900,
-        temperature: 0.4,
+        max_tokens: 1000,
+        temperature: 0.2,
         messages: [
-          {
-            role: "system",
-            content:
-              "You are a precise JSON-only API. Never include markdown formatting, code fences, or commentary — output only the raw JSON object.",
-          },
+          { role: "system", content: "You are a strict JSON-only API. Output ONLY a raw JSON object. No markdown, no code fences, no explanation. Never add facts not present in the input." },
           { role: "user", content: prompt },
         ],
       }),
     });
-
     const data = await response.json();
     let raw = data.choices?.[0]?.message?.content?.trim();
-
-    if (!raw) {
-      return res.status(502).json({ error: "No response from AI. Try again." });
-    }
-
-    raw = raw
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/```\s*$/i, "")
-      .trim();
-
+    if (!raw) return res.status(502).json({ error: "No response from AI. Try again." });
+    raw = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/```\s*$/i,"").trim();
     let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      const start = raw.indexOf("{");
-      const end = raw.lastIndexOf("}");
-      if (start === -1 || end === -1) {
-        return res.status(502).json({ error: "Could not read the AI response. Try again." });
-      }
+    try { parsed = JSON.parse(raw); }
+    catch {
+      const start = raw.indexOf("{"), end = raw.lastIndexOf("}");
+      if (start === -1 || end === -1) return res.status(502).json({ error: "Could not read the AI response. Try again." });
       parsed = JSON.parse(raw.slice(start, end + 1));
     }
-
-    const matchScore = Math.max(0, Math.min(100, Math.round(Number(parsed.matchScore) || 0)));
-    const missingKeywords = Array.isArray(parsed.missingKeywords)
-      ? parsed.missingKeywords.slice(0, 10)
-      : [];
-    const suggestions = Array.isArray(parsed.suggestions)
-      ? parsed.suggestions.filter((s) => s && s.label && s.tailored).slice(0, 5)
-      : [];
-
-    return res.status(200).json({ matchScore, missingKeywords, suggestions });
+    const missingKeywords = (Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords : [])
+      .filter(kw => typeof kw === "string" && kw.trim().length >= 2 && jobDescription.toLowerCase().includes(kw.toLowerCase()))
+      .slice(0, 8);
+    const suggestions = (Array.isArray(parsed.suggestions) ? parsed.suggestions : [])
+      .filter(s => s && s.label && s.tailored && s.original)
+      .filter(s => (s.tailored.match(/\d+/g) || []).filter(n => !(s.original.match(/\d+/g) || []).includes(n)).length === 0)
+      .filter(s => s.tailored.trim().toLowerCase() !== s.original.trim().toLowerCase())
+      .slice(0, 4);
+    return res.status(200).json({ matchScore: clientScore, missingKeywords, suggestions });
   } catch (err) {
     console.error("jd-match error:", err);
     return res.status(500).json({ error: "Something went wrong. Try again." });
