@@ -1,128 +1,97 @@
 // src/components/landing/Testimonials.jsx
 import { Link } from "react-router-dom";
+import ScrollGlow from '../ui/ScrollGlow'
 
 const TESTIMONIALS = [
   {
-    quote:
-      "I built my resume in under 10 minutes. The AI rewrote my internship bullets and added actual numbers I hadn't thought to include. Got a TCS interview call the same week.",
+    quote: "I built my resume in under 10 minutes. The AI rewrote my internship bullets and added actual numbers I hadn't thought to include. Got a TCS interview call the same week.",
     name: "Arjun Sharma",
-    detail: "B.Tech CSE · KIET Group of Institutions · Got TCS interview",
+    detail: "B.Tech CSE · KIET Group of Institutions · TCS interview",
     initials: "AS",
-    color: "#1E8E5A",
   },
   {
-    quote:
-      "Every other tool I tried either watermarked the PDF or asked me to pay before downloading. This one just... worked. Clean PDF, no sign-up, no surprises.",
+    quote: "Every other tool I tried either watermarked the PDF or asked me to pay before downloading. This one just... worked. Clean PDF, no sign-up, no surprises.",
     name: "Priya Nair",
-    detail: "MBA · Symbiosis Pune · Applying for Business Analyst roles",
+    detail: "MBA · Symbiosis Pune · Business Analyst roles",
     initials: "PN",
-    color: "#161A2E",
   },
   {
-    quote:
-      "My CGPA is 7.1 so I was worried. The AI helped me frame my projects properly — focused on what I built and the impact, not just the tech stack. Looks genuinely professional.",
+    quote: "My CGPA is 7.1 so I was worried. The AI helped me frame my projects properly — focused on what I built and the impact, not just the tech stack. Looks genuinely professional.",
     name: "Rahul Verma",
     detail: "B.Tech IT · AKTU Lucknow · Infosys offer received",
     initials: "RV",
-    color: "#E2A33B",
   },
 ];
 
 export default function Testimonials() {
   return (
-    <section id="testimonials" className="bg-white border-t border-[#DDD6C8] py-16 sm:py-24 px-4">
+    <section id="testimonials" className="relative bg-white border-t border-dove/30 py-16 sm:py-24 px-5 sm:px-8 overflow-hidden">
+      <ScrollGlow position="bottom-right" size="lg" opacity={0.09} delay={0}   />
+      <ScrollGlow position="top-left"     size="md" opacity={0.05} delay={500} />
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <p
-            className="font-mono text-[10px] tracking-widest text-[#1E8E5A] uppercase mb-3"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-          >
-            From students like you
-          </p>
+        <div className="text-center mb-14">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <span className="w-8 h-px bg-dove" />
+            <span className="font-sohne text-[13px] text-graphite tracking-[-0.009em]">From students like you</span>
+            <span className="w-8 h-px bg-dove" />
+          </div>
           <h2
-            className="font-bold text-[#161A2E]"
-            style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: "clamp(1.4rem, 3.5vw, 2.25rem)",
-            }}
+            className="font-signifier text-ink leading-[1.18]"
+            style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)", letterSpacing: "-0.23px" }}
           >
             Resumes that actually got responses.
           </h2>
         </div>
 
-        {/* Cards — 1 col mobile, 3 col lg */}
+        {/* Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {TESTIMONIALS.map(({ quote, name, detail, initials, color }) => (
-            <div
-              key={name}
-              className="flex flex-col justify-between bg-[#F6F4EF] border border-[#DDD6C8] rounded-xl p-5 sm:p-6"
-            >
-              {/* Quote mark */}
+          {TESTIMONIALS.map(({ quote, name, detail, initials }) => (
+            <div key={name}
+              className="flex flex-col justify-between bg-fog border border-dove/40 rounded-cards p-6"
+              style={{ boxShadow: "rgba(15,23,42,0.03) 0px 0px 0px 1px" }}>
+
+              {/* Quote */}
               <div>
                 <span
-                  className="block text-3xl leading-none mb-3"
-                  style={{ color, fontFamily: "'Space Grotesk', sans-serif", opacity: 0.4 }}
+                  className="block font-signifier text-[40px] leading-none mb-3 text-dove"
                   aria-hidden="true"
                 >
-                  "
+                  &ldquo;
                 </span>
-                <p
-                  className="text-sm sm:text-[0.9rem] text-[#161A2E]/75 leading-relaxed"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                >
+                <p className="font-sohne text-[14px] text-ash leading-[1.5] tracking-[-0.009em]">
                   {quote}
                 </p>
               </div>
 
               {/* Author */}
-              <div className="flex items-center gap-3 mt-6 pt-5 border-t border-[#DDD6C8]">
-                {/* Avatar */}
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
-                  style={{ backgroundColor: color, fontFamily: "'IBM Plex Mono', monospace" }}
-                >
-                  {initials}
+              <div className="flex items-center gap-3 mt-6 pt-5 border-t border-dove/40">
+                <div className="w-9 h-9 rounded-[9999px] bg-apricot-wash flex items-center justify-center shrink-0">
+                  <span className="font-sohne text-[12px] font-[500] text-rust">{initials}</span>
                 </div>
                 <div className="min-w-0">
-                  <p
-                    className="text-sm font-semibold text-[#161A2E] truncate"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                  >
-                    {name}
-                  </p>
-                  <p
-                    className="text-[11px] text-[#161A2E]/45 leading-snug mt-0.5"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    {detail}
-                  </p>
+                  <p className="font-sohne text-[14px] font-[500] text-ink truncate tracking-[-0.009em]">{name}</p>
+                  <p className="font-sohne text-[12px] text-graphite mt-0.5 tracking-[-0.009em]">{detail}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Bottom CTA */}
+        {/* CTA */}
         <div className="mt-14 text-center">
-          <p
-            className="text-[#161A2E]/50 mb-5 text-sm"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+          <p className="font-sohne text-[15px] text-graphite mb-5 tracking-[-0.009em]">
             Your resume is 8 minutes away.
           </p>
           <Link
             to="/builder"
-            className="inline-block w-full sm:w-auto bg-[#1E8E5A] text-white font-semibold px-8 py-3.5 rounded hover:bg-[#161A2E] transition-colors text-base shadow-sm"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="inline-block px-8 py-3.5 bg-ink hover:bg-ink/85 text-white font-sohne rounded-buttons transition-colors tracking-[-0.009em]"
+            style={{ fontSize: "15px", fontWeight: 450 }}
           >
-            Get Your Free Resume →
+            Get your free resume &rarr;
           </Link>
-          <p
-            className="mt-3 text-xs text-[#161A2E]/35"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-          >
+          <p className="mt-3 font-sohne text-[13px] text-dove tracking-[-0.009em]">
             No credit card · No account · No watermark
           </p>
         </div>

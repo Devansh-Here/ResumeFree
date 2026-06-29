@@ -1,266 +1,262 @@
+// src/components/landing/Hero.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-// Simulated "before" and "after" bullets for the live demo strip
 const BULLETS = [
   {
     before: "Worked on database project",
-    after: "Optimized MySQL queries for 500-record inventory system, reducing load time from 3s → 400ms",
+    after:  "Optimized MySQL queries for 500-record inventory system, reducing load time from 3s → 400ms",
+    role:   "Backend Dev",
   },
   {
     before: "Made a website for college fest",
-    after: "Built responsive React.js event portal for 2,000+ attendees; cut registration time by 60%",
+    after:  "Built responsive React.js event portal for 2,000+ attendees; cut registration time by 60%",
+    role:   "Frontend Dev",
   },
   {
     before: "Did internship at a startup",
-    after: "Developed REST APIs at fintech startup handling ₹4L/day transactions using Node.js + MongoDB",
+    after:  "Developed REST APIs at fintech startup handling ₹4L/day transactions using Node.js + MongoDB",
+    role:   "Fullstack Dev",
   },
 ];
 
-const STATS = [
-  { value: "0", label: "sign-up required" },
-  { value: "₹0", label: "to download PDF" },
-  { value: "100%", label: "ATS friendly" },
-  { value: "8 min", label: "to build resume" },
-];
-
-export default function Hero() {
+export default function Hero({ dark = false }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [showAfter, setShowAfter] = useState(false);
-  const [stamped, setStamped] = useState(false);
+  const [stamped,   setStamped]   = useState(false);
 
-  // Cycle through bullet examples
   useEffect(() => {
-    const cycle = setInterval(() => {
-      setShowAfter(false);
-      setStamped(false);
-      setTimeout(() => {
-        setActiveIdx((i) => (i + 1) % BULLETS.length);
-        setTimeout(() => setShowAfter(true), 400);
-        setTimeout(() => setStamped(true), 900);
-      }, 300);
-    }, 3500);
-    // kick off immediately
     const init = setTimeout(() => {
       setShowAfter(true);
       setTimeout(() => setStamped(true), 500);
-    }, 600);
-    return () => {
-      clearInterval(cycle);
-      clearTimeout(init);
-    };
+    }, 700);
+    const cycle = setInterval(() => {
+      setShowAfter(false); setStamped(false);
+      setTimeout(() => {
+        setActiveIdx(i => (i + 1) % BULLETS.length);
+        setTimeout(() => setShowAfter(true), 350);
+        setTimeout(() => setStamped(true), 850);
+      }, 300);
+    }, 3800);
+    return () => { clearTimeout(init); clearInterval(cycle); };
   }, []);
 
   const bullet = BULLETS[activeIdx];
 
   return (
-    <section
-      className="min-h-[calc(100vh-56px)] bg-[#F6F4EF] flex flex-col items-center justify-center px-4 pt-10 pb-16 relative overflow-hidden"
-    >
-      {/* Subtle ruled-paper background lines */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(to bottom, transparent, transparent 31px, #DDD6C8 31px, #DDD6C8 32px)",
-          opacity: 0.35,
-        }}
-      />
+    <section className="relative bg-transparent overflow-hidden">
 
-      {/* Top eyebrow */}
-      <div className="relative z-10 mb-5 flex items-center gap-2">
-        <span
-          className="font-mono text-[10px] tracking-widest text-[#1E8E5A] uppercase"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-        >
-          Free · No Sign-Up · Indian ATS Optimized
-        </span>
-      </div>
+      {/* ── Main grid ── */}
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pt-12 pb-16 lg:pt-16 lg:pb-20">
+        <div className="grid lg:grid-cols-[1fr_420px] gap-12 lg:gap-16 items-center">
 
-      {/* Headline */}
-      <h1
-        className="relative z-10 text-center text-[#161A2E] font-bold leading-[1.1] max-w-3xl"
-        style={{
-          fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: "clamp(2rem, 5.5vw, 3.75rem)",
-        }}
-      >
-        Build a resume that{" "}
-        <span className="relative inline-block">
-          <span className="text-[#1E8E5A]">passes ATS</span>
-          <svg
-            className="absolute -bottom-1 left-0 w-full"
-            viewBox="0 0 200 8"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M1 5.5 Q50 1 100 5.5 Q150 10 199 5.5"
-              stroke="#E2A33B"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-          </svg>
-        </span>
-        <br />— in under 8 minutes
-      </h1>
-
-      {/* Sub-headline */}
-      <p
-        className="relative z-10 mt-5 text-center text-[#161A2E]/60 max-w-xl leading-relaxed"
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: "clamp(0.95rem, 2vw, 1.1rem)",
-        }}
-      >
-        AI improves your bullets, JD matcher tailors for TCS/Infosys/startups,
-        and you download a clean PDF — no sign-up, no watermark, no hidden ₹5 charge.
-      </p>
-
-      {/* CTA Row */}
-      <div className="relative z-10 mt-8 flex flex-col sm:flex-row gap-3 items-center">
-        <Link
-          to="/builder"
-          className="bg-[#161A2E] text-[#F6F4EF] font-semibold px-7 py-3 rounded hover:bg-[#1E8E5A] transition-colors text-base shadow-sm"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          Build My Resume — It's Free →
-        </Link>
-        <a
-          href="#how-it-works"
-          className="text-sm text-[#161A2E]/60 hover:text-[#161A2E] underline underline-offset-4 transition-colors"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          See how it works
-        </a>
-      </div>
-
-      {/* Trust line */}
-      <p
-        className="relative z-10 mt-3 text-xs text-[#161A2E]/40"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-      >
-        No credit card · No account · Just your resume
-      </p>
-
-      {/* ── Live AI Demo Card ── */}
-      <div className="relative z-10 mt-12 w-full max-w-2xl bg-white border border-[#DDD6C8] rounded-lg shadow-md overflow-hidden">
-        {/* Card header */}
-        <div className="flex items-center justify-between px-4 py-2.5 bg-[#F6F4EF] border-b border-[#DDD6C8]">
-          <span
-            className="text-[10px] tracking-widest uppercase text-[#161A2E]/40"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-          >
-            AI Bullet Improver — Live Demo
-          </span>
-          <div className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#DDD6C8]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#DDD6C8]" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#1E8E5A]" />
-          </div>
-        </div>
-
-        <div className="p-5 sm:p-6 grid sm:grid-cols-2 gap-4">
-          {/* Before */}
+          {/* ── LEFT: Editorial copy ── */}
           <div>
-            <p
-              className="text-[10px] uppercase tracking-widest text-[#161A2E]/40 mb-2"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-            >
-              ✗ Before
-            </p>
-            <div className="bg-[#F6F4EF] border border-[#DDD6C8] rounded p-3 text-sm text-[#161A2E]/70 min-h-[56px]"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              {bullet.before}
-            </div>
-          </div>
-
-          {/* After */}
-          <div className="relative">
-            <p
-              className="text-[10px] uppercase tracking-widest text-[#1E8E5A] mb-2"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-            >
-              ✓ After AI
-            </p>
-            <div
-              className={`bg-white border border-[#1E8E5A]/40 rounded p-3 text-sm text-[#161A2E] min-h-[56px] transition-all duration-500 ${
-                showAfter ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-              }`}
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              {bullet.after}
-            </div>
-
-            {/* Stamp */}
-            <div
-              className={`absolute -top-2 -right-2 transition-all duration-300 ${
-                stamped ? "opacity-100 scale-100 rotate-[-8deg]" : "opacity-0 scale-75"
-              }`}
-              aria-hidden="true"
-            >
-              <span
-                className="block text-[#1E8E5A] border-2 border-[#1E8E5A] rounded px-2 py-0.5 text-[9px] font-bold tracking-widest bg-white shadow-sm"
-                style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-              >
-                ATS PASS ✓
+            {/* Eyebrow */}
+            <div className="flex items-center gap-3 mb-8">
+              <span className="w-8 h-px bg-white/20" />
+              <span className="font-sohne text-[13px] text-white/50 tracking-[-0.009em]">
+                Free · No sign-up · Indian ATS optimised
               </span>
             </div>
-          </div>
-        </div>
 
-        {/* Progress dots */}
-        <div className="flex justify-center gap-2 pb-4">
-          {BULLETS.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setShowAfter(false);
-                setStamped(false);
-                setActiveIdx(i);
-                setTimeout(() => setShowAfter(true), 300);
-                setTimeout(() => setStamped(true), 750);
+            {/* Display headline — Signifier */}
+            <h1
+              className="font-signifier text-white leading-[1.05]"
+              style={{ fontSize: "clamp(3rem, 6.5vw, 4.5rem)", letterSpacing: "-1.6px" }}
+            >
+              Build a resume
+              <br />
+              that{" "}
+              <span className="relative inline-block">
+                <span style={{ color: "#34d399" }}>passes ATS</span>
+                <svg
+                  className="absolute -bottom-2 left-0 w-full"
+                  viewBox="0 0 300 10" fill="none" aria-hidden="true"
+                >
+                  <path
+                    d="M2 7 Q75 2 150 7 Q225 12 298 7"
+                    stroke="#34d399" strokeWidth="2.5" strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <br />
+              in under{" "}
+              <em className="not-italic" style={{ color: "#34d399" }}>8 minutes</em>
+            </h1>
+
+            {/* Body copy */}
+            <p
+              className="mt-6 font-sohne text-white/60 leading-[1.5] max-w-md"
+              style={{ fontSize: "17px", letterSpacing: "-0.14px" }}
+            >
+              AI rewrites your bullets, JD matcher tailors your resume for
+              TCS/Infosys/startups, and you download a clean PDF —
+              no sign-up, no watermark, no hidden ₹5 charge.
+            </p>
+
+            {/* CTA row */}
+            <div className="mt-8 flex items-center gap-5 flex-wrap">
+              <Link
+                to="/builder"
+                className="px-7 py-3.5 bg-white hover:bg-white/90 text-ink font-sohne rounded-buttons transition-colors tracking-[-0.009em]"
+                style={{ fontSize: "15px", fontWeight: 500 }}
+              >
+                Build my resume — it&apos;s free &rarr;
+              </Link>
+              
+                <a href="#how-it-works"
+                className="font-sohne text-white/50 hover:text-white transition-colors tracking-[-0.009em]"
+                style={{ fontSize: "14px" }}
+              >
+                See how it works
+              </a>
+            </div>
+
+            {/* Trust micro-copy */}
+            <p
+              className="mt-4 font-sohne text-white/30 tracking-[-0.009em]"
+              style={{ fontSize: "13px" }}
+            >
+              No credit card · No account · Just your resume
+            </p>
+
+            {/* ── Stats inline strip ── */}
+            <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-4 gap-4">
+              {[
+                { value: "0",     label: "sign-ups" },
+                { value: "₹0",   label: "to download" },
+                { value: "100%", label: "ATS-safe" },
+                { value: "8 min",label: "avg build time" },
+              ].map(({ value, label }) => (
+                <div key={label}>
+                  <p
+                    className="font-signifier text-white leading-none"
+                    style={{ fontSize: "26px", letterSpacing: "-0.23px" }}
+                  >
+                    {value}
+                  </p>
+                  <p
+                    className="mt-1.5 font-sohne text-white/40 tracking-[-0.009em]"
+                    style={{ fontSize: "13px" }}
+                  >
+                    {label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── RIGHT: Floating AI demo card ── */}
+          <div className="relative">
+
+            {/* Role pill above card */}
+            <div className="flex items-center justify-between mb-3 px-1">
+              <span className="font-sohne text-[12px] text-white/40 tracking-[-0.009em]">
+                AI Bullet Improver
+              </span>
+              <span className="px-3 py-1 rounded-tags bg-white/10 font-sohne text-[12px] text-white/70 tracking-[-0.009em] transition-all duration-300">
+                {bullet.role}
+              </span>
+            </div>
+
+            {/* Main demo card — white on dark bg */}
+            <div
+              className="bg-white rounded-cards overflow-hidden"
+              style={{
+                boxShadow: "rgba(0,0,0,0.3) 0px 0px 0px 1px, rgba(0,0,0,0.25) 0px 20px 40px -8px",
               }}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                i === activeIdx ? "bg-[#1E8E5A]" : "bg-[#DDD6C8]"
-              }`}
-              aria-label={`Example ${i + 1}`}
-            />
-          ))}
+            >
+              {/* Card top bar */}
+              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-dove/40 bg-fog">
+                <span className="w-2.5 h-2.5 rounded-full bg-dove/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-dove/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-rust" />
+                <span className="ml-auto font-sohne text-[11px] text-graphite tracking-[-0.009em]">
+                  Live demo
+                </span>
+              </div>
+
+              {/* Before */}
+              <div className="px-5 pt-5 pb-4">
+                <p className="font-sohne text-[11px] text-graphite uppercase tracking-wider mb-2">
+                  ✗ Before
+                </p>
+                <div
+                  className="bg-fog border border-dove/40 rounded-inputs px-4 py-3.5 font-sohne text-ash"
+                  style={{ fontSize: "14px", lineHeight: "1.5", letterSpacing: "-0.009em" }}
+                >
+                  {bullet.before}
+                </div>
+              </div>
+
+              {/* Arrow divider */}
+              <div className="flex items-center gap-3 px-5 py-1">
+                <div className="flex-1 h-px bg-dove/30" />
+                <span className="font-sohne text-[11px] text-rust tracking-[-0.009em]">AI &darr;</span>
+                <div className="flex-1 h-px bg-dove/30" />
+              </div>
+
+              {/* After */}
+              <div className="px-5 pt-4 pb-5 relative">
+                <p className="font-sohne text-[11px] text-rust uppercase tracking-wider mb-2">
+                  ✓ After AI
+                </p>
+                <div
+                  className={`bg-apricot-wash border border-rust/20 rounded-inputs px-4 py-3.5 font-sohne text-ink transition-all duration-500 ${
+                    showAfter ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                  }`}
+                  style={{ fontSize: "14px", lineHeight: "1.5", letterSpacing: "-0.009em" }}
+                >
+                  {bullet.after}
+                </div>
+
+                {/* ATS stamp */}
+                <div
+                  className={`absolute top-3 right-3 transition-all duration-300 ${
+                    stamped ? "opacity-100 scale-100 rotate-[-6deg]" : "opacity-0 scale-75"
+                  }`}
+                >
+                  <span className="block font-sohne text-[10px] text-rust border border-rust/40 rounded px-2 py-0.5 bg-white/80 tracking-wider">
+                    ATS PASS ✓
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress dots */}
+              <div className="flex items-center justify-between px-5 py-3 border-t border-dove/20 bg-fog">
+                <div className="flex gap-1.5">
+                  {BULLETS.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setShowAfter(false); setStamped(false); setActiveIdx(i);
+                        setTimeout(() => setShowAfter(true), 300);
+                        setTimeout(() => setStamped(true), 750);
+                      }}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        i === activeIdx ? "bg-rust" : "bg-dove/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="font-sohne text-[11px] text-graphite tracking-[-0.009em]">
+                  {activeIdx + 1} / {BULLETS.length}
+                </span>
+              </div>
+            </div>
+
+            {/* Social proof below card */}
+            <p
+              className="mt-4 text-center font-sohne text-white/25 tracking-[-0.009em] px-2"
+              style={{ fontSize: "12px" }}
+            >
+              Other resume builders charge ₹500+ with hidden fees. ResumeFree doesn&apos;t.
+            </p>
+          </div>
+
         </div>
       </div>
-
-      {/* Stats strip */}
-      <div className="relative z-10 mt-10 w-full max-w-2xl grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#DDD6C8] border border-[#DDD6C8] rounded-lg overflow-hidden">
-        {STATS.map(({ value, label }) => (
-          <div key={label} className="bg-[#F6F4EF] flex flex-col items-center py-4 px-2">
-            <span
-              className="text-2xl font-bold text-[#161A2E]"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              {value}
-            </span>
-            <span
-              className="text-[10px] uppercase tracking-widest text-[#161A2E]/40 mt-0.5 text-center"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-            >
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* vs Resume.com jab */}
-      <p
-        className="relative z-10 mt-6 text-xs text-center text-[#161A2E]/35 max-w-md"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
-        Resume.com has a 1.4/5 rating on Trustpilot and charges $5 without permission.
-        ResumeFree doesn't.
-      </p>
     </section>
   );
 }
