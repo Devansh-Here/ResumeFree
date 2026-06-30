@@ -2,21 +2,29 @@
 // Confirm screen shown right before Razorpay opens — last chance to
 // review what's being bought, for both "just logged in" and
 // "already logged in, clicked a pass" flows.
+//
+// SECURITY: payment flow now goes through the backend (server.js):
+//   1. POST /api/create-order   → real Razorpay order_id (amount set server-side from PASS_CONFIG)
+//   2. Razorpay checkout opens with that order_id
+//   3. POST /api/verify-payment → backend verifies the HMAC signature and
+//      updates `profiles`/`payments` itself using the service role key.
+// The client never writes is_premium / payments rows directly anymore.
 
 import { createPortal } from "react-dom";
 import { useState } from "react";
 import { supabase } from "../../utils/supabaseClient";
 import { getPass } from "../../utils/passes";
 
+const API_BASE = "http://localhost:3001";
+
 export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
   const [paying, setPaying] = useState(false);
-  const [error, setPaying2] = useState(""); // (kept simple, see error state below)
   const [errorMsg, setErrorMsg] = useState("");
 
   const pass = getPass(passKey);
   if (!pass) return null;
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (!window.Razorpay) {
       setErrorMsg("Payment system failed to load. Please refresh and try again.");
       return;
@@ -25,62 +33,80 @@ export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
     setPaying(true);
     setErrorMsg("");
 
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: pass.price * 100, // paise
-      currency: "INR",
-      name: "ResumeFree",
-      description: pass.name,
-      theme: { color: "#059669" },
-      handler: async (response) => {
-        try {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Session expired — please sign in again.");
 
-          if (!user) throw new Error("Session expired — please sign in again.");
+      // 1. Create a real Razorpay order on the backend (amount comes from
+      // server-side PASS_CONFIG, never trusted from the client).
+      const orderRes = await fetch(`${API_BASE}/api/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pass_type: passKey }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        throw new Error(orderData.error || "Could not start payment. Try again.");
+      }
 
-          const expiresAt = new Date(
-            Date.now() + pass.durationDays * 24 * 60 * 60 * 1000
-          ).toISOString();
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.orderId,
+        name: "ResumeFree",
+        description: pass.name,
+        theme: { color: "#059669" },
+        prefill: {
+          email: user.email,
+          name: user.user_metadata?.full_name || "",
+        },
+        handler: async (response) => {
+          try {
+            // 2. Hand the signed response to the backend for verification.
+            // Backend checks the HMAC signature and only then updates
+            // is_premium / premium_expires_at / payments — client never
+            // touches those tables directly.
+            const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                email: user.email,
+                name: user.user_metadata?.full_name || null,
+                pass_type: passKey,
+                amount: orderData.amount / 100,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              throw new Error(verifyData.error || "Payment verification failed.");
+            }
 
-          // ⚠️ TEST MODE: no server-side signature verification yet.
-          // Before going live, move this update behind a verified
-          // backend route (server.js) that checks the Razorpay signature
-          // first — right now any client can call this with a fake id.
-          const { error: profileErr } = await supabase
-            .from("profiles")
-            .update({
-              is_premium: true,
-              premium_expires_at: expiresAt,
-              plan_type: pass.key,
-            })
-            .eq("id", user.id);
+            setPaying(false);
+            onSuccess();
+          } catch (err) {
+            setPaying(false);
+            setErrorMsg(
+              err.message || "Payment succeeded but verification failed — contact support."
+            );
+          }
+        },
+        modal: {
+          ondismiss: () => setPaying(false),
+        },
+      };
 
-          if (profileErr) throw profileErr;
-
-          await supabase.from("payments").insert({
-            user_id: user.id,
-            plan_type: pass.key,
-            amount: pass.price,
-            razorpay_id: response.razorpay_payment_id,
-            status: "success",
-          });
-
-          setPaying(false);
-          onSuccess();
-        } catch (err) {
-          setPaying(false);
-          setErrorMsg(err.message || "Payment succeeded but saving failed — contact support.");
-        }
-      },
-      modal: {
-        ondismiss: () => setPaying(false),
-      },
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      setPaying(false);
+      setErrorMsg(err.message || "Could not start payment. Try again.");
+    }
   };
 
   return createPortal(
