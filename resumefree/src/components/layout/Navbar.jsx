@@ -13,6 +13,56 @@ const NAV_LINKS = [
   { label: "FAQ",          href: "/#faq"          },
 ];
 
+/* ── Custom eased scroll (matches the sliding-indicator easing family) ──
+   Native scrollTo({behavior:"smooth"}) uses the browser's own easing,
+   which feels inconsistent across browsers. This uses the same
+   cubic-bezier(0.4,0,0.2,1) curve as the rest of the "alive" UI so a
+   nav click feels like part of the same motion language. */
+function easeInOutQuart(t) {
+  return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
+}
+
+function magicScrollTo(targetY, duration = 850) {
+  const startY = window.scrollY;
+  const distance = targetY - startY;
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = easeInOutQuart(progress);
+    window.scrollTo(0, startY + distance * eased);
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+/* ── Glow pulse on the section we just landed on ── */
+function pulseSection(el) {
+  if (!el) return;
+  el.classList.remove("rf-section-pulse");
+  // force reflow so the animation can re-trigger on repeat clicks
+  void el.offsetWidth;
+  el.classList.add("rf-section-pulse");
+  setTimeout(() => el.classList.remove("rf-section-pulse"), 900);
+}
+
+function magicScrollToHash(hash, navOffset = 90) {
+  if (!hash) {
+    magicScrollTo(0);
+    return;
+  }
+  const el = document.getElementById(hash);
+  if (el) {
+    const top = el.getBoundingClientRect().top + window.scrollY - navOffset;
+    magicScrollTo(top);
+    // pulse slightly after the scroll lands
+    setTimeout(() => pulseSection(el), 870);
+  }
+}
+
 // ── Auto-save pop indicator ──
 function AutoSaveIndicator() {
   const resume = useResumeStore((s) => s.resume);
@@ -130,7 +180,9 @@ function HomeIconButton() {
 /* ── Glass Nav Link ──
    Plain <a> with manual click handler so hash links (e.g. "/#how-it-works")
    reliably scroll to the target section even though it's an SPA route —
-   React Router's <Link> does NOT auto-scroll to hash targets on its own. */
+   React Router's <Link> does NOT auto-scroll to hash targets on its own.
+   Scroll itself now goes through magicScrollToHash (custom eased curve +
+   landing glow pulse) instead of the native smooth scroll. */
 function GlassLink({ href, children, onClick }) {
   const isRoute = href.startsWith("/");
   const navigate = useNavigate();
@@ -159,18 +211,7 @@ function GlassLink({ href, children, onClick }) {
     const [path, hash] = href.split("#");
     const targetPath = path || "/";
 
-    const scrollToHash = () => {
-      if (!hash) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      const el = document.getElementById(hash);
-      if (el) {
-        const NAV_OFFSET = 90;
-        const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
-        window.scrollTo({ top, behavior: "smooth" });
-      }
-    };
+    const scrollToHash = () => magicScrollToHash(hash, 90);
 
     if (location.pathname !== targetPath) {
       // navigate to landing first, then scroll once it's rendered
@@ -256,18 +297,7 @@ export default function Navbar() {
     const [path, hash] = href.split("#");
     const targetPath = path || "/";
 
-    const scrollToHash = () => {
-      if (!hash) {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
-      }
-      const el = document.getElementById(hash);
-      if (el) {
-        const NAV_OFFSET = 90;
-        const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
-        window.scrollTo({ top, behavior: "smooth" });
-      }
-    };
+    const scrollToHash = () => magicScrollToHash(hash, 90);
 
     if (location.pathname !== targetPath) {
       navigate(targetPath);
@@ -353,12 +383,27 @@ export default function Navbar() {
      Fixed to viewport. Wide rectangular glass bar with soft rounded
      corners (not a pill) — covers the full top width. Outer wrapper
      has pointer-events:none so it never blocks clicks on the page
-     below it; only the actual <nav> bar re-enables pointer-events. */
+     below it; only the actual <nav> bar re-enables pointer-events.
+
+     NOTE: the "✦ Premium" / "✦ Upgrade" nav link has been removed
+     (was redundant with "Pricing"). isPremium + setUpgradeOpen +
+     <UpgradeModal> are intentionally KEPT — to be repurposed later
+     into a conditional "My Pass" / active-pass link once pass-expiry
+     tracking is built (see handoff doc Section 15/14). */
   return (
     <>
       <style>{`
         .rf-glassnav {
           transition: box-shadow 0.3s ease, background 0.3s ease;
+        }
+        /* Magic landing glow — pulses on whatever section a nav click scrolls to */
+        .rf-section-pulse {
+          animation: rf-section-pulse-kf 0.9s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes rf-section-pulse-kf {
+          0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
+          25%  { box-shadow: 0 0 0 0 rgba(5,150,105,0.22); }
+          100% { box-shadow: 0 0 0 60px rgba(5,150,105,0); }
         }
       `}</style>
 
@@ -400,13 +445,6 @@ export default function Navbar() {
               {NAV_LINKS.map(({ label, href }) => (
                 <GlassLink key={label} href={href}>{label}</GlassLink>
               ))}
-              {isPremium ? (
-                <GlassLink href="#">✦ Premium</GlassLink>
-              ) : (
-                <GlassLink href="#" onClick={(e) => { e.preventDefault(); setUpgradeOpen(true); }}>
-                  ✦ Upgrade
-                </GlassLink>
-              )}
             </div>
 
             <div className="flex items-center justify-end">
@@ -482,14 +520,6 @@ export default function Navbar() {
                   {label}
                 </a>
               ))}
-              {!isPremium && (
-                <button
-                  onClick={() => { setUpgradeOpen(true); setMenuOpen(false); }}
-                  className="px-4 py-3 font-sohne text-[14px] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em] text-left"
-                >
-                  ✦ Upgrade
-                </button>
-              )}
             </div>
             <div className="px-4 pb-4 border-t border-white/8 pt-3">
               <ShimmerButton to="/builder">Start Building</ShimmerButton>

@@ -9,7 +9,9 @@ import AuthCallback from "./pages/AuthCallback";
 import AuthPage     from "./pages/AuthPage";
 import ProfilePage  from "./pages/ProfilePage";
 import PricingPage  from "./pages/PricingPage";
+import ScrollToTop  from "./components/ScrollToTop";
 import { useAuthStore } from "./store/authStore";
+
 
 export default function App() {
   const init = useAuthStore((s) => s.init);
@@ -20,6 +22,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         <Route path="/"              element={<Landing />} />
         <Route path="/builder"       element={<BuilderPage />} />

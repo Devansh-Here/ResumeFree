@@ -1,5 +1,7 @@
 // src/pages/PrivacyPage.jsx
 import { Link } from "react-router-dom";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 
 const LAST_UPDATED = "June 17, 2026";
 
@@ -80,9 +82,15 @@ const sections = [
           },
           {
             service: "Razorpay",
-            purpose: "Premium payments (coming soon)",
+            purpose: "Premium payments",
             dataShared: "Payment details only",
             link: "https://razorpay.com/privacy",
+          },
+          {
+            service: "Supabase",
+            purpose: "Account & cloud resume storage",
+            dataShared: "Email, saved resume data",
+            link: "https://supabase.com/privacy",
           },
         ],
       },
@@ -148,7 +156,7 @@ function ContentBlock({ block }) {
   switch (block.type) {
     case "p":
       return (
-        <p className="text-base leading-relaxed" style={{ color: "#161A2E", opacity: 0.8 }}>
+        <p className="text-[15.5px] leading-relaxed text-[#1e3a5f]">
           {block.text}
         </p>
       );
@@ -156,13 +164,10 @@ function ContentBlock({ block }) {
     case "subsection":
       return (
         <div className="space-y-1.5">
-          <h4
-            className="font-semibold text-sm tracking-wide"
-            style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#1E8E5A" }}
-          >
+          <h4 className="font-semibold text-[13px] tracking-wide text-[#059669]">
             {block.heading}
           </h4>
-          <p className="text-base leading-relaxed" style={{ color: "#161A2E", opacity: 0.8 }}>
+          <p className="text-[15.5px] leading-relaxed text-[#1e3a5f]">
             {block.text}
           </p>
         </div>
@@ -170,14 +175,11 @@ function ContentBlock({ block }) {
 
     case "list":
       return (
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {block.items.map((item, i) => (
             <li key={i} className="flex items-start gap-3">
-              <span
-                className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ background: "#E2A33B" }}
-              />
-              <span className="text-base leading-relaxed" style={{ color: "#161A2E", opacity: 0.8 }}>
+              <span className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#059669]" />
+              <span className="text-[15.5px] leading-relaxed text-[#1e3a5f]">
                 {item}
               </span>
             </li>
@@ -188,20 +190,13 @@ function ContentBlock({ block }) {
     case "table":
       return (
         <div className="overflow-x-auto -mx-4 sm:mx-0">
-          <table className="w-full text-sm min-w-[480px]">
+          <table className="w-full text-sm min-w-[520px]">
             <thead>
-              <tr style={{ borderBottom: "2px solid #161A2E" }}>
+              <tr className="border-b-2 border-[#0a1628]">
                 {["Service", "Purpose", "Data shared", "Policy"].map((h) => (
                   <th
                     key={h}
-                    className="pb-2 pr-4 text-left font-medium"
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      color: "#161A2E",
-                      fontSize: "0.75rem",
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}
+                    className="pb-2.5 pr-4 text-left font-semibold text-[11px] tracking-widest uppercase text-[#4a6fa5]"
                   >
                     {h}
                   </th>
@@ -210,26 +205,22 @@ function ContentBlock({ block }) {
             </thead>
             <tbody>
               {block.rows.map((row, i) => (
-                <tr
-                  key={i}
-                  style={{ borderBottom: "1px solid #DDD6C8" }}
-                >
-                  <td className="py-3 pr-4 font-medium" style={{ color: "#161A2E" }}>
+                <tr key={i} className="border-b border-[#cbd5e1]">
+                  <td className="py-3.5 pr-4 font-medium text-[#0a1628]">
                     {row.service}
                   </td>
-                  <td className="py-3 pr-4" style={{ color: "#161A2E", opacity: 0.75 }}>
+                  <td className="py-3.5 pr-4 text-[#1e3a5f]/80">
                     {row.purpose}
                   </td>
-                  <td className="py-3 pr-4" style={{ color: "#161A2E", opacity: 0.75 }}>
+                  <td className="py-3.5 pr-4 text-[#1e3a5f]/80">
                     {row.dataShared}
                   </td>
-                  <td className="py-3">
-                    <a
-                      href={row.link}
+                  <td className="py-3.5">
+                    
+                      <a href={row.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs underline underline-offset-2"
-                      style={{ color: "#1E8E5A" }}
+                      className="text-xs underline underline-offset-2 text-[#059669] hover:text-[#0a1628] transition-colors"
                     >
                       View →
                     </a>
@@ -243,14 +234,9 @@ function ContentBlock({ block }) {
 
     case "contact":
       return (
-        <a
-          href={`mailto:${block.email}`}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
-          style={{
-            background: "#161A2E",
-            color: "#F6F4EF",
-            fontFamily: "'IBM Plex Mono', monospace",
-          }}
+        
+          <a href={`mailto:${block.email}`}
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium bg-[#0a1628] text-white hover:bg-[#1e3a5f] transition-colors"
         >
           <span>✉</span>
           {block.email}
@@ -264,127 +250,65 @@ function ContentBlock({ block }) {
 
 export default function PrivacyPage() {
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "#F6F4EF", fontFamily: "'Inter', sans-serif" }}
-    >
-      {/* Nav strip */}
-      <nav
-        className="sticky top-0 z-10 px-6 py-4 flex items-center justify-between"
-        style={{
-          background: "#F6F4EF",
-          borderBottom: "1px solid #DDD6C8",
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        <Link
-          to="/"
-          className="text-sm font-medium flex items-center gap-1.5 hover:opacity-70 transition-opacity"
-          style={{ color: "#161A2E", fontFamily: "'IBM Plex Mono', monospace" }}
-        >
-          ← Back to ResumeFree
-        </Link>
-        <span
-          className="text-xs hidden sm:block"
-          style={{
-            color: "#161A2E",
-            opacity: 0.5,
-            fontFamily: "'IBM Plex Mono', monospace",
-          }}
-        >
-          Last updated {LAST_UPDATED}
-        </span>
-      </nav>
+    <div className="min-h-screen bg-[#f8fafc] font-sohne">
+      <Navbar />
 
       {/* Hero */}
-      <header className="px-6 pt-14 pb-10 max-w-3xl mx-auto">
-        <span
-          className="text-xs tracking-widest uppercase block mb-4"
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            color: "#1E8E5A",
-          }}
-        >
-          Legal · Privacy
+      <header className="max-w-3xl mx-auto px-6 pt-[120px] sm:pt-[136px] pb-10">
+        <span className="text-[11px] font-semibold tracking-widest uppercase block mb-4 text-[#059669]">
+          Legal · Privacy Policy
         </span>
         <h1
-          className="text-4xl sm:text-5xl font-bold leading-tight mb-4"
-          style={{ fontFamily: "'Space Grotesk', sans-serif", color: "#161A2E" }}
+          className="text-[2.75rem] sm:text-[3.25rem] leading-[1.08] mb-4 text-[#0a1628]"
+          style={{ fontFamily: "'DM Serif Display', serif", letterSpacing: "-0.5px" }}
         >
           Your data,
           <br />
           your rules.
         </h1>
-        <p
-          className="text-lg leading-relaxed max-w-xl"
-          style={{ color: "#161A2E", opacity: 0.65 }}
-        >
+        <p className="text-[17px] leading-relaxed max-w-xl text-[#1e3a5f]">
           We keep this simple: ResumeFree works in your browser. No hidden
           servers, no data harvesting, no ads. Here's the full picture.
         </p>
-        {/* Amber rule */}
-        <div
-          className="mt-8 h-0.5 w-16 rounded-full"
-          style={{ background: "#E2A33B" }}
-        />
+        <div className="mt-8 h-[3px] w-16 rounded-full bg-[#059669]" />
+        <p className="mt-6 text-xs text-[#4a6fa5]">Last updated {LAST_UPDATED}</p>
       </header>
 
-      {/* Table of contents (desktop sidebar on large, horizontal scroll on mobile) */}
+      {/* Table of contents */}
       <div className="max-w-3xl mx-auto px-6 mb-10">
         <div
-          className="flex gap-3 overflow-x-auto pb-2 sm:flex-wrap"
+          className="flex gap-2.5 overflow-x-auto pb-2 sm:flex-wrap"
           style={{ scrollbarWidth: "none" }}
         >
           {sections.map((s) => (
-            <a
-              key={s.id}
+            
+              <a key={s.id}
               href={`#${s.id}`}
-              className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors hover:border-current"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                color: "#161A2E",
-                borderColor: "#DDD6C8",
-                background: "transparent",
-              }}
+              className="flex-shrink-0 text-[12.5px] font-medium px-3.5 py-1.5 rounded-full border border-[#cbd5e1] text-[#1e3a5f] hover:border-[#059669] hover:text-[#059669] transition-colors"
             >
-              {s.label} {s.title}
+              {s.label} · {s.title}
             </a>
           ))}
         </div>
       </div>
 
       {/* Sections */}
-      <main className="max-w-3xl mx-auto px-6 pb-24 space-y-0">
+      <main className="max-w-3xl mx-auto px-6 pb-24">
         {sections.map((section, idx) => (
           <section
             key={section.id}
             id={section.id}
-            className="py-10"
-            style={{
-              borderTop: idx === 0 ? "none" : "1px solid #DDD6C8",
-            }}
+            className={`py-10 ${idx === 0 ? "" : "border-t border-[#cbd5e1]/70"}`}
           >
             <div className="flex items-start gap-6">
-              {/* Label */}
-              <span
-                className="hidden sm:block text-xs pt-1 flex-shrink-0 w-8"
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  color: "#161A2E",
-                  opacity: 0.35,
-                }}
-              >
+              <span className="hidden sm:block text-xs pt-1.5 flex-shrink-0 w-8 text-[#4a6fa5]/60 font-medium">
                 {section.label}
               </span>
 
-              {/* Content */}
               <div className="flex-1 space-y-5">
                 <h2
-                  className="text-xl font-semibold"
-                  style={{
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    color: "#161A2E",
-                  }}
+                  className="text-[22px] text-[#0a1628]"
+                  style={{ fontFamily: "'DM Serif Display', serif" }}
                 >
                   {section.title}
                 </h2>
@@ -397,34 +321,7 @@ export default function PrivacyPage() {
         ))}
       </main>
 
-      {/* Footer strip */}
-      <footer
-        className="border-t px-6 py-6"
-        style={{ borderColor: "#DDD6C8" }}
-      >
-        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <span
-            className="text-xs"
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              color: "#161A2E",
-              opacity: 0.45,
-            }}
-          >
-            © {new Date().getFullYear()} ResumeFree · Updated {LAST_UPDATED}
-          </span>
-          <Link
-            to="/"
-            className="text-xs hover:opacity-70 transition-opacity"
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              color: "#1E8E5A",
-            }}
-          >
-            ← Back to builder
-          </Link>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

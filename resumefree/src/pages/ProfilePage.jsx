@@ -1,6 +1,8 @@
+// src/pages/ProfilePage.jsx
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient'
+import { getPass } from '../utils/passes'
 
 const getInitials = (name = '', email = '') => {
   if (name?.trim()) {
@@ -17,6 +19,12 @@ const formatDate = (str) => {
   return new Date(str).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric'
   })
+}
+
+const daysLeft = (str) => {
+  if (!str) return 0
+  const diff = new Date(str).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
 }
 
 export default function ProfilePage() {
@@ -71,9 +79,16 @@ export default function ProfilePage() {
     navigate('/')
   }
 
-  const isPremium  = profile?.is_premium === true
-  const planLabel  = isPremium
-    ? (payment?.plan_type === 'yearly' ? '✦ Premium Yearly' : '✦ Premium Monthly')
+  // ── Pass-aware premium check (mirrors authStore.isPremium()) ──
+  const isPremium = profile?.is_premium === true
+    && profile?.premium_expires_at
+    && new Date(profile.premium_expires_at) > new Date()
+
+  const activePassDetails = isPremium ? getPass(profile?.plan_type) : null
+  const remainingDays = isPremium ? daysLeft(profile.premium_expires_at) : 0
+
+  const planLabel = isPremium
+    ? `✦ ${activePassDetails?.name || 'Premium'}`
     : 'Free'
 
   const displayName = user?.user_metadata?.full_name
@@ -81,7 +96,10 @@ export default function ProfilePage() {
     || user?.email?.split('@')[0]
     || 'User'
 
+  const firstName = displayName.split(' ')[0]
   const avatarUrl = user?.user_metadata?.avatar_url || null
+
+  const mostRecentResume = resumes[0] || null
 
   /* ── Loading ── */
   if (loading) return (
@@ -109,14 +127,12 @@ export default function ProfilePage() {
           </Link>
 
           <div className="flex items-center gap-4">
-            {/* Secondary — text link */}
             <button
               onClick={handleSignOut}
               className="font-sohne text-[15px] font-[450] text-graphite hover:text-ink transition-colors tracking-[-0.009em]"
             >
               Sign out
             </button>
-            {/* Primary CTA — one filled button */}
             <Link
               to="/builder"
               className="px-5 py-2 bg-ink hover:bg-ink/85 text-white font-sohne text-[15px] font-[450] rounded-buttons transition-colors tracking-[-0.009em]"
@@ -128,6 +144,43 @@ export default function ProfilePage() {
       </nav>
 
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+
+        {/* ── Greeting + primary CTA banner (NEW) ── */}
+        <div
+          className="rounded-cards p-7 flex flex-wrap items-center justify-between gap-5"
+          style={{
+            background: "linear-gradient(135deg, #0a1628 0%, #0a1f14 70%, #061a10 100%)",
+          }}
+        >
+          <div>
+            <p className="font-signifier text-[28px] leading-[1.18] tracking-[-0.23px] text-white">
+              Hello {firstName} 👋
+            </p>
+            <p className="font-sohne text-[14px] text-white/60 mt-1 tracking-[-0.009em]">
+              {isPremium
+                ? `${activePassDetails?.name || 'Premium'} active · ${remainingDays} day${remainingDays === 1 ? '' : 's'} left`
+                : resumes.length > 0
+                  ? "Pick up right where you left off."
+                  : "Let's get your first resume built — it takes about 8 minutes."}
+            </p>
+          </div>
+
+          {mostRecentResume ? (
+            <button
+              onClick={() => handleOpenResume(mostRecentResume)}
+              className="px-6 py-3 bg-white hover:bg-white/90 text-ink font-sohne text-[15px] font-[500] rounded-buttons transition-colors tracking-[-0.009em] whitespace-nowrap"
+            >
+              Continue Building →
+            </button>
+          ) : (
+            <Link
+              to="/builder"
+              className="px-6 py-3 bg-white hover:bg-white/90 text-ink font-sohne text-[15px] font-[500] rounded-buttons transition-colors tracking-[-0.009em] whitespace-nowrap"
+            >
+              Start Building →
+            </Link>
+          )}
+        </div>
 
         {/* ── Profile Card ── */}
         <div className="bg-white rounded-cards p-6 shadow-subtle">
@@ -166,21 +219,29 @@ export default function ProfilePage() {
             <div className="text-right">
               {isPremium ? (
                 <div>
-                  <p className="font-sohne text-[13px] text-graphite tracking-[-0.009em]">Active plan</p>
-                  {payment?.created_at && (
+                  <p className="font-sohne text-[13px] text-graphite tracking-[-0.009em]">
+                    {remainingDays} day{remainingDays === 1 ? '' : 's'} remaining
+                  </p>
+                  {profile?.premium_expires_at && (
                     <p className="font-sohne text-[13px] text-dove mt-0.5">
-                      Since {formatDate(payment.created_at)}
+                      Expires {formatDate(profile.premium_expires_at)}
                     </p>
                   )}
+                  <Link
+                    to="/pricing"
+                    className="inline-block mt-2 font-sohne text-[13px] font-[450] text-ash hover:text-ink transition-colors tracking-[-0.009em]"
+                  >
+                    Extend / change pass →
+                  </Link>
                 </div>
               ) : (
                 <div>
                   <p className="font-sohne text-[13px] text-graphite mb-2">Unlock AI features</p>
                   <Link
-                    to="/#pricing"
+                    to="/pricing"
                     className="inline-flex items-center gap-1.5 px-5 py-2 bg-ink hover:bg-ink/85 text-white font-sohne text-[14px] font-[450] rounded-buttons transition-colors tracking-[-0.009em]"
                   >
-                    ✦ Upgrade
+                    ✦ Get a Pass
                   </Link>
                 </div>
               )}
@@ -279,7 +340,6 @@ export default function ProfilePage() {
                     {formatDate(resume.updated_at)}
                   </p>
 
-                  {/* Text link — no ghost button */}
                   <button onClick={() => handleOpenResume(resume)}
                     className="mt-4 font-sohne text-[14px] font-[450] text-ash hover:text-ink transition-colors tracking-[-0.009em]">
                     Open & edit →
@@ -306,9 +366,9 @@ export default function ProfilePage() {
               <p className="font-sohne text-[15px] text-rust/70 mb-6 tracking-[-0.009em]">
                 Tailored cover letters per job description — Premium only
               </p>
-              <Link to="/#pricing"
+              <Link to="/pricing"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-ink hover:bg-ink/85 text-white font-sohne text-[15px] font-[450] rounded-buttons transition-colors tracking-[-0.009em]">
-                ✦ Upgrade to unlock
+                ✦ Get a pass to unlock
               </Link>
             </div>
           ) : coverLetters.length === 0 ? (

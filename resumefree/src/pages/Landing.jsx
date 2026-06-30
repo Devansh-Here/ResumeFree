@@ -3,6 +3,8 @@ import Hero         from "../components/landing/Hero";
 import Features     from "../components/landing/Features";
 import HowItWorks   from "../components/landing/HowItWorks";
 import Testimonials from "../components/landing/Testimonials";
+import FAQ          from "../components/landing/FAQ";
+import FinalCTA     from "../components/landing/FinalCTA";
 import Footer       from "../components/layout/Footer";
 import Navbar       from "../components/layout/Navbar";
 
@@ -56,7 +58,9 @@ export default function Landing() {
       <Features />
       <HowItWorks />
       <Testimonials />
-      <Footer />
+      <FAQ />
+      <FinalCTA />
+      <Footer attachedTop />
     </div>
   );
 }

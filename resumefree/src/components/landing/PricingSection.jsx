@@ -183,7 +183,7 @@ export default function PricingSection({ onSelectPass }) {
             margin: "0 auto",
             lineHeight: 1.5,
           }}>
-            Unlike Resume.com's hidden charges — you pick a pass, pay once, and it simply expires. That's it.
+            Unlike Other platform's hidden charges — you pick a pass, pay once, and it simply expires. That's it.
           </p>
         </div>
 

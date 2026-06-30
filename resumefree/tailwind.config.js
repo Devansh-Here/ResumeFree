@@ -4,16 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink:            '#0a1628',  // Deep Navy — primary text, CTA bg ← CHANGED
-        fog:            '#f8fafc',  // Slate 50  — secondary bg
-        ash:            '#1e3a5f',  // Navy 700  — muted body text ← CHANGED
-        graphite:       '#4a6fa5',  // Navy 400  — tertiary text ← CHANGED
-        dove:           '#cbd5e1',  // Slate 300 — borders, dividers
-        slate:          '#94a3b8',  // Slate 400 — placeholder
-        obsidian:       '#060d1a',  // Darkest navy ← CHANGED
-        rust:           '#059669',  // Emerald 600 — accent ✦
-        'apricot-wash': '#d1fae5',  // Emerald 100 — light accent bg
-        'sky-wash':     '#ecfdf5',  // Emerald 50  — subtle tint
+        ink:            '#0a1628',
+        fog:            '#f8fafc',
+        ash:            '#1e3a5f',
+        graphite:       '#4a6fa5',
+        dove:           '#cbd5e1',
+        slate:          '#94a3b8',
+        obsidian:       '#060d1a',
+        rust:           '#059669',
+        'apricot-wash': '#d1fae5',
+        'sky-wash':     '#ecfdf5',
       },
       fontFamily: {
         signifier: ['"DM Serif Display"', 'Georgia', 'serif'],
@@ -28,6 +28,37 @@ export default {
       },
       boxShadow: {
         subtle: 'rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.08) 0px 20px 25px -5px, rgba(0,0,0,0.06) 0px 8px 10px -6px',
+      },
+      keyframes: {
+        blob1: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '33%': { transform: 'translate(40px, -30px) scale(1.1)' },
+          '66%': { transform: 'translate(-20px, 20px) scale(0.95)' },
+        },
+        blob2: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '33%': { transform: 'translate(-30px, 30px) scale(1.05)' },
+          '66%': { transform: 'translate(20px, -20px) scale(0.9)' },
+        },
+        blob3: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '50%': { transform: 'translate(25px, 25px) scale(1.15)' },
+        },
+        float1: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-12px)' },
+        },
+        float2: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(10px)' },
+        },
+      },
+      animation: {
+        blob1: 'blob1 12s ease-in-out infinite',
+        blob2: 'blob2 14s ease-in-out infinite',
+        blob3: 'blob3 10s ease-in-out infinite',
+        float1: 'float1 6s ease-in-out infinite',
+        float2: 'float2 7s ease-in-out infinite',
       },
     },
   },
