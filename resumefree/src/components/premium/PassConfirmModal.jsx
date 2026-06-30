@@ -162,9 +162,10 @@ export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
             {pass.durationLabel}
           </span>
 
-          <p className="text-[13px] mt-4 leading-relaxed" style={{ color: "#1e3a5f" }}>
-            🔒 One-time payment via Razorpay. No auto-renewal — your pass simply
-            expires after {pass.durationDays} days.
+           <p className="text-[13px] mt-4 leading-relaxed" style={{ color: "#1e3a5f" }}>
+            {pass.isAddon
+              ? "🔒 One-time payment via Razorpay. This unlocks the feature instantly — no expiry, no auto-renewal."
+              : `🔒 One-time payment via Razorpay. No auto-renewal — your pass simply expires after ${pass.durationDays} days.`}
           </p>
 
           {errorMsg && (

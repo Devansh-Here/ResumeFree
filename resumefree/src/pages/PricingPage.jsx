@@ -14,9 +14,10 @@ export default function PricingPage() {
 
   const [confirmPass, setConfirmPass] = useState(null);
 
-  // If we landed here straight off a login redirect with ?confirm=placement,
-  // and the user is now actually logged in, auto-open the confirm screen
-  // for that pass instead of making them click it again.
+  // If we landed here straight off a login redirect with ?confirm=placement
+  // (or ?confirm=addon_cover_letter etc.), and the user is now actually
+  // logged in, auto-open the confirm screen for that pass/addon instead of
+  // making them click it again.
   useEffect(() => {
     const pending = searchParams.get("confirm");
     if (pending && user) {
@@ -28,21 +29,16 @@ export default function PricingPage() {
   }, [user, searchParams, setSearchParams]);
 
   const handleSelectPass = (passKey) => {
-    // Add-on chips (cover letter / JD tailoring / ATS) aren't full
-    // passes yet — keep their old placeholder behavior for now.
-    if (passKey.startsWith("addon_")) {
-      navigate("/builder");
-      return;
-    }
-
+    // Passes AND add-ons both go through the same real payment flow now —
+    // addons are no longer routed to /builder as a placeholder.
     if (!user) {
-      // Not logged in — auth first, carry the chosen pass along so
+      // Not logged in — auth first, carry the chosen pass/addon along so
       // AuthPage can route back here with ?confirm= after login.
       navigate("/auth", { state: { pendingPass: passKey } });
       return;
     }
 
-    // Already logged in — still show a confirm screen before charging.
+    // Already logged in — show the confirm screen before charging.
     setConfirmPass(passKey);
   };
 
@@ -58,7 +54,15 @@ export default function PricingPage() {
         <PassConfirmModal
           passKey={confirmPass}
           onClose={() => setConfirmPass(null)}
-          onSuccess={() => navigate("/dashboard")}
+          onSuccess={async () => {
+            // Refresh the cached profile in authStore right after a
+            // successful payment — otherwise pages like CoverLetterPage
+            // that read from authStore's `profile` (not a fresh Supabase
+            // query) keep showing the pre-payment state until the next
+            // full login/page reload.
+            await useAuthStore.getState().fetchProfile();
+            navigate("/dashboard");
+          }}
         />
       )}
     </div>

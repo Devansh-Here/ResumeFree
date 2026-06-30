@@ -1,4 +1,5 @@
 // src/pages/ProfilePage.jsx
+
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient'
@@ -92,6 +93,10 @@ export default function ProfilePage() {
   const isPremium = profile?.is_premium === true
     && profile?.premium_expires_at
     && new Date(profile.premium_expires_at) > new Date()
+
+  // ── Cover Letter access — true for a real premium pass OR the
+  // one-time addon_cover_letter purchase (mirrors authStore.hasCoverLetterAccess()) ──
+  const hasCoverLetterAccess = isPremium || profile?.addon_cover_letter_unlocked === true
 
   const activePassDetails = isPremium ? getPass(profile?.plan_type) : null
   const remainingDays = isPremium ? daysLeft(profile.premium_expires_at) : 0
@@ -367,7 +372,7 @@ export default function ProfilePage() {
             </h2>
           </div>
 
-          {!isPremium ? (
+          {!hasCoverLetterAccess ? (
             <div className="bg-apricot-wash rounded-cards p-10 text-center">
               <p className="font-signifier text-[26px] leading-[1.18] tracking-[-0.23px] text-rust mb-2">
                 AI Cover Letter Generator

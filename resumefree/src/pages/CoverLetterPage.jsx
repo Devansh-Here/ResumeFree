@@ -120,7 +120,7 @@ function AliveActionButton({ status, onClick, disabled, idleLabel, loadingLabel,
 
 export default function CoverLetterPage() {
   const resume = useResumeStore((s) => s.resume);
-  const isPremium = useAuthStore((s) => s.isPremium());
+  const hasAccess = useAuthStore((s) => s.hasCoverLetterAccess());
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const {
@@ -165,9 +165,9 @@ export default function CoverLetterPage() {
 
   // Load saved letters once, for premium logged-in users
   useEffect(() => {
-    if (isPremium) fetchCoverLetters();
+    if (hasAccess) fetchCoverLetters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPremium]);
+  }, [hasAccess]);
 
   // Load a cover letter passed in from Dashboard's "View →" button
   useEffect(() => {
@@ -308,7 +308,7 @@ export default function CoverLetterPage() {
 
       <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-28 pb-20">
 
-        {!isPremium ? (
+        {!hasAccess ? (
           <>
             <h1 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[32px] sm:text-[38px] text-[#0a1628] leading-tight mb-2">
               Write your cover letter

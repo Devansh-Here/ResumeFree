@@ -192,12 +192,12 @@ app.post("/api/verify-payment", async (req, res) => {
 
     // Calculate expiry
     // For passes: now + duration_days
-    // For addons: no expiry on profile (they're one-time feature unlocks — handle separately if needed)
+    // For addons: no profile expiry — handled via dedicated unlock flags instead
     let premiumExpiresAt = null;
     let activePassType = null;
 
     if (config.duration_days) {
-      // It's a pass — update profile expiry
+      // It's a real pass — update profile expiry
       // If user already has an active pass, extend from current expiry (not from now)
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
@@ -216,14 +216,23 @@ app.post("/api/verify-payment", async (req, res) => {
       activePassType = pass_type;
     }
 
-    // Update profile
+    // Build profile update.
+    // IMPORTANT: never explicitly write `is_premium: false` here. Addon purchases
+    // must NOT be able to overwrite/revoke an already-premium user's status.
+    // `is_premium` / `premium_expires_at` / `active_pass_type` are only included
+    // in the payload when this purchase is a real pass — for addons those keys
+    // are simply omitted, so Supabase's upsert leaves them untouched on existing
+    // rows. Addon-specific access is granted via its own dedicated flag instead.
     const profileUpdate = {
       id: userId,
       email,
       name: name || null,
-      is_premium: !!premiumExpiresAt, // true for passes, false for addons (addon logic separate)
-      ...(premiumExpiresAt && { premium_expires_at: premiumExpiresAt }),
-      ...(activePassType && { active_pass_type: activePassType }),
+      ...(premiumExpiresAt && {
+        is_premium: true,
+        premium_expires_at: premiumExpiresAt,
+        active_pass_type: activePassType,
+      }),
+      ...(pass_type === "addon_cover_letter" && { addon_cover_letter_unlocked: true }),
     };
 
     const { error: profileErr } = await supabaseAdmin
@@ -432,4 +441,8 @@ ${jobDescription}`;
     console.error('generate-cover-letter error:', err);
     return res.status(500).json({ error: 'Server error generating cover letter.' });
   }
+});
+
+app.listen(3001, () => {
+  console.log("✅ API server running at http://localhost:3001");
 });

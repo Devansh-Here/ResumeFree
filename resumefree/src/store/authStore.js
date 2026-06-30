@@ -44,11 +44,21 @@ export const useAuthStore = create((set, get) => ({
     if (!error) set({ profile: data });
   },
 
+  // True only for an active paid pass (sprint/placement/season).
   isPremium: () => {
     const { profile } = get();
     if (!profile?.is_premium) return false;
     if (!profile.premium_expires_at) return false;
     return new Date(profile.premium_expires_at) > new Date();
+  },
+
+  // True if the user has access to the Cover Letter Generator specifically —
+  // either via an active pass, OR via the one-time `addon_cover_letter` purchase.
+  // Use this (not isPremium()) for any Cover Letter gating.
+  hasCoverLetterAccess: () => {
+    const { profile } = get();
+    if (get().isPremium()) return true;
+    return !!profile?.addon_cover_letter_unlocked;
   },
 
   signOut: async () => {

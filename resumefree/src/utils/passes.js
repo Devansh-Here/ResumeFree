@@ -12,6 +12,7 @@ export const PASS_DETAILS = {
     durationDays: 7,
     durationLabel: "7-day access",
     featured: false,
+    isAddon: false,
   },
   placement: {
     key: "placement",
@@ -21,6 +22,7 @@ export const PASS_DETAILS = {
     durationDays: 30,
     durationLabel: "30-day access",
     featured: true,
+    isAddon: false,
   },
   season: {
     key: "season",
@@ -30,6 +32,37 @@ export const PASS_DETAILS = {
     durationDays: 90,
     durationLabel: "90-day access",
     featured: false,
+    isAddon: false,
+  },
+  addon_cover_letter: {
+    key: "addon_cover_letter",
+    name: "Cover Letter Add-on",
+    tagline: "One AI-generated cover letter",
+    price: 99,
+    durationDays: null,
+    durationLabel: "One-time unlock",
+    featured: false,
+    isAddon: true,
+  },
+  addon_jd_tailoring: {
+    key: "addon_jd_tailoring",
+    name: "JD Tailoring Add-on",
+    tagline: "Tailor your resume bullets for 1 job",
+    price: 49,
+    durationDays: null,
+    durationLabel: "One-time unlock",
+    featured: false,
+    isAddon: true,
+  },
+  addon_ats: {
+    key: "addon_ats",
+    name: "Advanced ATS Add-on",
+    tagline: "Deep ATS check + keyword gaps, 1 resume",
+    price: 99,
+    durationDays: null,
+    durationLabel: "One-time unlock",
+    featured: false,
+    isAddon: true,
   },
 };
 

@@ -10,7 +10,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const run = async () => {
-      // Supabase JS parses the magic-link token from the URL hash
+      // Supabase JS parses the magic-link/OAuth token from the URL hash
       // automatically. We just wait for the session to land, then
       // (re)sync our auth store and move the user along.
       const {
@@ -21,7 +21,22 @@ export default function AuthCallback() {
         useAuthStore.setState({ initialized: true, user: session.user, loading: false });
         await useAuthStore.getState().fetchProfile();
         setStatus("done");
-        setTimeout(() => navigate("/builder"), 1200);
+
+        // If the user clicked a pass/addon before logging in (Google OAuth
+        // does a full-page redirect, so AuthPage stashed it in localStorage
+        // instead of React Router state — see AuthPage.jsx's
+        // handleGoogleSignIn), send them back to Pricing to finish the
+        // purchase instead of dropping them on the builder.
+        const pendingPass = localStorage.getItem("resumefree_pending_pass");
+        localStorage.removeItem("resumefree_pending_pass");
+
+        setTimeout(() => {
+          if (pendingPass) {
+            navigate(`/pricing?confirm=${pendingPass}`);
+          } else {
+            navigate("/dashboard");
+          }
+        }, 1200);
       } else {
         setStatus("error");
       }
@@ -30,14 +45,14 @@ export default function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F4EF] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-4">
       <div className="text-center">
         <div className="text-3xl mb-3">
           {status === "loading" && "⏳"}
           {status === "done" && "✅"}
           {status === "error" && "⚠️"}
         </div>
-        <p className="text-[#161A2E]/70" style={{ fontFamily: "'Inter', sans-serif" }}>
+        <p className="text-[#1e3a5f]" style={{ fontFamily: "'Inter', sans-serif" }}>
           {status === "loading" && "Logging you in..."}
           {status === "done" && "You're in! Redirecting..."}
           {status === "error" && "That link has expired or already been used. Try upgrading again."}

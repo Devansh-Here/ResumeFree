@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Loader2, Sparkles, Check } from 'lucide-react';
 import { supabase } from '../utils/supabaseClient';
+import { getPass } from '../utils/passes';
 
 const GoogleIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 48 48">
@@ -205,6 +206,13 @@ function AIDemoCard() {
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Carried over from PricingPage when a logged-out user clicks a pass/addon.
+  // Persisted to localStorage too, since OAuth (Google) does a full-page
+  // redirect that wipes out React Router's `location.state`.
+  const pendingPass = location.state?.pendingPass || null;
+  const pendingPassDetails = pendingPass ? getPass(pendingPass) : null;
+
   const [mode, setMode] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
@@ -213,6 +221,15 @@ export default function AuthPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+
+  // Helper: where to go after a successful sign-in.
+  const redirectAfterAuth = () => {
+    if (pendingPass) {
+      navigate(`/pricing?confirm=${pendingPass}`);
+    } else {
+      navigate('/dashboard');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -223,7 +240,7 @@ export default function AuthPage() {
       if (mode === 'signin') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate('/dashboard');
+        redirectAfterAuth();
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
@@ -240,6 +257,16 @@ export default function AuthPage() {
     setError('');
     setGoogleLoading(true);
     try {
+      // Google OAuth does a full-page redirect, which wipes React Router's
+      // location.state — so stash the pending pass in localStorage instead.
+      // AuthCallback.jsx must read this key after OAuth completes and
+      // redirect to /pricing?confirm=<pass> instead of /dashboard if present.
+      if (pendingPass) {
+        localStorage.setItem('resumefree_pending_pass', pendingPass);
+      } else {
+        localStorage.removeItem('resumefree_pending_pass');
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -282,6 +309,12 @@ export default function AuthPage() {
               ? 'Apne resumes aur progress tak wapas pahuncho'
               : 'Free mein shuru karo, resume banao seconds mein'}
           </p>
+
+          {pendingPassDetails && (
+            <div className="mb-6 text-sm text-rust bg-apricot-wash border border-rust/20 rounded-inputs px-4 py-3">
+              Sign in to continue buying <strong>{pendingPassDetails.name}</strong> (₹{pendingPassDetails.price}) — we'll bring you right back to confirm.
+            </div>
+          )}
 
           {error && (
             <div className="mb-5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-inputs px-4 py-3">
