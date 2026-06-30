@@ -1,3 +1,4 @@
+// src/pages/BuilderPage.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useResumeStore } from "../store/resumeStore";
@@ -40,18 +41,15 @@ export default function BuilderPage() {
   const navigate                    = useNavigate();
   const currentIdx = SECTIONS.findIndex((s) => s.id === activeSection);
 
-  /* ── Auth check + load resume from dashboard ── */
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser(session.user);
     });
 
-    // Dashboard se resume load karo (agar open & edit click kiya tha)
     const raw = localStorage.getItem("resumefree_load_resume");
     if (raw) {
       try {
         const { id, data } = JSON.parse(raw);
-        // Zustand store me load karo
         useResumeStore.getState().loadResume?.(data);
         setSavedId(id);
         localStorage.removeItem("resumefree_load_resume");
@@ -61,22 +59,15 @@ export default function BuilderPage() {
     }
   }, []);
 
-  /* ── Save to Cloud ── */
   const handleSaveCloud = async () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
 
-    const resumeData  = useResumeStore.getState();
-    const personName  = resumeData?.personalInfo?.name?.trim();
-    const title       = personName ? `${personName}'s Resume` : "My Resume";
+    const resumeData = useResumeStore.getState();
+    const personName = resumeData?.personalInfo?.name?.trim();
+    const title      = personName ? `${personName}'s Resume` : "My Resume";
 
     const { data, error } = await saveResume({
-      userId:     user.id,
-      title,
-      data:       resumeData,
-      existingId: savedId,
+      userId: user.id, title, data: resumeData, existingId: savedId,
     });
 
     if (data) {
@@ -98,47 +89,48 @@ export default function BuilderPage() {
   };
 
   return (
-    <div className="h-screen bg-[#F6F4EF] flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#e8edf2] flex flex-col overflow-hidden">
       <Navbar />
 
       {/* ── Mobile tab switcher ── */}
-      <div className="lg:hidden flex border-b border-[#DDD6C8] bg-white sticky top-14 z-40">
+      <div className="lg:hidden flex border-b border-[#cbd5e1] bg-[#fdfdfe] sticky top-14 z-40">
         {["form", "preview"].map((tab) => (
           <button
             key={tab}
             onClick={() => setMobileTab(tab)}
             className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-widest transition-colors ${
               mobileTab === tab
-                ? "text-[#1E8E5A] border-b-2 border-[#1E8E5A]"
-                : "text-[#161A2E]/40"
+                ? "text-[#059669] border-b-2 border-[#059669]"
+                : "text-[#4a6fa5]/60 hover:text-[#1e3a5f]"
             }`}
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
           >
             {tab === "form" ? "Edit" : "Preview"}
           </button>
         ))}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      {/* ── Floating builder card — separated from navbar by grey gap ── */}
+      <div className="flex flex-1 overflow-hidden m-3 mt-3 rounded-3xl border border-[#cbd5e1]/60
+                       shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]
+                       bg-white relative z-10">
 
         {/* ── LEFT: Form Panel ── */}
-        <div className={`w-full lg:w-[52%] flex flex-col bg-[#F6F4EF] border-r border-[#DDD6C8] ${
+        <div className={`w-full lg:w-[52%] flex flex-col bg-[#f8fafc] border-r border-[#cbd5e1] rounded-l-3xl overflow-hidden ${
           mobileTab === "preview" ? "hidden lg:flex" : "flex"
         }`}>
 
-          {/* Section tabs */}
-          <div className="flex overflow-x-auto border-b border-[#DDD6C8] bg-white [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          {/* Section tabs — h-[45px] fixed so right panel bar aligns */}
+          <div className="h-[45px] flex overflow-x-auto border-b border-[#cbd5e1] bg-[#fdfdfe] [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
             {SECTIONS.map(({ id, label }) => (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
-                className={`flex-shrink-0 px-4 py-3 text-xs font-semibold transition-colors
-                             whitespace-nowrap border-b-2 -mb-px ${
+                className={`flex-shrink-0 px-5 h-full text-xs font-semibold tracking-wider uppercase
+                             transition-all whitespace-nowrap border-b-2 -mb-px ${
                   activeSection === id
-                    ? "text-[#161A2E] border-[#161A2E]"
-                    : "text-[#161A2E]/40 border-transparent hover:text-[#161A2E]/70"
+                    ? "text-[#0a1628] border-[#059669]"
+                    : "text-[#4a6fa5]/60 border-transparent hover:text-[#1e3a5f] hover:border-[#cbd5e1]"
                 }`}
-                style={{ fontFamily: "'IBM Plex Mono', monospace" }}
               >
                 {label}
               </button>
@@ -146,42 +138,43 @@ export default function BuilderPage() {
           </div>
 
           {/* Form content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="flex-1 overflow-y-auto p-5 sm:p-7">
             {FORM_MAP[activeSection]}
           </div>
 
           {/* Prev / Next footer */}
-          <div className="border-t border-[#DDD6C8] bg-white px-4 sm:px-6 py-3
+          <div className="border-t border-[#cbd5e1] bg-[#fdfdfe] px-5 sm:px-7 py-3
                            flex items-center justify-between">
             <button
               onClick={goPrev}
               disabled={currentIdx === 0}
-              className="text-sm text-[#161A2E]/50 hover:text-[#161A2E]
-                         disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="text-sm text-[#4a6fa5] hover:text-[#0a1628]
+                         disabled:opacity-25 disabled:cursor-not-allowed transition-colors font-medium"
             >
               ← Prev
             </button>
-            <div className="flex items-center gap-1.5">
+
+            {/* Progress dots */}
+            <div className="flex items-center gap-2">
               {SECTIONS.map(({ id }, i) => (
                 <span
                   key={id}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  className={`rounded-full transition-all duration-200 ${
                     id === activeSection
-                      ? "bg-[#1E8E5A]"
+                      ? "w-5 h-1.5 bg-[#059669]"
                       : i < currentIdx
-                      ? "bg-[#161A2E]/30"
-                      : "bg-[#DDD6C8]"
+                      ? "w-1.5 h-1.5 bg-[#059669]/40"
+                      : "w-1.5 h-1.5 bg-[#cbd5e1]"
                   }`}
                 />
               ))}
             </div>
+
             <button
               onClick={goNext}
               disabled={currentIdx === SECTIONS.length - 1}
-              className="text-sm font-semibold text-[#1E8E5A]
+              className="text-sm font-semibold text-[#059669] hover:text-[#047857]
                          disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Next →
             </button>
@@ -189,35 +182,31 @@ export default function BuilderPage() {
         </div>
 
         {/* ── RIGHT: Preview Panel ── */}
-        <div className={`w-full lg:w-[48%] flex flex-col bg-[#EDEAE4] ${
+        <div className={`w-full lg:w-[48%] flex flex-col bg-[#ecfdf5] rounded-r-3xl overflow-hidden ${
           mobileTab === "form" ? "hidden lg:flex" : "flex"
         }`}>
 
-          {/* Action bar */}
-          <div className="flex items-center gap-2 px-4 py-2.5
-                           border-b border-[#DDD6C8] bg-white/70 backdrop-blur-sm">
-            <span
-              className="text-[10px] tracking-widest text-[#161A2E]/35 uppercase mr-auto"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-            >
+          {/* Action bar — same h-[45px] as tab bar so border aligns perfectly */}
+          <div className="h-[45px] flex items-center gap-2 px-4
+                           border-b border-[#cbd5e1] bg-[#fdfdfe]/90 backdrop-blur-sm">
+            <span className="text-[10px] tracking-widest text-[#4a6fa5]/60 uppercase mr-auto font-semibold">
               Live Preview
             </span>
 
             <ATSCheckPanel />
             <JDMatcherPanel />
 
-            {/* ── Save to Cloud Button ── */}
+            {/* Save to Cloud */}
             <button
               onClick={handleSaveCloud}
               disabled={saving}
               title={!user ? "Sign in to save" : savedId ? "Update saved resume" : "Save to cloud"}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
                           transition-all disabled:opacity-50 disabled:cursor-not-allowed
                           ${saveSuccess
-                            ? "bg-[#1E8E5A] text-white"
-                            : "bg-[#161A2E]/8 hover:bg-[#161A2E]/15 text-[#161A2E]/70 hover:text-[#161A2E]"
+                            ? "bg-[#059669] text-white"
+                            : "bg-[#0a1628]/6 hover:bg-[#0a1628]/12 text-[#1e3a5f] hover:text-[#0a1628]"
                           }`}
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
             >
               {saving ? (
                 <>
@@ -228,7 +217,6 @@ export default function BuilderPage() {
                 <>✓ Saved</>
               ) : (
                 <>
-                  {/* Cloud icon */}
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />

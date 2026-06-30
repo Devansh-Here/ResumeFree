@@ -10,26 +10,14 @@ function collectBullets(resume) {
   resume.experience.forEach((exp, i) => {
     exp.bullets.forEach((b, j) => {
       if (b && b.trim()) {
-        items.push({
-          label: `E${i + 1}-B${j + 1}`,
-          type: "experience",
-          entryId: exp.id,
-          bulletIdx: j,
-          text: b,
-        });
+        items.push({ label: `E${i + 1}-B${j + 1}`, type: "experience", entryId: exp.id, bulletIdx: j, text: b });
       }
     });
   });
   resume.projects.forEach((proj, i) => {
     proj.bullets.forEach((b, j) => {
       if (b && b.trim()) {
-        items.push({
-          label: `P${i + 1}-B${j + 1}`,
-          type: "project",
-          entryId: proj.id,
-          bulletIdx: j,
-          text: b,
-        });
+        items.push({ label: `P${i + 1}-B${j + 1}`, type: "project", entryId: proj.id, bulletIdx: j, text: b });
       }
     });
   });
@@ -51,10 +39,7 @@ export default function JDMatcherPanel() {
   const [applied, setApplied] = useState({});
 
   const handleOpen = () => {
-    if (!isPremium) {
-      setUpgradeOpen(true);
-      return;
-    }
+    if (!isPremium) { setUpgradeOpen(true); return; }
     setOpen(true);
   };
 
@@ -67,186 +52,223 @@ export default function JDMatcherPanel() {
 
   const handleAnalyze = async () => {
     if (!jd.trim() || jd.trim().length < 30) {
-      setError("Paste the full job description (at least a few lines).");
-      return;
+      setError("Paste the full job description (at least a few lines)."); return;
     }
-
     const bullets = collectBullets(resume);
     if (bullets.length === 0) {
-      setError("Add at least one experience or project bullet first.");
-      return;
+      setError("Add at least one experience or project bullet first."); return;
     }
-
     setError(null);
     setLoading(true);
     setResult(null);
-
     const skills = [
       ...(resume.skills?.technical || []),
       ...(resume.skills?.tools || []),
       ...(resume.skills?.languages || []),
     ];
-
     try {
       const res = await fetch("/api/jd-match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bullets: bullets.map(({ label, text }) => ({ label, text })),
-          skills,
-          jobDescription: jd,
-        }),
+        body: JSON.stringify({ bullets: bullets.map(({ label, text }) => ({ label, text })), skills, jobDescription: jd }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not analyze. Try again.");
       setResult({ ...data, bullets });
+      setApplied({});
     } catch (err) {
       setError(err.message);
     }
     setLoading(false);
   };
 
+  const handleReanalyze = () => {
+    const savedJd = jd;
+    setResult(null);
+    setError(null);
+    setApplied({});
+    setJd(savedJd);
+    // slight delay taaki state settle ho, phir analyze
+    setTimeout(() => handleAnalyze(), 50);
+  };
+
   const applySuggestion = (label, tailored) => {
     const bullet = result.bullets.find((b) => b.label === label);
     if (!bullet) return;
-    if (bullet.type === "experience") {
-      updateExperienceBullet(bullet.entryId, bullet.bulletIdx, tailored);
-    } else {
-      updateProjectBullet(bullet.entryId, bullet.bulletIdx, tailored);
-    }
+    if (bullet.type === "experience") updateExperienceBullet(bullet.entryId, bullet.bulletIdx, tailored);
+    else updateProjectBullet(bullet.entryId, bullet.bulletIdx, tailored);
     setApplied((prev) => ({ ...prev, [label]: true }));
   };
 
-  const scoreColor =
-    result && result.matchScore >= 70
-      ? "#1E8E5A"
-      : result && result.matchScore >= 40
-      ? "#E2A33B"
-      : "#dc2626";
+  const anyApplied = Object.keys(applied).length > 0;
+
+  const scoreColor = result && result.matchScore >= 70 ? '#059669' : result && result.matchScore >= 40 ? '#d97706' : '#dc2626';
+  const scoreBg    = result && result.matchScore >= 70 ? '#d1fae5' : result && result.matchScore >= 40 ? '#fef3c7' : '#fee2e2';
+  const scoreText  = result && result.matchScore >= 70 ? '#065f46' : result && result.matchScore >= 40 ? '#92400e' : '#991b1b';
+  const scoreLabel = result && result.matchScore >= 70 ? 'Strong match' : result && result.matchScore >= 40 ? 'Partial match' : 'Weak match';
 
   return (
     <>
       <button
         type="button"
         onClick={handleOpen}
-        className={`flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap ${
-          isPremium
-            ? "bg-white border-[#DDD6C8] text-[#161A2E] hover:border-[#161A2E]/40"
-            : "bg-[#E2A33B]/8 border-[#E2A33B]/30 text-[#E2A33B] hover:bg-[#E2A33B]/15"
-        }`}
-        style={{ fontFamily: "'Inter', sans-serif" }}
+        className="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-full border transition-all whitespace-nowrap"
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          background: isPremium ? 'white' : '#fffbeb',
+          borderColor: isPremium ? '#cbd5e1' : '#d97706' + '50',
+          color: isPremium ? '#1e3a5f' : '#92400e',
+        }}
       >
         {isPremium ? "🎯 JD Match" : "🔒 JD Match"}
       </button>
 
-      {open &&
-        createPortal(
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#161A2E]/60 px-4">
-            <div className="bg-[#F6F4EF] rounded-lg max-w-lg w-full p-6 relative border border-[#DDD6C8] max-h-[85vh] overflow-y-auto">
+      {open && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+          style={{ background: 'rgba(10,22,40,0.55)', backdropFilter: 'blur(2px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) { setOpen(false); reset(); } }}
+        >
+          <div
+            className="w-full sm:max-w-lg bg-white flex flex-col"
+            style={{
+              borderRadius: '24px',
+              maxHeight: '90vh',
+              border: '1px solid #e2e8f0',
+              boxShadow: 'rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.14) 0px 24px 40px -8px',
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 shrink-0" style={{ borderBottom: '1px solid #f1f5f9' }}>
+              <div>
+                <h2 className="text-base font-semibold text-[#0a1628] leading-none mb-0.5" style={{ fontFamily: "'DM Serif Display', serif" }}>
+                  JD Matcher
+                </h2>
+                <p className="text-[11px] text-[#4a6fa5]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  {result ? `${result.matchScore}/100 match against this job` : 'Paste a job description to tailor your resume'}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => {
-                  setOpen(false);
-                  reset();
-                }}
-                className="absolute top-3 right-3 text-[#161A2E]/40 hover:text-[#161A2E] text-xl leading-none"
-                aria-label="Close"
+                onClick={() => { setOpen(false); reset(); }}
+                className="w-7 h-7 flex items-center justify-center rounded-full transition-colors hover:bg-[#f1f5f9] text-[#4a6fa5] hover:text-[#0a1628] text-lg leading-none"
               >
                 ×
               </button>
+            </div>
 
-              <h3
-                className="text-lg font-bold text-[#161A2E] mb-1"
-                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-              >
-                🎯 JD Matcher
-              </h3>
-              <p
-                className="text-sm text-[#161A2E]/60 mb-4"
-                style={{ fontFamily: "'Inter', sans-serif" }}
-              >
-                Paste a job description — we'll score your match and tailor your bullets to it.
-              </p>
+            {/* Body */}
+            <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
 
+              {/* Input state */}
               {!result && (
                 <>
                   <textarea
-                    rows={8}
+                    rows={7}
                     value={jd}
                     onChange={(e) => setJd(e.target.value)}
                     placeholder="Paste the full job description here..."
-                    className="w-full border border-[#DDD6C8] rounded-lg px-3 py-2.5 text-sm text-[#161A2E] placeholder:text-[#161A2E]/30 focus:outline-none focus:border-[#1E8E5A] resize-none mb-2"
+                    className="w-full border border-[#cbd5e1] rounded-2xl px-4 py-3 text-sm text-[#0a1628] placeholder:text-[#4a6fa5]/40 focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/15 transition-all resize-none"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   />
-                  {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
+                  {error && (
+                    <p className="text-xs text-red-500 -mt-2" style={{ fontFamily: "'Inter', sans-serif" }}>{error}</p>
+                  )}
                   <button
                     type="button"
                     onClick={handleAnalyze}
                     disabled={loading}
-                    className="w-full bg-[#161A2E] text-[#F6F4EF] font-semibold py-2.5 rounded hover:bg-[#1E8E5A] transition-colors disabled:opacity-50"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="w-full py-2.5 rounded-full text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                    style={{ background: loading ? '#4a6fa5' : '#0a1628', fontFamily: "'Inter', sans-serif" }}
                   >
-                    {loading ? "Analyzing..." : "Analyze Match"}
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        Analyzing…
+                      </span>
+                    ) : 'Analyze match'}
                   </button>
-                  <p
-                    className="text-[10px] text-[#161A2E]/30 mt-3"
-                    style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    Only your bullets, skills & this job description are sent — never your personal info.
+                  <p className="text-[10px] text-[#4a6fa5]/50 text-center" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    Only your bullets, skills, and this JD are sent — never your personal info.
                   </p>
                 </>
               )}
 
+              {/* Results state */}
               {result && (
-                <div className="space-y-4">
-                  {/* Score */}
-                  <div className="flex items-center gap-3 bg-white border border-[#DDD6C8] rounded-lg p-3">
-                    <svg width="48" height="48" viewBox="0 0 40 40" className="shrink-0">
-                      <circle cx="20" cy="20" r="15" fill="none" stroke="#E8E5DF" strokeWidth="3.5" />
-                      <circle
-                        cx="20"
-                        cy="20"
-                        r="15"
-                        fill="none"
-                        stroke={scoreColor}
-                        strokeWidth="3.5"
+                <>
+                  {/* Score hero */}
+                  <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: scoreBg, border: `1px solid ${scoreColor}25` }}>
+                    <svg width="56" height="56" viewBox="0 0 40 40" className="shrink-0">
+                      <circle cx="20" cy="20" r="15" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                      <circle cx="20" cy="20" r="15" fill="none" stroke={scoreColor} strokeWidth="3"
                         strokeLinecap="round"
                         strokeDasharray={`${(result.matchScore / 100) * 94.2} 94.2`}
-                        transform="rotate(-90 20 20)"
-                      />
-                      <text
-                        x="20"
-                        y="20"
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        fontSize="10"
-                        fontWeight="700"
-                        fill="#161A2E"
-                      >
+                        transform="rotate(-90 20 20)" />
+                      <text x="20" y="20" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="700" fill={scoreColor}>
                         {result.matchScore}
                       </text>
                     </svg>
-                    <div>
-                      <p className="text-sm font-bold text-[#161A2E]">{result.matchScore}/100 match</p>
-                      <p className="text-xs text-[#161A2E]/50">against this job description</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-2xl font-bold leading-none mb-1" style={{ color: scoreText, fontFamily: "'DM Serif Display', serif" }}>
+                        {result.matchScore}/100
+                      </p>
+                      <p className="text-xs font-semibold" style={{ color: scoreColor, fontFamily: "'Inter', sans-serif" }}>
+                        {scoreLabel}
+                      </p>
+                      <p className="text-[10px] mt-0.5" style={{ color: scoreText + 'aa', fontFamily: "'Inter', sans-serif" }}>
+                        against this job description
+                      </p>
                     </div>
+
+                    {/* Re-analyze button — score ke andar right side */}
+                    {anyApplied && (
+                      <button
+                        type="button"
+                        onClick={handleReanalyze}
+                        disabled={loading}
+                        className="shrink-0 flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1.5 rounded-full border transition-all disabled:opacity-50"
+                        style={{
+                          background: 'white',
+                          borderColor: scoreColor + '40',
+                          color: scoreText,
+                          fontFamily: "'Inter', sans-serif",
+                        }}
+                      >
+                        {loading ? (
+                          <svg className="animate-spin h-2.5 w-2.5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                        ) : '↻'}
+                        {loading ? 'Updating…' : 'Re-analyze'}
+                      </button>
+                    )}
                   </div>
+
+                  {/* Applied count nudge */}
+                  {anyApplied && (
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: '#d1fae5', border: '1px solid #a7f3d0' }}>
+                      <span className="text-[#059669] text-sm">✓</span>
+                      <p className="text-[11px] text-[#065f46]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        {Object.keys(applied).length} suggestion{Object.keys(applied).length > 1 ? 's' : ''} applied — hit Re-analyze to see your updated score.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Missing keywords */}
                   {result.missingKeywords?.length > 0 && (
                     <div>
-                      <p
-                        className="text-[10px] font-mono uppercase tracking-widest text-[#161A2E]/50 mb-1.5"
-                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                      >
-                        Missing — this JD mentions, your resume doesn't
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        Missing from your resume
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {result.missingKeywords.map((kw) => (
-                          <span
-                            key={kw}
-                            className="px-2 py-0.5 bg-red-50 text-red-600 border border-red-100 text-xs rounded-md"
-                          >
+                          <span key={kw} className="px-2.5 py-0.5 text-[11px] rounded-full"
+                            style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontFamily: "'Inter', sans-serif" }}>
                             {kw}
                           </span>
                         ))}
@@ -257,37 +279,32 @@ export default function JDMatcherPanel() {
                   {/* Suggestions */}
                   {result.suggestions?.length > 0 && (
                     <div>
-                      <p
-                        className="text-[10px] font-mono uppercase tracking-widest text-[#161A2E]/50 mb-1.5"
-                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                      >
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
                         Tailored bullet suggestions
                       </p>
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {result.suggestions.map((s) => (
-                          <div key={s.label} className="bg-white border border-[#DDD6C8] rounded-lg p-3">
-                            <p className="text-xs text-[#161A2E]/40 line-through mb-1">
+                          <div key={s.label} className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3.5">
+                            <p className="text-[11px] text-[#4a6fa5]/60 line-through mb-1.5" style={{ fontFamily: "'Inter', sans-serif" }}>
                               {result.bullets.find((b) => b.label === s.label)?.text}
                             </p>
-                            <p
-                              className="text-sm text-[#161A2E] mb-2"
-                              style={{ fontFamily: "'Inter', sans-serif" }}
-                            >
+                            <p className="text-sm text-[#0a1628] mb-3 leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
                               {s.tailored}
                             </p>
                             {applied[s.label] ? (
-                              <span className="text-xs text-[#1E8E5A] font-semibold">✓ Applied</span>
+                              <span className="text-xs font-semibold text-[#059669]" style={{ fontFamily: "'Inter', sans-serif" }}>✓ Applied</span>
                             ) : (
-                              <div>
-                                <p className="text-[10px] text-[#E2A33B] mb-1.5" style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
-                                  ⚠ Verify: only accept if facts match your actual experience
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-[10px] text-[#d97706]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                                  ⚠ Verify facts match your actual experience
                                 </p>
                                 <button
                                   type="button"
                                   onClick={() => applySuggestion(s.label, s.tailored)}
-                                  className="text-xs font-semibold text-white bg-[#1E8E5A] px-3 py-1.5 rounded hover:bg-[#161A2E] transition-colors"
+                                  className="shrink-0 text-[11px] font-semibold text-white px-3 py-1.5 rounded-full transition-colors hover:bg-[#1e3a5f]"
+                                  style={{ background: '#0a1628', fontFamily: "'Inter', sans-serif" }}
                                 >
-                                  Apply to resume
+                                  Apply
                                 </button>
                               </div>
                             )}
@@ -297,25 +314,30 @@ export default function JDMatcherPanel() {
                     </div>
                   )}
 
-                  {result.suggestions?.length === 0 && result.missingKeywords?.length === 0 && (
-                    <p className="text-sm text-[#161A2E]/60">
-                      Your resume already matches this job description well!
-                    </p>
+                  {result.suggestions?.length === 0 && result.missingKeywords?.length === 0 && result.matchScore >= 60 && (
+                    <div className="text-center py-4">
+                      <p className="text-2xl mb-1">🎉</p>
+                      <p className="text-sm font-semibold text-[#0a1628]" style={{ fontFamily: "'DM Serif Display', serif" }}>Strong match!</p>
+                      <p className="text-[11px] text-[#4a6fa5]" style={{ fontFamily: "'Inter', sans-serif" }}>Your resume already matches this job description well.</p>
+                    </div>
                   )}
 
+                  {/* Try another */}
                   <button
                     type="button"
                     onClick={reset}
-                    className="w-full py-1.5 text-xs text-[#161A2E]/40 hover:text-[#161A2E] border border-[#DDD6C8] rounded-lg transition-colors"
+                    className="w-full py-2 text-[11px] text-[#4a6fa5] hover:text-[#0a1628] border border-[#cbd5e1] hover:border-[#4a6fa5] rounded-2xl transition-all"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     ↻ Try another job description
                   </button>
-                </div>
+                </>
               )}
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {upgradeOpen && <UpgradeModal onClose={() => setUpgradeOpen(false)} />}
     </>

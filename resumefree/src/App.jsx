@@ -8,6 +8,7 @@ import TermsPage    from "./pages/TermsPage";
 import AuthCallback from "./pages/AuthCallback";
 import AuthPage     from "./pages/AuthPage";
 import ProfilePage  from "./pages/ProfilePage";
+import PricingPage  from "./pages/PricingPage";
 import { useAuthStore } from "./store/authStore";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth"          element={<AuthPage />} />
         <Route path="/dashboard"     element={<ProfilePage />} />
+        <Route path="/pricing"       element={<PricingPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -4,10 +4,10 @@ import { useResumeStore } from "../../store/resumeStore";
 import { useAuthStore } from "../../store/authStore";
 
 const inputClass =
-  "w-full bg-white border border-[#DDD6C8] rounded-lg px-3 py-2.5 text-sm text-[#161A2E] placeholder:text-[#161A2E]/30 focus:outline-none focus:border-[#161A2E] focus:ring-1 focus:ring-[#161A2E]/10 transition-colors";
+  "w-full bg-white border border-[#cbd5e1] rounded-2xl px-4 py-3 text-sm text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/15 transition-all duration-150";
 
 const labelClass =
-  "block text-[10px] font-mono tracking-widest uppercase text-[#161A2E]/50 mb-1.5";
+  "block text-[11px] font-semibold tracking-widest uppercase text-[#4a6fa5] mb-2";
 
 // ── AI Bullet Row ─────────────────────────────────────────────
 function BulletRow({ expId, bulletIdx, value, canUseAi, onAiUse }) {
@@ -23,11 +23,10 @@ function BulletRow({ expId, bulletIdx, value, canUseAi, onAiUse }) {
     setError(null);
 
     try {
-      // Calls our serverless function — API key never in browser
       const response = await fetch("/api/improve-bullet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bullet: value }), // only bullet text, no personal info
+        body: JSON.stringify({ bullet: value }),
       });
 
       const data = await response.json();
@@ -64,7 +63,7 @@ function BulletRow({ expId, bulletIdx, value, canUseAi, onAiUse }) {
   return (
     <div className="space-y-2">
       <div className="flex gap-2 items-start">
-        <span className="text-[#DDD6C8] mt-2.5 text-xs select-none">•</span>
+        <span className="text-[#cbd5e1] mt-3 text-xs select-none">•</span>
         <textarea
           rows={2}
           placeholder="e.g. Worked on backend APIs using Node.js"
@@ -78,21 +77,21 @@ function BulletRow({ expId, bulletIdx, value, canUseAi, onAiUse }) {
             onClick={handleImprove}
             disabled={loading || !canUseAi || !value.trim()}
             title={!canUseAi ? "AI limit reached — upgrade to Premium" : "Improve with AI"}
-            className={`text-[10px] font-mono px-2 py-1.5 rounded border transition-colors whitespace-nowrap ${
+            className={`text-[10px] font-semibold px-2 py-1.5 rounded-full border transition-all duration-150 whitespace-nowrap ${
               !canUseAi
-                ? "text-[#E2A33B] border-[#E2A33B]/30 bg-[#E2A33B]/5 cursor-not-allowed"
+                ? "text-amber-500 border-amber-200 bg-amber-50 cursor-not-allowed"
                 : loading
-                ? "text-[#1E8E5A]/50 border-[#1E8E5A]/20 cursor-wait"
-                : "text-[#1E8E5A] border-[#1E8E5A]/30 hover:bg-[#1E8E5A]/10 disabled:opacity-40"
+                ? "text-[#059669]/50 border-[#059669]/20 cursor-wait"
+                : "text-[#059669] border-[#059669]/30 hover:bg-[#059669]/10 disabled:opacity-40"
             }`}
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             {loading ? "···" : canUseAi ? "✨ AI" : "🔒 AI"}
           </button>
           <button
             onClick={() => removeExperienceBullet(expId, bulletIdx)}
-            className="text-[10px] text-[#161A2E]/25 hover:text-red-400 transition-colors px-2 py-1.5 rounded border border-transparent hover:border-red-200"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            className="text-[10px] text-[#4a6fa5]/50 hover:text-red-400 transition-colors px-2 py-1.5 rounded-full border border-transparent hover:border-red-200"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             ✕
           </button>
@@ -108,36 +107,35 @@ function BulletRow({ expId, bulletIdx, value, canUseAi, onAiUse }) {
 
       {/* AI Suggestion card */}
       {showSuggestion && improved && (
-        <div className="ml-4 bg-[#F6F4EF] border border-[#1E8E5A]/30 rounded-lg p-3 space-y-2">
+        <div className="ml-4 bg-[#d1fae5] border border-[#059669]/30 rounded-2xl p-3 space-y-2">
           <p
-            className="text-[10px] font-mono tracking-widest text-[#1E8E5A] uppercase"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            className="text-[11px] font-semibold tracking-widest text-[#059669] uppercase"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             ✨ AI Suggestion
           </p>
-          <p className="text-sm text-[#161A2E]" style={{ fontFamily: "'Inter', sans-serif" }}>
+          <p className="text-sm text-[#0a1628]" style={{ fontFamily: "'Inter', sans-serif" }}>
             {improved}
           </p>
           <div className="flex gap-2">
             <button
               onClick={acceptSuggestion}
-              className="text-xs font-semibold text-white bg-[#1E8E5A] px-3 py-1.5 rounded hover:bg-[#161A2E] transition-colors"
+              className="text-xs font-semibold text-white bg-[#059669] px-3 py-1.5 rounded-full hover:bg-[#0a1628] transition-colors"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Accept
             </button>
             <button
               onClick={rejectSuggestion}
-              className="text-xs text-[#161A2E]/50 px-3 py-1.5 rounded border border-[#DDD6C8] hover:border-[#161A2E]/30 transition-colors"
+              className="text-xs text-[#4a6fa5] px-3 py-1.5 rounded-full border border-[#cbd5e1] hover:border-[#4a6fa5] transition-colors"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Reject
             </button>
           </div>
-          {/* Privacy note */}
           <p
-            className="text-[10px] text-[#161A2E]/30"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            className="text-[10px] text-[#4a6fa5]/60"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Only this bullet was sent for improvement — never your personal info.
           </p>
@@ -171,13 +169,13 @@ export default function ExperienceForm() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2
-            className="text-lg font-bold text-[#161A2E]"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            className="text-2xl text-[#0a1628]"
+            style={{ fontFamily: "'DM Serif Display', serif" }}
           >
             Experience
           </h2>
           <p
-            className="text-xs text-[#161A2E]/45 mt-1"
+            className="text-xs text-[#4a6fa5] mt-1"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Internships, part-time jobs, freelance work — add all of them.
@@ -186,12 +184,12 @@ export default function ExperienceForm() {
 
         {/* AI usage badge */}
         <div
-          className={`flex-shrink-0 text-[10px] font-mono px-2.5 py-1.5 rounded-full border whitespace-nowrap ${
+          className={`flex-shrink-0 text-[11px] font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap ${
             isPremium || aiLeft > 0
-              ? "text-[#1E8E5A] border-[#1E8E5A]/30 bg-[#1E8E5A]/8"
-              : "text-[#E2A33B] border-[#E2A33B]/30 bg-[#E2A33B]/8"
+              ? "text-[#059669] border-[#059669]/30 bg-[#d1fae5]"
+              : "text-amber-600 border-amber-200 bg-amber-50"
           }`}
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
           {isPremium ? "✨ Unlimited AI" : aiLeft > 0 ? `✨ ${aiLeft} AI left` : "🔒 Upgrade for more AI"}
         </div>
@@ -199,22 +197,22 @@ export default function ExperienceForm() {
 
       {/* Empty state */}
       {entries.length === 0 && (
-        <div className="border border-dashed border-[#DDD6C8] rounded-xl p-8 text-center">
+        <div className="border border-dashed border-[#cbd5e1] rounded-3xl p-8 text-center">
           <p
-            className="text-sm text-[#161A2E]/40 mb-1"
+            className="text-sm text-[#4a6fa5] mb-1"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             No experience added yet.
           </p>
           <p
-            className="text-xs text-[#161A2E]/30 mb-4"
+            className="text-xs text-[#4a6fa5]/60 mb-4"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Even a 2-week internship counts — add it.
           </p>
           <button
             onClick={addExperience}
-            className="text-sm font-semibold text-[#1E8E5A] hover:underline"
+            className="text-sm font-semibold text-[#059669] hover:underline"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             + Add Experience
@@ -226,18 +224,19 @@ export default function ExperienceForm() {
       {entries.map((exp, idx) => (
         <div
           key={exp.id}
-          className="bg-white border border-[#DDD6C8] rounded-xl p-4 sm:p-5 space-y-4"
+          className="bg-white border border-[#cbd5e1] rounded-3xl p-5 space-y-4"
+          style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 4px 12px -2px" }}
         >
           <div className="flex items-center justify-between">
             <span
-              className="text-[10px] font-mono tracking-widest text-[#161A2E]/40 uppercase"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+              className="text-[11px] font-semibold tracking-widest uppercase text-[#4a6fa5]"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Experience {idx + 1}
             </span>
             <button
               onClick={() => removeExperience(exp.id)}
-              className="text-xs text-[#161A2E]/30 hover:text-red-400 transition-colors"
+              className="text-xs text-[#4a6fa5]/60 hover:text-red-400 transition-colors"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Remove
@@ -246,7 +245,7 @@ export default function ExperienceForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className={labelClass} style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+              <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
                 Job Title / Role
               </label>
               <input
@@ -259,7 +258,7 @@ export default function ExperienceForm() {
               />
             </div>
             <div>
-              <label className={labelClass} style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+              <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
                 Company Name
               </label>
               <input
@@ -274,7 +273,7 @@ export default function ExperienceForm() {
           </div>
 
           <div>
-            <label className={labelClass} style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
               Duration
             </label>
             <input
@@ -288,7 +287,7 @@ export default function ExperienceForm() {
           </div>
 
           <div>
-            <label className={labelClass} style={{ fontFamily: "'IBM Plex Mono', monospace" }}>
+            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
               What you did — use ✨ AI to improve each bullet
             </label>
             <div className="space-y-3">
@@ -305,7 +304,7 @@ export default function ExperienceForm() {
             </div>
             <button
               onClick={() => addExperienceBullet(exp.id)}
-              className="mt-3 text-xs text-[#161A2E]/40 hover:text-[#1E8E5A] transition-colors"
+              className="mt-3 text-xs text-[#4a6fa5]/60 hover:text-[#059669] transition-colors"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               + Add bullet point
@@ -317,7 +316,7 @@ export default function ExperienceForm() {
       {entries.length > 0 && (
         <button
           onClick={addExperience}
-          className="w-full border border-dashed border-[#DDD6C8] rounded-xl py-3 text-sm text-[#161A2E]/40 hover:border-[#1E8E5A] hover:text-[#1E8E5A] transition-colors"
+          className="w-full border border-dashed border-[#cbd5e1] rounded-3xl py-3 text-sm text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           + Add Another Experience
@@ -325,10 +324,10 @@ export default function ExperienceForm() {
       )}
 
       <div className="flex items-center gap-2 pt-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1E8E5A] flex-shrink-0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
         <p
-          className="text-[11px] text-[#161A2E]/35"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+          className="text-[11px] text-[#4a6fa5]"
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
           Auto-saved to your browser — no account needed
         </p>

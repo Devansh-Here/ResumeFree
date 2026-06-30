@@ -6,12 +6,12 @@ function SectionHeading({ title }) {
   return (
     <div className="flex items-center gap-2 mt-4 mb-2">
       <span
-        className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#161A2E]"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        className="text-[10px] font-bold tracking-[0.15em] uppercase text-[#0a1628]"
+        style={{ fontFamily: "'Inter', sans-serif" }}
       >
         {title}
       </span>
-      <div className="flex-1 h-px bg-[#161A2E]" />
+      <div className="flex-1 h-px bg-[#0a1628]" />
     </div>
   );
 }
@@ -19,7 +19,7 @@ function SectionHeading({ title }) {
 // ── Empty placeholder ─────────────────────────────────────────
 function EmptyField({ text }) {
   return (
-    <span className="text-[#DDD6C8] italic">{text}</span>
+    <span className="text-[#cbd5e1] italic">{text}</span>
   );
 }
 
@@ -42,24 +42,22 @@ export default function ResumePreview() {
         fontFamily: "'Inter', sans-serif",
         fontSize: "11px",
         lineHeight: "1.5",
-        color: "#161A2E",
+        color: "#0a1628",
         padding: "32px 36px",
-        minHeight: "842px", // A4 ratio
+        minHeight: "842px",
       }}
     >
       {/* ── Header ── */}
       <div className="text-center mb-3">
         <h1
-          className="font-bold text-[22px] tracking-tight text-[#161A2E]"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          className="font-bold text-[22px] tracking-tight text-[#0a1628]"
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
           {personal.name || <EmptyField text="Your Name" />}
         </h1>
 
         {/* Contact line */}
-        <div
-          className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-[#161A2E]/70"
-        >
+        <div className="flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-[#1e3a5f]">
           {personal.email && <span>{personal.email}</span>}
           {personal.phone && <span>· {personal.phone}</span>}
           {personal.address && <span>· {personal.address}</span>}
@@ -70,7 +68,7 @@ export default function ResumePreview() {
 
         {/* Links line */}
         {(personal.linkedin || personal.github || personal.portfolio) && (
-          <div className="flex flex-wrap justify-center gap-x-3 mt-0.5 text-[10px] text-[#1E8E5A]">
+          <div className="flex flex-wrap justify-center gap-x-3 mt-0.5 text-[10px] text-[#059669]">
             {personal.linkedin && (
               <span>linkedin.com/in/{personal.linkedin}</span>
             )}
@@ -95,10 +93,10 @@ export default function ResumePreview() {
                       {edu.degree || <EmptyField text="Degree" />}
                     </span>
                     {edu.college && (
-                      <span className="text-[#161A2E]/60"> · {edu.college}</span>
+                      <span className="text-[#1e3a5f]/70"> · {edu.college}</span>
                     )}
                   </div>
-                  <div className="text-right flex-shrink-0 text-[#161A2E]/60">
+                  <div className="text-right flex-shrink-0 text-[#1e3a5f]/70">
                     {edu.year && <span>{edu.year}</span>}
                     {edu.cgpa && <span className="ml-2">· {edu.cgpa}</span>}
                   </div>
@@ -122,11 +120,11 @@ export default function ResumePreview() {
                       {exp.role || <EmptyField text="Role" />}
                     </span>
                     {exp.company && (
-                      <span className="text-[#161A2E]/60"> · {exp.company}</span>
+                      <span className="text-[#1e3a5f]/70"> · {exp.company}</span>
                     )}
                   </div>
                   {exp.duration && (
-                    <span className="text-[#161A2E]/60 flex-shrink-0 text-[10px]">
+                    <span className="text-[#1e3a5f]/70 flex-shrink-0 text-[10px]">
                       {exp.duration}
                     </span>
                   )}
@@ -136,7 +134,7 @@ export default function ResumePreview() {
                     {exp.bullets
                       .filter((b) => b.trim())
                       .map((bullet, i) => (
-                        <li key={i} className="flex gap-1.5 text-[#161A2E]/80">
+                        <li key={i} className="flex gap-1.5 text-[#1e3a5f]">
                           <span className="flex-shrink-0 mt-0.5">•</span>
                           <span>{bullet}</span>
                         </li>
@@ -161,7 +159,7 @@ export default function ResumePreview() {
                     {proj.name || <EmptyField text="Project Name" />}
                   </span>
                   {proj.techStack.length > 0 && (
-                    <span className="text-[#161A2E]/50 text-[10px] flex-shrink-0">
+                    <span className="text-[#4a6fa5] text-[10px] flex-shrink-0">
                       {proj.techStack.join(", ")}
                     </span>
                   )}
@@ -171,7 +169,7 @@ export default function ResumePreview() {
                     {proj.bullets
                       .filter((b) => b.trim())
                       .map((bullet, i) => (
-                        <li key={i} className="flex gap-1.5 text-[#161A2E]/80">
+                        <li key={i} className="flex gap-1.5 text-[#1e3a5f]">
                           <span className="flex-shrink-0 mt-0.5">•</span>
                           <span>{bullet}</span>
                         </li>
@@ -192,7 +190,7 @@ export default function ResumePreview() {
             {skills.technical.length > 0 && (
               <div className="flex gap-1.5">
                 <span className="font-semibold flex-shrink-0">Technical:</span>
-                <span className="text-[#161A2E]/75">
+                <span className="text-[#1e3a5f]">
                   {skills.technical.join(", ")}
                 </span>
               </div>
@@ -200,7 +198,7 @@ export default function ResumePreview() {
             {skills.tools.length > 0 && (
               <div className="flex gap-1.5">
                 <span className="font-semibold flex-shrink-0">Tools:</span>
-                <span className="text-[#161A2E]/75">
+                <span className="text-[#1e3a5f]">
                   {skills.tools.join(", ")}
                 </span>
               </div>
@@ -208,7 +206,7 @@ export default function ResumePreview() {
             {skills.languages.length > 0 && (
               <div className="flex gap-1.5">
                 <span className="font-semibold flex-shrink-0">Languages:</span>
-                <span className="text-[#161A2E]/75">
+                <span className="text-[#1e3a5f]">
                   {skills.languages.join(", ")}
                 </span>
               </div>
@@ -217,7 +215,7 @@ export default function ResumePreview() {
         </>
       )}
 
-      {/* Empty state — nothing filled yet */}
+      {/* Empty state */}
       {!personal.name &&
         !hasEducation &&
         !hasExperience &&
@@ -225,8 +223,8 @@ export default function ResumePreview() {
         !hasProjects && (
           <div className="flex flex-col items-center justify-center h-64 text-center">
             <p
-              className="text-[#DDD6C8] text-sm"
-              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+              className="text-[#cbd5e1] text-sm"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               Start filling the form —
               <br />

@@ -10,6 +10,11 @@ export default function Landing() {
   return (
     <div className="bg-white min-h-screen">
 
+      {/* Fixed navbar — renders on top of everything via position:fixed,
+          no spacer needed here since hero is a full-bleed dark background
+          and the glass navbar is meant to float over it */}
+      <Navbar />
+
       {/* ── Dark hero card ── */}
       <div
         className="relative overflow-hidden"
@@ -18,7 +23,6 @@ export default function Landing() {
           borderRadius: "0px",
         }}
       >
-        {/* Emerald glow — top right */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute top-0 right-0 w-[600px] h-[500px]"
@@ -26,7 +30,6 @@ export default function Landing() {
             background: "radial-gradient(ellipse 60% 50% at 85% 15%, rgba(5,150,105,0.4) 0%, transparent 65%)",
           }}
         />
-        {/* Emerald glow — bottom left subtle */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 left-0 w-[400px] h-[300px]"
@@ -34,9 +37,6 @@ export default function Landing() {
             background: "radial-gradient(ellipse 50% 40% at 15% 90%, rgba(5,150,105,0.15) 0%, transparent 60%)",
           }}
         />
-
-        {/* Navbar inside dark card */}
-        <Navbar />
 
         {/* Hero — dark mode */}
         <Hero dark />

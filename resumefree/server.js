@@ -43,6 +43,18 @@ app.get("/api/test", (req, res) => {
   res.json({ status: "API server working!" });
 });
 
+// Pass config — single source of truth
+// pass_type => { amount in paise, duration_days, label }
+// Addons have duration_days: null (one-time use, no expiry needed)
+const PASS_CONFIG = {
+  sprint:              { amount: 7900,  duration_days: 7,   label: "Sprint Pass (7 days)" },
+  placement:           { amount: 19900, duration_days: 30,  label: "Placement Pass (30 days)" },
+  season:              { amount: 39900, duration_days: 90,  label: "Season Pass (90 days)" },
+  addon_cover_letter:  { amount: 9900,  duration_days: null, label: "Cover Letter (Add-on)" },
+  addon_jd_tailoring:  { amount: 4900,  duration_days: null, label: "JD Tailoring (Add-on)" },
+  addon_ats:           { amount: 9900,  duration_days: null, label: "Advanced ATS (Add-on)" },
+};
+
 // POST /api/improve-bullet
 app.post("/api/improve-bullet", async (req, res) => {
   const { bullet } = req.body;
@@ -78,23 +90,46 @@ app.post("/api/improve-bullet", async (req, res) => {
 
 // POST /api/create-order
 app.post("/api/create-order", async (req, res) => {
-  const { plan } = req.body || {};
-  const AMOUNTS = { monthly: 19900, yearly: 49900 };
-  const amount = AMOUNTS[plan];
-  if (!amount) return res.status(400).json({ error: "Invalid plan" });
+  const { pass_type } = req.body || {};
+
+  const config = PASS_CONFIG[pass_type];
+  if (!config) {
+    return res.status(400).json({
+      error: `Invalid pass_type. Valid options: ${Object.keys(PASS_CONFIG).join(", ")}`,
+    });
+  }
+
   const keyId = process.env.VITE_RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (!keyId || !keySecret) return res.status(500).json({ error: "Razorpay keys not configured" });
+  if (!keyId || !keySecret) {
+    return res.status(500).json({ error: "Razorpay keys not configured" });
+  }
+
   try {
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
     const response = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
-      body: JSON.stringify({ amount, currency: "INR", receipt: `rcpt_${Date.now()}`, notes: { plan } }),
+      body: JSON.stringify({
+        amount: config.amount,
+        currency: "INR",
+        receipt: `rcpt_${Date.now()}`,
+        notes: { pass_type, label: config.label },
+      }),
     });
     const order = await response.json();
-    if (!response.ok) return res.status(502).json({ error: order.error?.description || "Razorpay order creation failed" });
-    return res.status(200).json({ orderId: order.id, amount: order.amount, currency: order.currency, keyId });
+    if (!response.ok) {
+      return res.status(502).json({ error: order.error?.description || "Razorpay order creation failed" });
+    }
+    return res.status(200).json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId,
+      pass_type,
+      duration_days: config.duration_days,
+      label: config.label,
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -102,40 +137,120 @@ app.post("/api/create-order", async (req, res) => {
 
 // POST /api/verify-payment
 app.post("/api/verify-payment", async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email, name, plan, amount } = req.body || {};
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !email || !plan) {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+    email,
+    name,
+    pass_type,
+    amount,
+  } = req.body || {};
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !email || !pass_type) {
     return res.status(400).json({ error: "Missing required fields" });
   }
+
+  const config = PASS_CONFIG[pass_type];
+  if (!config) {
+    return res.status(400).json({ error: "Invalid pass_type" });
+  }
+
+  // Signature verification
   const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-  const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET).update(body).digest("hex");
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(body)
+    .digest("hex");
   if (expectedSignature !== razorpay_signature) {
     return res.status(400).json({ error: "Payment verification failed — signature mismatch" });
   }
+
   try {
-    const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseAdmin = createClient(
+      process.env.VITE_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // Find or create user
     let userId;
     const { data: existingUsers, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
     if (listErr) throw listErr;
-    const existing = existingUsers.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    const existing = existingUsers.users.find(
+      (u) => u.email?.toLowerCase() === email.toLowerCase()
+    );
     if (existing) {
       userId = existing.id;
     } else {
-      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({ email, email_confirm: true });
+      const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+      });
       if (createErr) throw createErr;
       userId = created.user.id;
     }
-    const expiresAt = new Date();
-    if (plan === "yearly") expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-    else expiresAt.setMonth(expiresAt.getMonth() + 1);
-    const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
-      id: userId, email, name: name || null, is_premium: true, premium_plan: plan, premium_expires_at: expiresAt.toISOString(),
-    });
+
+    // Calculate expiry
+    // For passes: now + duration_days
+    // For addons: no expiry on profile (they're one-time feature unlocks — handle separately if needed)
+    let premiumExpiresAt = null;
+    let activePassType = null;
+
+    if (config.duration_days) {
+      // It's a pass — update profile expiry
+      // If user already has an active pass, extend from current expiry (not from now)
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("premium_expires_at")
+        .eq("id", userId)
+        .single();
+
+      const baseDate =
+        existingProfile?.premium_expires_at &&
+        new Date(existingProfile.premium_expires_at) > new Date()
+          ? new Date(existingProfile.premium_expires_at) // extend from current expiry
+          : new Date(); // start fresh from now
+
+      baseDate.setDate(baseDate.getDate() + config.duration_days);
+      premiumExpiresAt = baseDate.toISOString();
+      activePassType = pass_type;
+    }
+
+    // Update profile
+    const profileUpdate = {
+      id: userId,
+      email,
+      name: name || null,
+      is_premium: !!premiumExpiresAt, // true for passes, false for addons (addon logic separate)
+      ...(premiumExpiresAt && { premium_expires_at: premiumExpiresAt }),
+      ...(activePassType && { active_pass_type: activePassType }),
+    };
+
+    const { error: profileErr } = await supabaseAdmin
+      .from("profiles")
+      .upsert(profileUpdate);
     if (profileErr) throw profileErr;
+
+    // Log payment
     const { error: paymentErr } = await supabaseAdmin.from("payments").insert({
-      profile_id: userId, razorpay_order_id, razorpay_payment_id, amount: amount || 0, plan, status: "success",
+      profile_id: userId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      amount: amount || config.amount / 100,
+      plan: pass_type,        // keeping 'plan' col for backward compat
+      pass_type,
+      duration_days: config.duration_days,
+      expires_at: premiumExpiresAt,
+      status: "success",
     });
     if (paymentErr) throw paymentErr;
-    return res.status(200).json({ success: true });
+
+    return res.status(200).json({
+      success: true,
+      pass_type,
+      label: config.label,
+      expires_at: premiumExpiresAt,
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -154,8 +269,16 @@ app.post("/api/jd-match", async (req, res) => {
   const bulletLines = bullets.map((b) => `${b.label}: ${b.text}`).join("\n");
   const skillsLine  = (skills || []).join(", ") || "(none listed)";
 
-  const jdWords = new Set(jobDescription.toLowerCase().split(/[\s,.()\[\]{};:!"'\/\\|<>]+/).filter(w => w.length >= 3));
-  const resumeWords = new Set([...skills, ...bullets.map(b => b.text)].join(" ").toLowerCase().split(/[\s,.()\[\]{};:!"'\/\\|<>]+/).filter(w => w.length >= 3));
+  const jdWords = new Set(
+    jobDescription.toLowerCase()
+      .split(/[\s,.()\[\]{};:!"'\/\\|<>]+/)
+      .filter(w => w.length >= 3)
+  );
+  const resumeWords = new Set(
+    [...skills, ...bullets.map(b => b.text)].join(" ").toLowerCase()
+      .split(/[\s,.()\[\]{};:!"'\/\\|<>]+/)
+      .filter(w => w.length >= 3)
+  );
   let overlap = 0;
   jdWords.forEach(w => { if (resumeWords.has(w)) overlap++; });
   const clientScore = Math.min(100, Math.round((overlap / Math.max(jdWords.size, 1)) * 200));

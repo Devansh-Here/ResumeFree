@@ -32,10 +32,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
 
   const { label, placeholder } = CATEGORY_LABELS[category];
 
-  // Suggestions not already added
   const notAdded = SUGGESTIONS[category].filter((s) => !skills.includes(s));
-
-  // Filtered by current input
   const filtered = notAdded.filter((s) =>
     s.toLowerCase().includes(input.toLowerCase())
   );
@@ -59,24 +56,26 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
   };
 
   return (
-    <div className="bg-white border border-[#DDD6C8] rounded-xl p-4 sm:p-5 space-y-3">
-
+    <div
+      className="bg-white border border-[#cbd5e1] rounded-3xl p-5 space-y-3"
+      style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 4px 12px -2px" }}
+    >
       <label
-        className="block text-[10px] font-mono tracking-widest uppercase text-[#161A2E]/50"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        className="block text-[11px] font-semibold tracking-widest uppercase text-[#4a6fa5]"
+        style={{ fontFamily: "'Inter', sans-serif" }}
       >
         {label}
       </label>
 
       {/* Tags + Input box */}
       <div
-        className="min-h-[44px] flex flex-wrap gap-2 p-2.5 bg-[#F6F4EF] border border-[#DDD6C8] rounded-lg cursor-text focus-within:border-[#161A2E] transition-colors"
+        className="min-h-[48px] flex flex-wrap gap-2 p-3 bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl cursor-text focus-within:border-[#059669] focus-within:ring-2 focus-within:ring-[#059669]/15 transition-all duration-150"
         onClick={() => document.getElementById(`input-${category}`).focus()}
       >
         {skills.map((skill) => (
           <span
             key={skill}
-            className="flex items-center gap-1.5 bg-white border border-[#DDD6C8] text-[#161A2E] text-xs px-2.5 py-1 rounded-full"
+            className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] text-[#0a1628] text-xs px-3 py-1 rounded-full"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             {skill}
@@ -85,7 +84,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
                 e.stopPropagation();
                 onRemove(category, skills.filter((s) => s !== skill));
               }}
-              className="text-[#161A2E]/30 hover:text-red-400 transition-colors leading-none"
+              className="text-[#4a6fa5]/50 hover:text-red-400 transition-colors leading-none"
             >
               ×
             </button>
@@ -104,26 +103,26 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
           onKeyDown={handleKeyDown}
           onFocus={() => setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-          className="flex-1 min-w-[120px] bg-transparent text-sm text-[#161A2E] placeholder:text-[#161A2E]/30 outline-none"
+          className="flex-1 min-w-[120px] bg-transparent text-sm text-[#0a1628] placeholder:text-[#4a6fa5]/50 outline-none"
           style={{ fontFamily: "'Inter', sans-serif" }}
         />
       </div>
 
       <p
-        className="text-[10px] text-[#161A2E]/30"
-        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+        className="text-[11px] text-[#4a6fa5]/60"
+        style={{ fontFamily: "'Inter', sans-serif" }}
       >
         Type and press Enter or comma to add · Backspace to remove last
       </p>
 
       {/* Dropdown — when typing */}
       {showDropdown && input.length > 0 && filtered.length > 0 && (
-        <div className="border border-[#DDD6C8] rounded-lg overflow-hidden bg-white shadow-sm">
+        <div className="border border-[#cbd5e1] rounded-2xl overflow-hidden bg-white shadow-sm">
           {filtered.slice(0, 6).map((s) => (
             <button
               key={s}
               onMouseDown={() => handleAdd(s)}
-              className="w-full text-left px-3 py-2 text-sm text-[#161A2E]/70 hover:bg-[#F6F4EF] hover:text-[#161A2E] transition-colors"
+              className="w-full text-left px-4 py-2.5 text-sm text-[#4a6fa5] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {s}
@@ -132,12 +131,12 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
         </div>
       )}
 
-      {/* Quick-add pills — always show unselected suggestions */}
+      {/* Quick-add pills */}
       {notAdded.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           <span
-            className="text-[10px] text-[#161A2E]/30 self-center mr-1"
-            style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+            className="text-[11px] text-[#4a6fa5]/60 self-center mr-1"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Quick add:
           </span>
@@ -145,7 +144,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
             <button
               key={s}
               onClick={() => handleAdd(s)}
-              className="text-xs px-2.5 py-1 rounded-full border border-[#DDD6C8] text-[#161A2E]/50 hover:border-[#1E8E5A] hover:text-[#1E8E5A] transition-colors"
+              className="text-xs px-3 py-1 rounded-full border border-[#cbd5e1] text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               + {s}
@@ -167,15 +166,16 @@ export default function SkillsForm() {
   return (
     <div className="space-y-6">
 
+      {/* Header */}
       <div>
         <h2
-          className="text-lg font-bold text-[#161A2E]"
-          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          className="text-2xl text-[#0a1628]"
+          style={{ fontFamily: "'DM Serif Display', serif" }}
         >
           Skills
         </h2>
         <p
-          className="text-xs text-[#161A2E]/45 mt-1"
+          className="text-xs text-[#4a6fa5] mt-1"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           Add skills relevant to the jobs you're applying for. ATS scans these first.
@@ -183,13 +183,13 @@ export default function SkillsForm() {
       </div>
 
       {/* ATS tip */}
-      <div className="bg-[#1E8E5A]/8 border border-[#1E8E5A]/20 rounded-xl p-3.5 flex items-center gap-3">
-        <span className="text-[#1E8E5A] flex-shrink-0">✦</span>
+      <div className="bg-[#d1fae5] border border-[#059669]/20 rounded-2xl p-3.5 flex items-center gap-3">
+        <span className="text-[#059669] flex-shrink-0">✦</span>
         <p
-          className="text-xs text-[#161A2E]/60 leading-relaxed"
+          className="text-xs text-[#1e3a5f] leading-relaxed"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          <span className="font-semibold text-[#1E8E5A]">ATS tip:</span> Add skills exactly as they appear in the job description. "React.js" and "ReactJS" are different to an ATS.
+          <span className="font-semibold text-[#059669]">ATS tip:</span> Add skills exactly as they appear in the job description. "React.js" and "ReactJS" are different to an ATS.
         </p>
       </div>
 
@@ -197,11 +197,12 @@ export default function SkillsForm() {
       <SkillCategory category="tools"     skills={skills.tools}     onAdd={handleAdd} onRemove={handleRemove} />
       <SkillCategory category="languages" skills={skills.languages} onAdd={handleAdd} onRemove={handleRemove} />
 
+      {/* Auto-save notice */}
       <div className="flex items-center gap-2 pt-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1E8E5A] flex-shrink-0" />
+        <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
         <p
-          className="text-[11px] text-[#161A2E]/35"
-          style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+          className="text-[11px] text-[#4a6fa5]"
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
           Auto-saved to your browser — no account needed
         </p>

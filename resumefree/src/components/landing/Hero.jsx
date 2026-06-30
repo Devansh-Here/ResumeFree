@@ -46,8 +46,11 @@ export default function Hero({ dark = false }) {
   return (
     <section className="relative bg-transparent overflow-hidden">
 
-      {/* ── Main grid ── */}
-      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pt-12 pb-16 lg:pt-16 lg:pb-20">
+      {/* ── Main grid ──
+          Top padding now accounts for the fixed glass navbar
+          (≈ pt-3 spacing + h-14 nav + a little breathing room ≈ 100px),
+          so the eyebrow/headline never sits behind it. */}
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pt-[104px] sm:pt-[112px] lg:pt-[124px] pb-16 lg:pb-20">
         <div className="grid lg:grid-cols-[1fr_420px] gap-12 lg:gap-16 items-center">
 
           {/* ── LEFT: Editorial copy ── */}
