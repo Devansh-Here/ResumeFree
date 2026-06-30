@@ -355,7 +355,81 @@ Return ONLY a raw JSON object (no markdown, no explanation):
   }
 });
 
-app.listen(3001, () => {
-  console.log("🚀 API server running on http://localhost:3001");
-  console.log("   GROQ_API_KEY:", process.env.GROQ_API_KEY ? "✅ loaded" : "❌ missing");
+// POST /api/generate-cover-letter
+app.post('/api/generate-cover-letter', async (req, res) => {
+  try {
+    const { background, jobTitle, companyName, jobDescription } = req.body;
+
+    // Validation
+    if (!background || background.trim().length < 20) {
+      return res.status(400).json({ error: 'Background must be at least 20 characters.' });
+    }
+    if (!companyName || companyName.trim().length === 0) {
+      return res.status(400).json({ error: 'Company name is required.' });
+    }
+    if (!jobDescription || jobDescription.trim().length < 20) {
+      return res.status(400).json({ error: 'Job description must be at least 20 characters.' });
+    }
+
+    const prompt = `You are an expert career coach who writes cover letters in the exact style used by candidates getting hired at top-tier tech companies (Google, Amazon, Meta, Apple, Netflix — "MAANG" companies). These companies reject generic, fluffy cover letters immediately. Follow this EXACT structure and discipline:
+
+STRUCTURE (4 short paragraphs, 250-350 words total, no headers, no bullet points, no markdown):
+
+Paragraph 1 (Hook): Open by directly naming the role "${jobTitle || 'the role'}" at "${companyName}". Lead with the single strongest, most relevant fact about the candidate from their background — NOT a generic "I am writing to apply for..." opener.
+
+Paragraph 2 (Proof): Pick 1-2 specific, quantified achievements from the candidate's background that most directly match what this job description is asking for. Numbers and concrete outcomes only — no vague claims.
+
+Paragraph 3 (Why this company): Connect the candidate's skills/interests to something SPECIFIC about this company or role mentioned in the job description (their product, tech stack, mission, team) — not a generic "I admire your company" line.
+
+Paragraph 4 (Close): Short, confident close. State interest in discussing further. No desperation, no over-explaining.
+
+HARD RULES:
+- Only use facts, skills, numbers, and experiences that are explicitly present in the candidate's background below. NEVER invent metrics, companies, job titles, or achievements not present in the background.
+- Paraphrase the job description in your own words — never copy phrases directly from it.
+- Banned phrases: "I am a hardworking team player", "I am passionate about", "I believe I would be a great fit", "To whom it may concern", any generic filler that could apply to any company.
+- Active voice, confident tone, zero fluff. Every sentence must add information a recruiter cares about.
+- Do NOT include a greeting line ("Dear Hiring Manager,") or sign-off ("Sincerely,") — those are added separately by the application.
+- Return ONLY the 4 paragraphs of body text. No headers, no labels, no markdown formatting, no quotation marks around the output.
+
+CANDIDATE BACKGROUND:
+${background}
+
+JOB TITLE: ${jobTitle || 'Not specified'}
+COMPANY: ${companyName}
+
+JOB DESCRIPTION:
+${jobDescription}`;
+
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.6,
+        max_tokens: 600,
+      }),
+    });
+
+    if (!groqResponse.ok) {
+      const errText = await groqResponse.text();
+      console.error('Groq API error:', errText);
+      return res.status(502).json({ error: 'AI generation failed. Try again.' });
+    }
+
+    const data = await groqResponse.json();
+    const letter = data.choices?.[0]?.message?.content?.trim();
+
+    if (!letter) {
+      return res.status(502).json({ error: 'AI returned empty response. Try again.' });
+    }
+
+    return res.json({ letter });
+  } catch (err) {
+    console.error('generate-cover-letter error:', err);
+    return res.status(500).json({ error: 'Server error generating cover letter.' });
+  }
 });

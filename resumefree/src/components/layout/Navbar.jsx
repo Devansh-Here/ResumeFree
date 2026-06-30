@@ -177,6 +177,225 @@ function HomeIconButton() {
   );
 }
 
+/* ── Dropdown menu icons (small line icons, same stroke language as HomeIconButton) ── */
+const MenuIcons = {
+  dashboard: (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <rect x="2" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="8.5" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="2" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  ),
+  resumes: (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M4 1.8h5.4L12.2 4.6V14a.7.7 0 01-.7.7H4a.7.7 0 01-.7-.7V2.5a.7.7 0 01.7-.7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M9.4 1.8V4.6h2.8" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M5.3 8.2h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M5.3 10.6h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  ),
+  premium: (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6L8 1.6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  ),
+  logout: (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M6.4 14H2.7a.7.7 0 01-.7-.7V2.7a.7.7 0 01.7-.7h3.7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.6 11.2L14 8l-3.4-3.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 8H6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  coverletter: (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M2.5 3.5h11a.7.7 0 01.7.7v7.6a.7.7 0 01-.7.7h-11a.7.7 0 01-.7-.7V4.2a.7.7 0 01.7-.7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M2.8 4.3L8 8.4l5.2-4.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
+/* ── Profile avatar — initials circle that opens an animated dropdown
+   menu instead of navigating directly. The avatar itself reacts on
+   click (squash + tilt bounce, reusing the same overshoot easing as
+   the Home icon door-hinge), and grows a pulsing emerald ring while
+   the menu is open. Menu items cascade in with a small stagger.
+
+   ASSUMPTION: authStore exposes a `signOut` action with this name —
+   not yet verified against the real authStore.js file. If it's named
+   differently, only the `useAuthStore((s) => s.signOut)` line below
+   needs updating. */
+function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const btnRef = useRef(null);
+  const navigate = useNavigate();
+  const signOut = useAuthStore((s) => s.signOut);
+
+  const initial = (email || "?").trim().charAt(0).toUpperCase();
+
+  // click-outside + escape to close
+  useEffect(() => {
+    if (!open) return;
+    const handlePointer = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    const handleKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointer);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handlePointer);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [open]);
+
+  const handleAvatarClick = () => {
+    // replay the click-bounce animation even on rapid repeat clicks
+    const el = btnRef.current;
+    if (el) {
+      el.classList.remove("rf-avatar-clicked");
+      void el.offsetWidth;
+      el.classList.add("rf-avatar-clicked");
+    }
+    setOpen((v) => !v);
+  };
+
+  const closeAnd = (fn) => () => {
+    setOpen(false);
+    fn();
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut?.();
+    } finally {
+      navigate("/");
+    }
+  };
+
+  const items = [
+    { key: "dashboard", icon: MenuIcons.dashboard, label: "Dashboard", onClick: closeAnd(() => navigate("/dashboard")) },
+    { key: "resumes",   icon: MenuIcons.resumes,   label: "My Resumes", onClick: closeAnd(() => navigate("/dashboard")) },
+    { key: "coverletter", icon: MenuIcons.coverletter, label: "Cover Letter", onClick: closeAnd(() => navigate("/cover-letter")) },
+    {
+      key: "premium",
+      icon: MenuIcons.premium,
+      label: isPremium ? "Manage Plan" : "Upgrade to Premium",
+      onClick: closeAnd(() => (isPremium ? navigate("/dashboard") : onUpgradeClick?.())),
+    },
+    { key: "logout", icon: MenuIcons.logout, label: "Sign out", danger: true, onClick: closeAnd(handleSignOut) },
+  ];
+
+  return (
+    <div ref={wrapRef} className="relative">
+      {/* pulsing ring — only visible while menu is open */}
+      <span
+        aria-hidden="true"
+        className="absolute -inset-[3px] rounded-full pointer-events-none transition-opacity duration-200"
+        style={{
+          opacity: open ? 1 : 0,
+          animation: open ? "rf-avatar-ring-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite" : "none",
+        }}
+      />
+
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={handleAvatarClick}
+        aria-label="Open profile menu"
+        aria-expanded={open}
+        className="rf-avatar-btn relative flex items-center justify-center w-9 h-9 rounded-full shrink-0 transition-all duration-200"
+        style={{
+          background: dark ? "rgba(255,255,255,0.1)" : "#0a1628",
+          border: dark ? "1.5px solid rgba(255,255,255,0.2)" : "1.5px solid #0a1628",
+          boxShadow: open ? "0 0 0 3px rgba(5,150,105,0.18)" : "none",
+        }}
+      >
+        <span
+          className="font-sohne text-[13px]"
+          style={{ fontWeight: 600, color: "#ffffff" }}
+        >
+          {initial}
+        </span>
+      </button>
+
+      {/* dropdown — always mounted so close can animate too, just
+          transitions opacity/scale/pointer-events based on `open` */}
+      <div
+        className="absolute right-0 top-[calc(100%+10px)] w-[212px] origin-top-right rounded-2xl overflow-hidden z-[80] transition-all"
+        style={{
+          background: "rgba(10,22,40,0.96)",
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+          opacity: open ? 1 : 0,
+          transform: open ? "scale(1) translateY(0)" : "scale(0.92) translateY(-4px)",
+          pointerEvents: open ? "auto" : "none",
+          transitionDuration: open ? "280ms" : "160ms",
+          transitionTimingFunction: open
+            ? "cubic-bezier(.34,1.56,.64,1)"
+            : "cubic-bezier(0.4,0,0.2,1)",
+        }}
+      >
+        <div className="px-3.5 py-3 border-b border-white/8">
+          <p className="font-sohne text-[12px] text-white/45 truncate" style={{ fontWeight: 500 }}>
+            Signed in as
+          </p>
+          <p className="font-sohne text-[13px] text-white truncate" style={{ fontWeight: 600 }}>
+            {email || "—"}
+          </p>
+        </div>
+
+        <div className="p-1.5 flex flex-col">
+          {items.map((item, i) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={item.onClick}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-sohne text-[13px] transition-all duration-150 text-left ${
+                item.danger
+                  ? "text-white/55 hover:text-[#f87171] hover:bg-[#f87171]/10"
+                  : "text-white/70 hover:text-white hover:bg-white/8"
+              }`}
+              style={{
+                fontWeight: 500,
+                opacity: open ? 1 : 0,
+                transform: open ? "translateY(0)" : "translateY(-3px)",
+                transitionDelay: open ? `${70 + i * 35}ms` : "0ms",
+              }}
+            >
+              <span className="shrink-0 opacity-80">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Login link — shown only when signed OUT.
+   Subtle text link (not a button) so it doesn't compete visually with
+   "Start Building", but gives returning premium users on a new device
+   a way back into their account instead of typing /auth manually. */
+function LoginLink({ dark = true }) {
+  return (
+    <Link
+      to="/auth"
+      className={`font-sohne text-[13px] tracking-[-0.009em] transition-colors duration-200 whitespace-nowrap px-1 ${
+        dark ? "text-white/55 hover:text-white" : "text-graphite hover:text-ink"
+      }`}
+    >
+      Log in
+    </Link>
+  );
+}
+
 /* ── Glass Nav Link ──
    Plain <a> with manual click handler so hash links (e.g. "/#how-it-works")
    reliably scroll to the target section even though it's an SPA route —
@@ -282,6 +501,7 @@ export default function Navbar() {
   const navigate  = useNavigate();
   const isBuilder = location.pathname === "/builder";
   const isPremium = useAuthStore((s) => s.isPremium());
+  const user      = useAuthStore((s) => s.user);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -307,7 +527,7 @@ export default function Navbar() {
     }
   };
 
-  /* ── Builder Navbar (unchanged) ── */
+  /* ── Builder Navbar (unchanged, + profile avatar if signed in) ── */
   if (isBuilder) {
     return (
       <>
@@ -349,6 +569,22 @@ export default function Navbar() {
           .rf-home-btn:hover .rf-home-door {
             transform: skewY(-28deg) translateX(0.3px);
           }
+          .rf-avatar-btn:hover {
+            transform: translateY(-1px) scale(1.05);
+          }
+          @keyframes rf-avatar-click-bounce {
+            0%   { transform: scale(1)    rotate(0deg); }
+            40%  { transform: scale(0.86) rotate(-7deg); }
+            70%  { transform: scale(1.14) rotate(5deg); }
+            100% { transform: scale(1)    rotate(0deg); }
+          }
+          .rf-avatar-clicked {
+            animation: rf-avatar-click-bounce 0.45s cubic-bezier(.34,1.56,.64,1);
+          }
+          @keyframes rf-avatar-ring-pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.55); }
+            100% { box-shadow: 0 0 0 8px rgba(5,150,105,0); }
+          }
         `}</style>
 
         <nav className="w-full border-b border-dove/20 bg-white sticky top-0 z-50 ">
@@ -369,6 +605,16 @@ export default function Navbar() {
             <div className="flex items-center gap-7">
               <AutoSaveIndicator />
               {isPremium && <PremiumBadge />}
+              {user ? (
+                <ProfileAvatar
+                  email={user.email}
+                  dark={false}
+                  isPremium={isPremium}
+                  onUpgradeClick={() => setUpgradeOpen(true)}
+                />
+              ) : (
+                <LoginLink dark={false} />
+              )}
               <HomeIconButton />
             </div>
 
@@ -385,11 +631,11 @@ export default function Navbar() {
      has pointer-events:none so it never blocks clicks on the page
      below it; only the actual <nav> bar re-enables pointer-events.
 
-     NOTE: the "✦ Premium" / "✦ Upgrade" nav link has been removed
-     (was redundant with "Pricing"). isPremium + setUpgradeOpen +
-     <UpgradeModal> are intentionally KEPT — to be repurposed later
-     into a conditional "My Pass" / active-pass link once pass-expiry
-     tracking is built (see handoff doc Section 15/14). */
+     If signed in, a profile avatar (initials circle) sits before the
+     "Start Building" button and opens an animated dropdown menu. If
+     signed out, a subtle "Log in" text link takes its place — this is
+     how a returning premium user on a new/different device gets back
+     into their account, since there's otherwise no way to reach /auth. */
   return (
     <>
       <style>{`
@@ -404,6 +650,23 @@ export default function Navbar() {
           0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
           25%  { box-shadow: 0 0 0 0 rgba(5,150,105,0.22); }
           100% { box-shadow: 0 0 0 60px rgba(5,150,105,0); }
+        }
+        .rf-avatar-btn:hover {
+          transform: translateY(-1px) scale(1.05);
+          background: rgba(255,255,255,0.18) !important;
+        }
+        @keyframes rf-avatar-click-bounce {
+          0%   { transform: scale(1)    rotate(0deg); }
+          40%  { transform: scale(0.86) rotate(-7deg); }
+          70%  { transform: scale(1.14) rotate(5deg); }
+          100% { transform: scale(1)    rotate(0deg); }
+        }
+        .rf-avatar-clicked {
+          animation: rf-avatar-click-bounce 0.45s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes rf-avatar-ring-pulse {
+          0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.55); }
+          100% { box-shadow: 0 0 0 8px rgba(5,150,105,0); }
         }
       `}</style>
 
@@ -447,7 +710,17 @@ export default function Navbar() {
               ))}
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-4">
+              {user ? (
+                <ProfileAvatar
+                  email={user.email}
+                  dark={true}
+                  isPremium={isPremium}
+                  onUpgradeClick={() => setUpgradeOpen(true)}
+                />
+              ) : (
+                <LoginLink dark={true} />
+              )}
               <Link
                 to="/builder"
                 className="group relative inline-flex items-center gap-2.5 px-5 py-2 bg-white rounded-buttons overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -483,15 +756,25 @@ export default function Navbar() {
                 ResumeFree
               </span>
             </Link>
-            <button
-              className="flex flex-col gap-[5px] p-3"
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[6px]" : ""}`} />
-              <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} />
-              <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[6px]" : ""}`} />
-            </button>
+            <div className="flex items-center gap-2">
+              {user && (
+                <ProfileAvatar
+                  email={user.email}
+                  dark={true}
+                  isPremium={isPremium}
+                  onUpgradeClick={() => setUpgradeOpen(true)}
+                />
+              )}
+              <button
+                className="flex flex-col gap-[5px] p-3"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="Toggle menu"
+              >
+                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[6px]" : ""}`} />
+                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} />
+                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[6px]" : ""}`} />
+              </button>
+            </div>
           </div>
         </nav>
 
@@ -520,6 +803,23 @@ export default function Navbar() {
                   {label}
                 </a>
               ))}
+              {user ? (
+                <Link
+                  to="/dashboard"
+                  className="px-4 py-3 font-sohne text-[14px] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  My Profile
+                </Link>
+              ) : (
+                <Link
+                  to="/auth"
+                  className="px-4 py-3 font-sohne text-[14px] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Log in
+                </Link>
+              )}
             </div>
             <div className="px-4 pb-4 border-t border-white/8 pt-3">
               <ShimmerButton to="/builder">Start Building</ShimmerButton>

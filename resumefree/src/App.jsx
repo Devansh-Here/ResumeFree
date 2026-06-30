@@ -1,15 +1,16 @@
 // src/App.jsx
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Landing      from "./pages/Landing";
-import BuilderPage  from "./pages/BuilderPage";
-import PrivacyPage  from "./pages/PrivacyPage";
-import TermsPage    from "./pages/TermsPage";
-import AuthCallback from "./pages/AuthCallback";
-import AuthPage     from "./pages/AuthPage";
-import ProfilePage  from "./pages/ProfilePage";
-import PricingPage  from "./pages/PricingPage";
-import ScrollToTop  from "./components/ScrollToTop";
+import Landing         from "./pages/Landing";
+import BuilderPage     from "./pages/BuilderPage";
+import PrivacyPage     from "./pages/PrivacyPage";
+import TermsPage       from "./pages/TermsPage";
+import AuthCallback    from "./pages/AuthCallback";
+import AuthPage        from "./pages/AuthPage";
+import ProfilePage     from "./pages/ProfilePage";
+import PricingPage     from "./pages/PricingPage";
+import CoverLetterPage from "./pages/CoverLetterPage";
+import ScrollToTop     from "./components/ScrollToTop";
 import { useAuthStore } from "./store/authStore";
 
 
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/auth"          element={<AuthPage />} />
         <Route path="/dashboard"     element={<ProfilePage />} />
         <Route path="/pricing"       element={<PricingPage />} />
+        <Route path="/cover-letter"  element={<CoverLetterPage />} />
       </Routes>
     </BrowserRouter>
   );
