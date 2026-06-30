@@ -1,9 +1,10 @@
 // src/pages/CoverLetterPage.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../components/layout/Navbar";
 import UpgradeModal from "../components/premium/UpgradeModal";
 import { useResumeStore } from "../store/resumeStore";
 import { useAuthStore } from "../store/authStore";
+import { useCoverLetterCloud } from "../hooks/useCoverLetterCloud";
 import generateCoverLetterPDF from "../utils/generateCoverLetterPDF";
 
 const inputClass = "w-full bg-white border border-[#cbd5e1] rounded-2xl px-4 py-3 text-sm text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/15 transition-all duration-150";
@@ -53,8 +54,8 @@ function buildBackgroundFromResume(resume) {
 
 /* ── Shared "alive" action button — same idle/loading/done/error
    language as the resume DownloadButton (hover bob, loading sweep +
-   dots, success pop + burst, error shake), reused here for both
-   "Generate" and "Download PDF" so the whole app feels consistent. ── */
+   dots, success pop + burst, error shake), reused here for Generate,
+   Download PDF, and Save. ── */
 function AliveActionButton({ status, onClick, disabled, idleLabel, loadingLabel, doneLabel, errorLabel, idleIconPath }) {
   const bg =
     status === "done" ? "bg-[#059669]" :
@@ -66,7 +67,7 @@ function AliveActionButton({ status, onClick, disabled, idleLabel, loadingLabel,
       onClick={onClick}
       disabled={status === "loading" || disabled}
       className={`group relative overflow-hidden flex items-center justify-center gap-2
-                  min-w-[168px] h-11 px-5 text-[13px] font-semibold text-white
+                  min-w-[150px] h-11 px-5 text-[13px] font-semibold text-white
                   rounded-full transition-colors duration-300 ease-out
                   ${bg} ${status === "error" ? "rf-shake" : ""}
                   ${(status === "loading" || disabled) ? "cursor-not-allowed opacity-90" : "cursor-pointer"}`}
@@ -122,6 +123,15 @@ export default function CoverLetterPage() {
   const isPremium = useAuthStore((s) => s.isPremium());
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
+  const {
+    letters,
+    saving,
+    loadingList,
+    fetchCoverLetters,
+    saveCoverLetter,
+    deleteCoverLetter,
+  } = useCoverLetterCloud();
+
   const hasResumeData = !!(
     resume.personal?.name ||
     resume.experience?.length ||
@@ -143,8 +153,41 @@ export default function CoverLetterPage() {
   const [genStatus, setGenStatus] = useState("idle");
   const [genError, setGenError] = useState("");
   const [dlStatus, setDlStatus] = useState("idle");
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const [currentLetterId, setCurrentLetterId] = useState(null);
+
+  // ── NEW: when a letter is opened from Dashboard, show a clean
+  // read-only view instead of the full generate form. ──
+  const [viewMode, setViewMode] = useState(false);
+  const [viewTitle, setViewTitle] = useState("");
 
   const effectiveBackground = useResumeData ? buildBackgroundFromResume(resume) : manualBackground;
+
+  // Load saved letters once, for premium logged-in users
+  useEffect(() => {
+    if (isPremium) fetchCoverLetters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium]);
+
+  // Load a cover letter passed in from Dashboard's "View →" button
+  useEffect(() => {
+    const raw = localStorage.getItem("resumefree_load_coverletter");
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      setLetter(saved.content || "");
+      setCurrentLetterId(saved.id || null);
+      setViewTitle(saved.title || "Cover Letter");
+      const [titlePart, companyPart] = (saved.title || "").split("–").map((s) => s.trim());
+      if (companyPart) setCompanyName(companyPart);
+      if (titlePart && titlePart !== "Cover Letter") setJobTitle(titlePart);
+      setViewMode(true); // ← show clean view, not the full form
+    } catch (e) {
+      console.error("Failed to load saved cover letter:", e);
+    } finally {
+      localStorage.removeItem("resumefree_load_coverletter");
+    }
+  }, []);
 
   async function handleGenerate() {
     if (genStatus === "loading") return;
@@ -181,6 +224,7 @@ export default function CoverLetterPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
       setLetter(data.letter);
+      setCurrentLetterId(null); // fresh generation = not yet saved as this version
       setGenStatus("done");
       setTimeout(() => setGenStatus("idle"), 2200);
     } catch (e) {
@@ -205,11 +249,40 @@ export default function CoverLetterPage() {
     }
   }
 
+  async function handleSave() {
+    if (saveStatus === "loading" || !letter) return;
+    setSaveStatus("loading");
+    const title = `${jobTitle || "Cover Letter"} – ${companyName || "Untitled"}`;
+    const { data, error } = await saveCoverLetter({ id: currentLetterId, title, content: letter });
+    if (error) {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 2400);
+      return;
+    }
+    if (data?.id) setCurrentLetterId(data.id);
+    setSaveStatus("done");
+    setTimeout(() => setSaveStatus("idle"), 2200);
+  }
+
+  async function handleDeleteSaved(id) {
+    await deleteCoverLetter(id);
+    if (currentLetterId === id) setCurrentLetterId(null);
+  }
+
   function handleCopy() {
     if (!letter) return;
     navigator.clipboard.writeText(letter);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
+  }
+
+  function handleStartNew() {
+    setViewMode(false);
+    setLetter("");
+    setCurrentLetterId(null);
+    setCompanyName("");
+    setJobTitle("");
+    setJobDescription("");
   }
 
   return (
@@ -234,164 +307,274 @@ export default function CoverLetterPage() {
       <Navbar />
 
       <div className="max-w-3xl mx-auto px-5 sm:px-6 pt-28 pb-20">
-        <h1 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[32px] sm:text-[38px] text-[#0a1628] leading-tight mb-2">
-          Write your cover letter
-        </h1>
-        <p className="text-[14px] text-[#4a6fa5] mb-10">
-          Paste the job description, tell us a bit about yourself, and AI will draft a letter tailored to the role — in your own facts, no invented numbers.
-        </p>
 
         {!isPremium ? (
-          <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-10 text-center shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
-            <div className="w-12 h-12 rounded-2xl bg-[#d1fae5] flex items-center justify-center mx-auto mb-4">
-              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-                <path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6L8 1.6z" stroke="#059669" strokeWidth="1.3" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[22px] text-[#0a1628] mb-2">
-              Cover Letter Generator is a premium feature
-            </h2>
-            <p className="text-[13px] text-[#4a6fa5] mb-6 max-w-sm mx-auto">
-              Unlock it with any pass — Sprint, Placement, or Season — or grab it as a one-time add-on.
+          <>
+            <h1 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[32px] sm:text-[38px] text-[#0a1628] leading-tight mb-2">
+              Write your cover letter
+            </h1>
+            <p className="text-[14px] text-[#4a6fa5] mb-10">
+              Paste the job description, tell us a bit about yourself, and AI will draft a letter tailored to the role — in your own facts, no invented numbers.
             </p>
+            <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-10 text-center shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
+              <div className="w-12 h-12 rounded-2xl bg-[#d1fae5] flex items-center justify-center mx-auto mb-4">
+                <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6L8 1.6z" stroke="#059669" strokeWidth="1.3" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <h2 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[22px] text-[#0a1628] mb-2">
+                Cover Letter Generator is a premium feature
+              </h2>
+              <p className="text-[13px] text-[#4a6fa5] mb-6 max-w-sm mx-auto">
+                Unlock it with any pass — Sprint, Placement, or Season — or grab it as a one-time add-on.
+              </p>
+              <button
+                onClick={() => setUpgradeOpen(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0a1628] text-white text-[13px] font-semibold hover:bg-[#059669] transition-colors duration-200"
+              >
+                Unlock Cover Letter Generator
+              </button>
+            </div>
+          </>
+        ) : viewMode ? (
+          /* ───────────── CLEAN READ VIEW (opened from Dashboard) ───────────── */
+          <div className="rf-fade-up">
             <button
-              onClick={() => setUpgradeOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#0a1628] text-white text-[13px] font-semibold hover:bg-[#059669] transition-colors duration-200"
+              onClick={handleStartNew}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#4a6fa5] hover:text-[#0a1628] transition-colors mb-6"
             >
-              Unlock Cover Letter Generator
+              ← Write a new letter
             </button>
+
+            <h1 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[28px] sm:text-[32px] text-[#0a1628] leading-tight mb-1">
+              {viewTitle}
+            </h1>
+            <p className="text-[13px] text-[#4a6fa5] mb-8">Saved cover letter</p>
+
+            <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-8 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
+              <div className="whitespace-pre-wrap text-[14px] leading-relaxed text-[#0a1628] font-[Inter]">
+                {letter}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-5 flex-wrap">
+              <button
+                onClick={handleCopy}
+                className="text-[13px] font-semibold text-[#4a6fa5] hover:text-[#0a1628] transition-colors px-4 py-2.5"
+              >
+                {copied ? "Copied ✓" : "Copy text"}
+              </button>
+              <button
+                onClick={() => setViewMode(false)}
+                className="text-[13px] font-semibold text-[#059669] hover:text-[#047857] transition-colors px-4 py-2.5 rounded-full border border-[#059669]/30 hover:bg-[#d1fae5]/40"
+              >
+                Edit details
+              </button>
+              <AliveActionButton
+                status={dlStatus}
+                onClick={handleDownload}
+                idleLabel="Download PDF"
+                loadingLabel="Generating…"
+                doneLabel="Downloaded"
+                errorLabel="Try again"
+                idleIconPath="M8 1.5v8M4.5 6.5L8 10l3.5-3.5M2 13.5h12"
+              />
+            </div>
           </div>
         ) : (
-          <div className="space-y-6">
+          /* ───────────── FULL FORM (new letter / editing) ───────────── */
+          <>
+            <h1 style={{ fontFamily: "'DM Serif Display', serif" }} className="text-[32px] sm:text-[38px] text-[#0a1628] leading-tight mb-2">
+              Write your cover letter
+            </h1>
+            <p className="text-[14px] text-[#4a6fa5] mb-10">
+              Paste the job description, tell us a bit about yourself, and AI will draft a letter tailored to the role — in your own facts, no invented numbers.
+            </p>
 
-            {/* Background source toggle */}
-            <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
-              {hasResumeData ? (
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div>
-                    <p className={labelClass}>Background source</p>
-                    <p className="text-[13px] text-[#0a1628]">
-                      {useResumeData
-                        ? "Using details from your saved resume (education, experience, projects, skills)."
-                        : "Using the background you type below."}
-                    </p>
+            <div className="space-y-6">
+
+              {/* Saved letters */}
+              {letters.length > 0 && (
+                <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
+                  <p className={labelClass}>Your saved letters {loadingList && "(refreshing…)"}</p>
+                  <div className="space-y-2">
+                    {letters.map((l) => (
+                      <div
+                        key={l.id}
+                        className={`flex items-center justify-between gap-3 px-3 py-2 rounded-2xl border transition-colors ${
+                          currentLetterId === l.id ? "border-[#059669] bg-[#d1fae5]/30" : "border-[#cbd5e1]/60 hover:bg-[#f8fafc]"
+                        }`}
+                      >
+                        <button
+                          onClick={() => {
+                            setLetter(l.content);
+                            setCurrentLetterId(l.id);
+                            setViewTitle(l.title);
+                            const [titlePart, companyPart] = (l.title || "").split("–").map((s) => s.trim());
+                            if (companyPart) setCompanyName(companyPart);
+                            if (titlePart && titlePart !== "Cover Letter") setJobTitle(titlePart);
+                            setViewMode(true);
+                          }}
+                          className="text-left flex-1 min-w-0"
+                        >
+                          <p className="text-[13px] font-semibold text-[#0a1628] truncate">{l.title}</p>
+                          <p className="text-[11px] text-[#4a6fa5]">
+                            {new Date(l.updated_at || l.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          </p>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSaved(l.id)}
+                          className="shrink-0 text-[11px] font-semibold text-red-500 hover:text-red-700 transition-colors px-2 py-1"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <button
-                    onClick={() => setUseResumeData((v) => !v)}
-                    className="shrink-0 text-[12px] font-semibold text-[#059669] hover:text-[#047857] transition-colors px-3 py-1.5 rounded-full border border-[#059669]/30 hover:bg-[#d1fae5]/40"
-                  >
-                    {useResumeData ? "Enter manually instead" : "Use my resume instead"}
-                  </button>
-                </div>
-              ) : (
-                <p className="text-[13px] text-[#4a6fa5]">
-                  We didn't find a saved resume — just tell us a bit about your background below.
-                </p>
-              )}
-
-              {!useResumeData && (
-                <div className="mt-4">
-                  <label className={labelClass}>Your background</label>
-                  <textarea
-                    value={manualBackground}
-                    onChange={(e) => setManualBackground(e.target.value)}
-                    rows={5}
-                    placeholder="E.g. B.Tech CSE student, skilled in React, Node.js, MySQL. Built a 3-project portfolio including an e-commerce app with Razorpay integration. Interned at..."
-                    className={inputClass}
-                  />
                 </div>
               )}
-            </div>
 
-            {/* Contact details */}
-            <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
-              <p className={labelClass}>Contact details (for the letter header)</p>
-              <div className="grid sm:grid-cols-3 gap-3">
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className={inputClass} />
-                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={inputClass} />
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" className={inputClass} />
+              {/* Background source toggle */}
+              <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
+                {hasResumeData ? (
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                      <p className={labelClass}>Background source</p>
+                      <p className="text-[13px] text-[#0a1628]">
+                        {useResumeData
+                          ? "Using details from your saved resume (education, experience, projects, skills)."
+                          : "Using the background you type below."}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setUseResumeData((v) => !v)}
+                      className="shrink-0 text-[12px] font-semibold text-[#059669] hover:text-[#047857] transition-colors px-3 py-1.5 rounded-full border border-[#059669]/30 hover:bg-[#d1fae5]/40"
+                    >
+                      {useResumeData ? "Enter manually instead" : "Use my resume instead"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-[#4a6fa5]">
+                    We didn't find a saved resume — just tell us a bit about your background below.
+                  </p>
+                )}
+
+                {!useResumeData && (
+                  <div className="mt-4">
+                    <label className={labelClass}>Your background</label>
+                    <textarea
+                      value={manualBackground}
+                      onChange={(e) => setManualBackground(e.target.value)}
+                      rows={5}
+                      placeholder="E.g. B.Tech CSE student, skilled in React, Node.js, MySQL. Built a 3-project portfolio including an e-commerce app with Razorpay integration. Interned at..."
+                      className={inputClass}
+                    />
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Job details */}
-            <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
-              <div className="grid sm:grid-cols-2 gap-3 mb-4">
-                <div>
-                  <label className={labelClass}>Company name</label>
-                  <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. TCS" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Job title (optional)</label>
-                  <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Software Engineer" className={inputClass} />
+              {/* Contact details */}
+              <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
+                <p className={labelClass}>Contact details (for the letter header)</p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className={inputClass} />
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className={inputClass} />
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" className={inputClass} />
                 </div>
               </div>
-              <label className={labelClass}>Job description</label>
-              <textarea
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                rows={7}
-                placeholder="Paste the full job description here…"
-                className={inputClass}
-              />
-            </div>
 
-            {genError && genStatus === "error" && (
-              <p className="text-[13px] text-red-600 -mt-2 px-1">{genError}</p>
-            )}
-
-            <div className="flex justify-end">
-              <AliveActionButton
-                status={genStatus}
-                onClick={handleGenerate}
-                idleLabel="Generate Letter"
-                loadingLabel="Writing…"
-                doneLabel="Generated"
-                errorLabel="Try again"
-                idleIconPath="M2 8h8M10 8l-3-3M10 8l-3 3M2 3h3M2 13h3"
-              />
-            </div>
-
-            {/* Result */}
-            {letter && (
-              <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)] rf-fade-up">
-                <div className="flex items-center justify-between mb-3">
-                  <p className={labelClass + " mb-0"}>Your cover letter (editable)</p>
-                  <button
-                    onClick={handleCopy}
-                    className="text-[12px] font-semibold text-[#4a6fa5] hover:text-[#0a1628] transition-colors"
-                  >
-                    {copied ? "Copied ✓" : "Copy text"}
-                  </button>
+              {/* Job details */}
+              <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]">
+                <div className="grid sm:grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className={labelClass}>Company name</label>
+                    <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="e.g. TCS" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Job title (optional)</label>
+                    <input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Software Engineer" className={inputClass} />
+                  </div>
                 </div>
+                <label className={labelClass}>Job description</label>
                 <textarea
-                  value={letter}
-                  onChange={(e) => setLetter(e.target.value)}
-                  rows={14}
-                  className={inputClass + " font-[Inter] leading-relaxed"}
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  rows={7}
+                  placeholder="Paste the full job description here…"
+                  className={inputClass}
                 />
-                <div className="flex items-center justify-end gap-3 mt-4">
-                  <AliveActionButton
-                    status={genStatus === "loading" ? "idle" : genStatus}
-                    onClick={handleGenerate}
-                    idleLabel="Regenerate"
-                    loadingLabel="Writing…"
-                    doneLabel="Generated"
-                    errorLabel="Try again"
-                    idleIconPath="M2 3v4h4M14 13V9h-4M3.5 6A5.5 5.5 0 0113 5.2M12.5 10A5.5 5.5 0 013 10.8"
-                  />
-                  <AliveActionButton
-                    status={dlStatus}
-                    onClick={handleDownload}
-                    idleLabel="Download PDF"
-                    loadingLabel="Generating…"
-                    doneLabel="Downloaded"
-                    errorLabel="Try again"
-                    idleIconPath="M8 1.5v8M4.5 6.5L8 10l3.5-3.5M2 13.5h12"
-                  />
-                </div>
               </div>
-            )}
-          </div>
+
+              {genError && genStatus === "error" && (
+                <p className="text-[13px] text-red-600 -mt-2 px-1">{genError}</p>
+              )}
+
+              <div className="flex justify-end">
+                <AliveActionButton
+                  status={genStatus}
+                  onClick={handleGenerate}
+                  idleLabel="Generate Letter"
+                  loadingLabel="Writing…"
+                  doneLabel="Generated"
+                  errorLabel="Try again"
+                  idleIconPath="M2 8h8M10 8l-3-3M10 8l-3 3M2 3h3M2 13h3"
+                />
+              </div>
+
+              {/* Result */}
+              {letter && (
+                <div className="rounded-3xl border border-[#cbd5e1]/60 bg-white p-6 shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)] rf-fade-up">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className={labelClass + " mb-0"}>
+                      Your cover letter (editable) {currentLetterId && <span className="text-[#059669]">· saved</span>}
+                    </p>
+                    <button
+                      onClick={handleCopy}
+                      className="text-[12px] font-semibold text-[#4a6fa5] hover:text-[#0a1628] transition-colors"
+                    >
+                      {copied ? "Copied ✓" : "Copy text"}
+                    </button>
+                  </div>
+                  <textarea
+                    value={letter}
+                    onChange={(e) => setLetter(e.target.value)}
+                    rows={14}
+                    className={inputClass + " font-[Inter] leading-relaxed"}
+                  />
+                  <div className="flex items-center justify-end gap-3 mt-4 flex-wrap">
+                    <AliveActionButton
+                      status={genStatus === "loading" ? "idle" : genStatus}
+                      onClick={handleGenerate}
+                      idleLabel="Regenerate"
+                      loadingLabel="Writing…"
+                      doneLabel="Generated"
+                      errorLabel="Try again"
+                      idleIconPath="M2 3v4h4M14 13V9h-4M3.5 6A5.5 5.5 0 0113 5.2M12.5 10A5.5 5.5 0 013 10.8"
+                    />
+                    <AliveActionButton
+                      status={saveStatus}
+                      onClick={handleSave}
+                      disabled={saving}
+                      idleLabel={currentLetterId ? "Update" : "Save"}
+                      loadingLabel="Saving…"
+                      doneLabel="Saved"
+                      errorLabel="Try again"
+                      idleIconPath="M3 2h8l2 2v9a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1zM5 2v3h5V2M5 9h5"
+                    />
+                    <AliveActionButton
+                      status={dlStatus}
+                      onClick={handleDownload}
+                      idleLabel="Download PDF"
+                      loadingLabel="Generating…"
+                      doneLabel="Downloaded"
+                      errorLabel="Try again"
+                      idleIconPath="M8 1.5v8M4.5 6.5L8 10l3.5-3.5M2 13.5h12"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 

@@ -74,6 +74,15 @@ export default function ProfilePage() {
     navigate('/builder')
   }
 
+  const handleOpenCoverLetter = (cl) => {
+    localStorage.setItem('resumefree_load_coverletter', JSON.stringify({
+      id: cl.id,
+      title: cl.title,
+      content: cl.content
+    }))
+    navigate('/cover-letter')
+  }
+
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     navigate('/')
@@ -402,7 +411,10 @@ export default function ProfilePage() {
                   <p className="font-sohne text-[13px] text-dove mt-1 tracking-[-0.009em]">
                     {formatDate(cl.updated_at)}
                   </p>
-                  <button className="mt-4 font-sohne text-[14px] font-[450] text-ash hover:text-ink transition-colors tracking-[-0.009em]">
+                  <button
+                    onClick={() => handleOpenCoverLetter(cl)}
+                    className="mt-4 font-sohne text-[14px] font-[450] text-ash hover:text-ink transition-colors tracking-[-0.009em]"
+                  >
                     View →
                   </button>
                 </div>
