@@ -8,10 +8,10 @@ const root = path.resolve(__dirname, "..");
 
 await build({
   entryPoints: [path.join(root, "src/server/generate-pdf.entry.js")],
-  outfile: path.join(root, "api/generate-pdf.js"),
+  outfile: path.join(root, "api/generate-pdf.cjs"),
   bundle: true,
   platform: "node",
-  format: "esm",
+  format: "cjs",
   target: "node20",
   external: ["puppeteer-core", "@sparticuz/chromium", "puppeteer"],
   jsx: "automatic",
@@ -20,4 +20,4 @@ await build({
   },
 });
 
-console.log("✅ api/generate-pdf.js bundled successfully");
+console.log("✅ api/generate-pdf.cjs bundled successfully");
