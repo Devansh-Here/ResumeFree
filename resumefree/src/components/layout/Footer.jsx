@@ -2,19 +2,18 @@
 import { Link } from "react-router-dom";
 
 const ABOUT_LINKS = [
-  { label: "How It Works", href: "#how-it-works", internal: false },
-  { label: "Pricing",      href: "#pricing",       internal: false },
-  { label: "Privacy Policy", href: "/privacy",     internal: true  },
-  { label: "Terms of Use",   href: "/terms",       internal: true  },
+  { label: "How It Works", href: "/#how-it-works" },
+  { label: "Pricing",      href: "/pricing" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Use",   href: "/terms" },
 ];
 
 const HELPFUL_LINKS = [
-  { label: "ATS Checker",   href: "#how-it-works", internal: false },
-  { label: "JD Matcher",    href: "#how-it-works", internal: false },
-  { label: "Resume Templates", href: "#how-it-works", internal: false },
-  { label: "FAQ",           href: "#pricing",       internal: false },
+  { label: "ATS Checker",   href: "/#how-it-works" },
+  { label: "JD Matcher",    href: "/#how-it-works" },
+  { label: "Resume Templates", href: "/#how-it-works" },
+  { label: "FAQ",           href: "/pricing" },
 ];
-
 const SOCIALS = [
   { label: "Instagram", href: "https://instagram.com" },
   { label: "Twitter",   href: "https://twitter.com" },
@@ -102,23 +101,14 @@ export default function Footer({ attachedTop = false }) {
                 About Us
               </h4>
               <ul className="flex flex-col gap-3">
-                {ABOUT_LINKS.map(({ label, href, internal }) => (
+                {ABOUT_LINKS.map(({ label, href }) => (
                   <li key={label}>
-                    {internal ? (
-                      <Link
-                        to={href}
-                        className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
-                      >
-                        {label}
-                      </Link>
-                    ) : (
-                      
-                        <a href={href}
-                        className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
-                      >
-                        {label}
-                      </a>
-                    )}
+                    <Link
+                      to={href}
+                      className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
+                    >
+                      {label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -132,12 +122,12 @@ export default function Footer({ attachedTop = false }) {
               <ul className="flex flex-col gap-3">
                 {HELPFUL_LINKS.map(({ label, href }) => (
                   <li key={label}>
-                    
-                      <a href={href}
+                    <Link
+                      to={href}
                       className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
                     >
                       {label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
