@@ -1,19 +1,27 @@
 // src/components/ATSCheckPanel.jsx
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import { runATSCheck, getScoreLabel, CATEGORY_LABELS } from '../utils/atsCheck'
 import { useResumeStore } from '../store/resumeStore'
 import { useAuthStore } from '../store/authStore'
 import UpgradeModal from './premium/UpgradeModal'
 
 export default function ATSCheckPanel() {
+  const navigate = useNavigate()
   const resumeData = useResumeStore((s) => s.resume)
-  const isPremium = useAuthStore((s) => s.isPremium())
+  // Note: basic ATS check (score/matched/missing) is free for everyone —
+  // this only gates the AI-generated "reach 90+" tips below.
+  const hasAdvancedAccess = useAuthStore((s) => s.hasATSAdvancedAccess())
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [open, setOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+
+  const [tips, setTips] = useState(null)
+  const [tipsLoading, setTipsLoading] = useState(false)
+  const [tipsError, setTipsError] = useState(null)
 
   function handleClick() {
     if (result) { setOpen(true); return }
@@ -32,6 +40,43 @@ export default function ATSCheckPanel() {
     setResult(null)
     setOpen(false)
     setShowAll(false)
+    setTips(null)
+    setTipsError(null)
+  }
+
+  // Sends the user to Pricing with the addon pre-selected AND remembers
+  // that they started this from the Builder — PricingPage reads this via
+  // location.state.returnTo and routes back here (not /dashboard) after
+  // a successful purchase.
+  function handleBuyATSAddon() {
+    setOpen(false)
+    navigate('/pricing?confirm=addon_ats', { state: { returnTo: '/builder' } })
+  }
+
+  async function handleGetTips() {
+    if (!hasAdvancedAccess) { setUpgradeOpen(true); return }
+    if (!result || !result.missing || result.missing.length === 0) return
+    setTipsLoading(true)
+    setTipsError(null)
+    try {
+      const res = await fetch('/api/ats-advanced-tips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          score: result.score,
+          roleLabel: result.roleLabel,
+          missingKeywords: result.missing.map((m) => m.word),
+          categoryBreakdown: result.categoryBreakdown,
+          matchedCount: result.matched.length,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Could not generate tips. Try again.')
+      setTips(data.tips)
+    } catch (err) {
+      setTipsError(err.message)
+    }
+    setTipsLoading(false)
   }
 
   const si = result ? getScoreLabel(result.score) : null
@@ -196,20 +241,81 @@ export default function ATSCheckPanel() {
                 </div>
               )}
 
-              {/* Premium nudge */}
-              {result && result.score < 80 && !isPremium && (
+              {/* Advanced ATS Tips — locked (upgrade nudge) */}
+              {result && result.missing.length > 0 && !hasAdvancedAccess && (
                 <div className="rounded-2xl px-4 py-3.5" style={{ background: '#d1fae5', border: '1px solid #a7f3d0' }}>
                   <p className="text-sm font-semibold text-[#0a1628] mb-1" style={{ fontFamily: "'DM Serif Display', serif" }}>
-                    Reach 90+ with JD Match
+                    Unlock Advanced ATS Tips
                   </p>
                   <p className="text-[11px] text-[#1e3a5f] leading-relaxed mb-2.5" style={{ fontFamily: "'Inter', sans-serif" }}>
-                    Paste any job description — we scan for that exact role's keywords and tailor your bullets.
+                    Get a prioritized, step-by-step plan to push this resume toward 90+ — built from your actual missing keywords.
                   </p>
-                  <button onClick={() => { setUpgradeOpen(true); setOpen(false) }} type="button"
-                    className="px-4 py-1.5 text-[11px] font-semibold rounded-full text-white transition-colors hover:bg-[#1e3a5f]"
-                    style={{ background: '#0a1628', fontFamily: "'Inter', sans-serif" }}>
-                    Upgrade — ₹199/month
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => { setUpgradeOpen(true); setOpen(false) }} type="button"
+                      className="px-4 py-1.5 text-[11px] font-semibold rounded-full text-white transition-colors hover:bg-[#1e3a5f]"
+                      style={{ background: '#0a1628', fontFamily: "'Inter', sans-serif" }}>
+                      Upgrade — ₹199/month
+                    </button>
+                    <button onClick={handleBuyATSAddon} type="button"
+                      className="text-[11px] font-semibold text-[#059669] hover:underline" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      or buy Advanced ATS add-on ₹99
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Advanced ATS Tips — unlocked */}
+              {result && result.missing.length > 0 && hasAdvancedAccess && !tips && (
+                <button
+                  type="button"
+                  onClick={handleGetTips}
+                  disabled={tipsLoading}
+                  className="w-full py-2.5 rounded-full text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                  style={{ background: tipsLoading ? '#4a6fa5' : '#0a1628', fontFamily: "'Inter', sans-serif" }}
+                >
+                  {tipsLoading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Building your plan…
+                    </span>
+                  ) : '🎯 Get Advanced Tips to Reach 90+'}
+                </button>
+              )}
+
+              {tipsError && (
+                <p className="text-xs text-red-500" style={{ fontFamily: "'Inter', sans-serif" }}>{tipsError}</p>
+              )}
+
+              {tips && tips.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    Your action plan to 90+
+                  </p>
+                  <div className="space-y-2">
+                    {tips.map((t, i) => (
+                      <div key={i} className="flex items-start gap-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3">
+                        <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                          style={{ background: '#059669' }}>
+                          {i + 1}
+                        </span>
+                        <p className="text-[13px] text-[#0a1628] leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+                          {t.action}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {result && result.missing.length === 0 && (
+                <div className="text-center py-2">
+                  <p className="text-xl mb-1">🎉</p>
+                  <p className="text-[11px] text-[#4a6fa5]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    No missing keywords for your detected role — nothing to fix right now.
+                  </p>
                 </div>
               )}
 

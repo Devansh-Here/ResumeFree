@@ -222,7 +222,7 @@ app.post("/api/verify-payment", async (req, res) => {
     // `is_premium` / `premium_expires_at` / `active_pass_type` are only included
     // in the payload when this purchase is a real pass — for addons those keys
     // are simply omitted, so Supabase's upsert leaves them untouched on existing
-    // rows. Addon-specific access is granted via its own dedicated flag instead.
+    // rows. Each addon grants access via its own dedicated unlock flag instead.
     const profileUpdate = {
       id: userId,
       email,
@@ -233,6 +233,8 @@ app.post("/api/verify-payment", async (req, res) => {
         active_pass_type: activePassType,
       }),
       ...(pass_type === "addon_cover_letter" && { addon_cover_letter_unlocked: true }),
+      ...(pass_type === "addon_jd_tailoring" && { addon_jd_tailoring_unlocked: true }),
+      ...(pass_type === "addon_ats" && { addon_ats_unlocked: true }),
     };
 
     const { error: profileErr } = await supabaseAdmin
@@ -360,6 +362,88 @@ Return ONLY a raw JSON object (no markdown, no explanation):
     return res.status(200).json({ matchScore: clientScore, missingKeywords, suggestions });
   } catch (err) {
     console.error("jd-match error:", err);
+    return res.status(500).json({ error: "Something went wrong. Try again." });
+  }
+});
+
+// POST /api/ats-advanced-tips
+// Premium/addon_ats-gated feature. Turns the deterministic missing-keywords list
+// (already computed client-side by runATSCheck) into a short, prioritized,
+// actionable plan. Anti-hallucination: the AI may only reference keywords that
+// were explicitly sent in `missingKeywords` — it cannot invent new ones, and it
+// cannot fabricate achievements/experience, only suggest ADDING listed keywords.
+app.post("/api/ats-advanced-tips", async (req, res) => {
+  const { score, roleLabel, missingKeywords, categoryBreakdown, matchedCount } = req.body || {};
+
+  if (typeof score !== "number") {
+    return res.status(400).json({ error: "Missing ATS score." });
+  }
+  if (!Array.isArray(missingKeywords) || missingKeywords.length === 0) {
+    return res.status(400).json({ error: "No missing keywords to build tips from." });
+  }
+
+  const breakdownLines = Object.entries(categoryBreakdown || {})
+    .filter(([, v]) => v.relevant)
+    .map(([cat, v]) => `${cat}: ${v.found}/${v.total} found`)
+    .join("\n") || "(no category data)";
+
+  const prompt = `You are an ATS resume optimization coach for Indian college students applying to TCS, Infosys, Capgemini, and startups.
+
+CURRENT ATS SCORE: ${score}/100
+DETECTED ROLE: ${roleLabel || "general"}
+KEYWORDS ALREADY MATCHED: ${matchedCount || 0}
+KEYWORDS MISSING FROM RESUME: ${missingKeywords.join(", ")}
+CATEGORY BREAKDOWN (found/total per category):
+${breakdownLines}
+
+TASK: Give the student a short, prioritized action plan (max 5 steps) to raise their ATS score toward 90+.
+
+STRICT RULES:
+- Every keyword you recommend adding MUST come from the "KEYWORDS MISSING" list above — never invent a keyword not in that exact list.
+- Recommendations must be concrete and actionable (e.g. "Add 'Docker' to your Skills > Tools section" not "improve your skills section").
+- Prioritize by impact — reference the category breakdown to decide which section has the biggest gap and put that first.
+- Keep each tip under 20 words.
+- Never invent achievements, projects, numbers, or experience the student doesn't have — only suggest ADDING existing missing keywords to the right section, never fabricating accomplishments.
+
+Return ONLY a raw JSON object (no markdown, no explanation):
+{"tips": [{"action": "<short actionable instruction>"}]}`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 400,
+        temperature: 0.3,
+        messages: [
+          { role: "system", content: "You are a strict JSON-only API. Output ONLY a raw JSON object. No markdown, no code fences, no explanation. Never suggest a keyword outside the provided missing-keywords list." },
+          { role: "user", content: prompt },
+        ],
+      }),
+    });
+    const data = await response.json();
+    let raw = data.choices?.[0]?.message?.content?.trim();
+    if (!raw) return res.status(502).json({ error: "No response from AI. Try again." });
+    raw = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/```\s*$/i,"").trim();
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch {
+      const start = raw.indexOf("{"), end = raw.lastIndexOf("}");
+      if (start === -1 || end === -1) return res.status(502).json({ error: "Could not read the AI response. Try again." });
+      parsed = JSON.parse(raw.slice(start, end + 1));
+    }
+    const tips = (Array.isArray(parsed.tips) ? parsed.tips : [])
+      .filter(t => t && typeof t.action === "string" && t.action.trim().length > 0)
+      .slice(0, 5)
+      .map(t => ({ action: t.action.trim() }));
+
+    if (tips.length === 0) {
+      return res.status(502).json({ error: "Could not generate tips. Try again." });
+    }
+    return res.status(200).json({ tips });
+  } catch (err) {
+    console.error("ats-advanced-tips error:", err);
     return res.status(500).json({ error: "Something went wrong. Try again." });
   }
 });

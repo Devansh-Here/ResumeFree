@@ -1,6 +1,6 @@
 // src/pages/PricingPage.jsx
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import PricingSection from "../components/landing/PricingSection";
@@ -9,10 +9,18 @@ import { useAuthStore } from "../store/authStore";
 
 export default function PricingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const user = useAuthStore((s) => s.user);
 
   const [confirmPass, setConfirmPass] = useState(null);
+
+  // Where to send the user after a successful purchase. Defaults to
+  // /dashboard (normal case — user browsed Pricing directly). If they were
+  // sent here from somewhere else (e.g. the Builder's "buy Advanced ATS
+  // add-on" nudge), that page passes `state: { returnTo: '/builder' }` via
+  // navigate(), and we honor it instead.
+  const [returnTo] = useState(location.state?.returnTo || "/dashboard");
 
   // If we landed here straight off a login redirect with ?confirm=placement
   // (or ?confirm=addon_cover_letter etc.), and the user is now actually
@@ -61,7 +69,7 @@ export default function PricingPage() {
             // query) keep showing the pre-payment state until the next
             // full login/page reload.
             await useAuthStore.getState().fetchProfile();
-            navigate("/dashboard");
+            navigate(returnTo);
           }}
         />
       )}

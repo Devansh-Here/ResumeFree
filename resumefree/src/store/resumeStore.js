@@ -36,6 +36,10 @@ export const useResumeStore = create(
       activeSection: "personal",
       aiUsageCount: 0, // free tier: max 3
 
+      // ── Template selection ──────────────────────────────
+      selectedTemplateId: "classic",
+      setTemplate: (templateId) => set({ selectedTemplateId: templateId }),
+
       // ── Section navigation ──────────────────────────────
       setActiveSection: (section) => set({ activeSection: section }),
 
@@ -251,6 +255,8 @@ export const useResumeStore = create(
       // ── Reset ───────────────────────────────────────────
       resetResume: () =>
         set({ resume: DEFAULT_RESUME, aiUsageCount: 0 }),
+      // Note: selectedTemplateId is intentionally NOT reset here —
+      // template choice is a user preference, not resume data.
     }),
     {
       name: "resumefree-data", // localStorage key

@@ -1,9 +1,9 @@
 // src/pages/ProfilePage.jsx
-
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient'
 import { getPass } from '../utils/passes'
+import Navbar from '../components/layout/Navbar'
 
 const getInitials = (name = '', email = '') => {
   if (name?.trim()) {
@@ -84,11 +84,6 @@ export default function ProfilePage() {
     navigate('/cover-letter')
   }
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    navigate('/')
-  }
-
   // ── Pass-aware premium check (mirrors authStore.isPremium()) ──
   const isPremium = profile?.is_premium === true
     && profile?.premium_expires_at
@@ -128,38 +123,12 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-fog">
 
-      {/* ── Navbar ── */}
-      <nav className="bg-white border-b border-dove/40 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-ink rounded-images flex items-center justify-center">
-              <span className="text-white text-[10px] font-semibold font-sohne tracking-wider">ATS</span>
-            </div>
-            <span className="font-sohne text-[15px] font-[500] text-ink tracking-[-0.009em] hidden sm:block">
-              ResumeFree
-            </span>
-          </Link>
+      {/* ── Shared site-wide navbar (same as Landing/Pricing/Privacy/Terms) ── */}
+      <Navbar />
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleSignOut}
-              className="font-sohne text-[15px] font-[450] text-graphite hover:text-ink transition-colors tracking-[-0.009em]"
-            >
-              Sign out
-            </button>
-            <Link
-              to="/builder"
-              className="px-5 py-2 bg-ink hover:bg-ink/85 text-white font-sohne text-[15px] font-[450] rounded-buttons transition-colors tracking-[-0.009em]"
-            >
-              + New Resume
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <div className="max-w-5xl mx-auto px-6 pt-28 pb-10 space-y-8">
 
-      <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
-
-        {/* ── Greeting + primary CTA banner (NEW) ── */}
+        {/* ── Greeting + primary CTA banner ── */}
         <div
           className="rounded-cards p-7 flex flex-wrap items-center justify-between gap-5"
           style={{

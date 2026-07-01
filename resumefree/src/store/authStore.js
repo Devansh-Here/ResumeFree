@@ -61,6 +61,24 @@ export const useAuthStore = create((set, get) => ({
     return !!profile?.addon_cover_letter_unlocked;
   },
 
+  // True if the user has access to JD Matcher specifically —
+  // either via an active pass, OR via the one-time `addon_jd_tailoring` purchase.
+  hasJDMatcherAccess: () => {
+    const { profile } = get();
+    if (get().isPremium()) return true;
+    return !!profile?.addon_jd_tailoring_unlocked;
+  },
+
+  // True if the user has access to Advanced ATS Tips specifically —
+  // either via an active pass, OR via the one-time `addon_ats` purchase.
+  // NOTE: basic ATS check (score/matched/missing) stays free for everyone —
+  // this only gates the AI-generated "how to reach 90+" recommendations.
+  hasATSAdvancedAccess: () => {
+    const { profile } = get();
+    if (get().isPremium()) return true;
+    return !!profile?.addon_ats_unlocked;
+  },
+
   signOut: async () => {
     await supabase.auth.signOut();
     set({ user: null, profile: null });

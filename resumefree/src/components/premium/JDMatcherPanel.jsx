@@ -28,7 +28,8 @@ export default function JDMatcherPanel() {
   const resume = useResumeStore((s) => s.resume);
   const updateExperienceBullet = useResumeStore((s) => s.updateExperienceBullet);
   const updateProjectBullet = useResumeStore((s) => s.updateProjectBullet);
-  const isPremium = useAuthStore((s) => s.isPremium());
+  // Full pass OR the standalone addon_jd_tailoring purchase both grant access.
+  const hasAccess = useAuthStore((s) => s.hasJDMatcherAccess());
 
   const [open, setOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -39,7 +40,7 @@ export default function JDMatcherPanel() {
   const [applied, setApplied] = useState({});
 
   const handleOpen = () => {
-    if (!isPremium) { setUpgradeOpen(true); return; }
+    if (!hasAccess) { setUpgradeOpen(true); return; }
     setOpen(true);
   };
 
@@ -115,12 +116,12 @@ export default function JDMatcherPanel() {
         className="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-full border transition-all whitespace-nowrap"
         style={{
           fontFamily: "'Inter', sans-serif",
-          background: isPremium ? 'white' : '#fffbeb',
-          borderColor: isPremium ? '#cbd5e1' : '#d97706' + '50',
-          color: isPremium ? '#1e3a5f' : '#92400e',
+          background: hasAccess ? 'white' : '#fffbeb',
+          borderColor: hasAccess ? '#cbd5e1' : '#d97706' + '50',
+          color: hasAccess ? '#1e3a5f' : '#92400e',
         }}
       >
-        {isPremium ? "🎯 JD Match" : "🔒 JD Match"}
+        {hasAccess ? "🎯 JD Match" : "🔒 JD Match"}
       </button>
 
       {open && createPortal(
