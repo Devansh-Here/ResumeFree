@@ -4,13 +4,14 @@ import { useResumeStore } from '../store/resumeStore'
 
 export default function DownloadButton() {
   const resume = useResumeStore((s) => s.resume)
+  const selectedTemplateId = useResumeStore((s) => s.selectedTemplateId)
   const [status, setStatus] = useState('idle') // idle | loading | done | error
 
   async function handleDownload() {
     if (status === 'loading') return
     setStatus('loading')
     try {
-      await generatePDF(resume)
+      await generatePDF(resume, selectedTemplateId)
       setStatus('done')
       setTimeout(() => setStatus('idle'), 2800)
     } catch (e) {

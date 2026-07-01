@@ -1,9 +1,9 @@
 // src/components/templates/templateRegistry.js
-import ClassicTemplate from "./ClassicTemplate";
-import ModernTemplate from "./ModernTemplate";
-import MinimalTemplate from "./MinimalTemplate";
-import CompactTemplate from "./CompactTemplate";
-import ExecutiveTemplate from "./ExecutiveTemplate";
+import ClassicTemplate from "./ClassicTemplate.jsx";
+import ModernTemplate from "./ModernTemplate.jsx";
+import MinimalTemplate from "./MinimalTemplate.jsx";
+import CompactTemplate from "./CompactTemplate.jsx";
+import ExecutiveTemplate from "./ExecutiveTemplate.jsx";
 
 // Single source of truth for every resume template.
 // To add a new (premium) template later: build the component,
