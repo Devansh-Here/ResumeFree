@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, "..");
 
 await build({
   entryPoints: [path.join(root, "src/server/generate-pdf.entry.js")],
-  outfile: path.join(root, "api/generate-pdf.cjs"),
+  outfile: path.join(root, "api/generate-pdf.js"),
   bundle: true,
   platform: "node",
   format: "cjs",
@@ -20,4 +20,4 @@ await build({
   },
 });
 
-console.log("✅ api/generate-pdf.cjs bundled successfully");
+console.log("✅ api/generate-pdf.js bundled successfully");
