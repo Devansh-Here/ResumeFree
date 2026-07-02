@@ -21,7 +21,13 @@ export default async function generatePDF(resume, templateId) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "resume.pdf";
+
+  const rawName = resume?.personal?.name?.trim();
+  const fileName = rawName
+    ? `${rawName.replace(/[^a-zA-Z0-9]+/g, "_")}_Resume.pdf`
+    : "resume.pdf";
+
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
   a.remove();
