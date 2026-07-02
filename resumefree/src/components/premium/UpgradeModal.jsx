@@ -3,29 +3,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useResumeStore } from "../../store/resumeStore";
 import { supabase } from "../../utils/supabaseClient";
-
-const PASSES = {
-  sprint: {
-    name: "Sprint Pass",
-    price: 79,
-    durationShort: "7-day access",
-    tagline: "One urgent application to nail",
-  },
-  placement: {
-    name: "Placement Pass",
-    price: 199,
-    durationShort: "30-day access",
-    tagline: "Full placement drive, multiple companies",
-    badge: "Most Popular",
-  },
-  season: {
-    name: "Season Pass",
-    price: 399,
-    durationShort: "90-day access",
-    tagline: "Full Aug–Dec or Jan–Apr cycle",
-    badge: "Best Value",
-  },
-};
+import { PASS_DETAILS, FULL_PASS_KEYS } from "../../utils/passes";
 
 export default function UpgradeModal({ onClose }) {
   const personal = useResumeStore((s) => s.resume.personal);
@@ -33,6 +11,8 @@ export default function UpgradeModal({ onClose }) {
   const [email, setEmail] = useState(personal.email || "");
   const [status, setStatus] = useState("idle"); // idle | processing | sent | error
   const [errorMsg, setErrorMsg] = useState("");
+
+  const selectedPass = PASS_DETAILS[pass];
 
   const handlePay = async () => {
     if (!email || !email.includes("@")) {
@@ -64,7 +44,7 @@ export default function UpgradeModal({ onClose }) {
         currency: order.currency,
         order_id: order.orderId,
         name: "ResumeFree",
-        description: `${PASSES[pass].name}`,
+        description: selectedPass.name,
         prefill: { email, name: personal.name || "" },
         theme: { color: "#059669" },
         handler: async (response) => {
@@ -79,6 +59,9 @@ export default function UpgradeModal({ onClose }) {
                 email,
                 name: personal.name || "",
                 pass_type: pass,
+                // Note: server.js now ignores this and derives the true
+                // amount from its own PASS_CONFIG — kept here only for
+                // logging/debugging visibility, not trusted by the backend.
                 amount: order.amount,
               }),
             });
@@ -173,7 +156,8 @@ export default function UpgradeModal({ onClose }) {
             </p>
 
             <div className="flex flex-col gap-2.5 mb-5">
-              {Object.entries(PASSES).map(([key, p]) => {
+              {FULL_PASS_KEYS.map((key) => {
+                const p = PASS_DETAILS[key];
                 const active = pass === key;
                 return (
                   <button
@@ -198,7 +182,7 @@ export default function UpgradeModal({ onClose }) {
                         )}
                       </div>
                       <p className="font-sohne text-[11.5px] text-[#4a6fa5] truncate">
-                        {p.tagline} · {p.durationShort}
+                        {p.tagline} · {p.durationLabel}
                       </p>
                     </div>
 
@@ -259,7 +243,7 @@ export default function UpgradeModal({ onClose }) {
                   Processing...
                 </>
               ) : (
-                `Pay ₹${PASSES[pass].price} & Unlock ${PASSES[pass].name}`
+                `Pay ₹${selectedPass.price} & Unlock ${selectedPass.name}`
               )}
             </button>
           </>

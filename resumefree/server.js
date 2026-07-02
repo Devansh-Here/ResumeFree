@@ -247,7 +247,7 @@ app.post("/api/verify-payment", async (req, res) => {
       profile_id: userId,
       razorpay_order_id,
       razorpay_payment_id,
-      amount: amount || config.amount / 100,
+      amount: config.amount / 100, // server-authoritative, always rupees — client-sent amount ignored
       plan: pass_type,        // keeping 'plan' col for backward compat
       pass_type,
       duration_days: config.duration_days,

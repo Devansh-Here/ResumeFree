@@ -13,6 +13,7 @@ export default defineConfig({
       '/api/generate-cover-letter': 'http://localhost:3001',
       '/api/create-order': 'http://localhost:3001',
       '/api/verify-payment': 'http://localhost:3001',
+      '/api/ats-advanced-tips': 'http://localhost:3001',
     }
   }
 })
