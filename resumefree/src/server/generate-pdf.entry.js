@@ -81,11 +81,12 @@ export default async function handler(req, res) {
     await page.setContent(fullHtml, { waitUntil: "networkidle0" });
     await page.evaluate(() => document.fonts.ready);
 
-    const pdfBuffer = await page.pdf({
+    const pdfBytes = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: "0", bottom: "0", left: "0", right: "0" },
     });
+    const pdfBuffer = Buffer.from(pdfBytes);
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", 'attachment; filename="resume.pdf"');
