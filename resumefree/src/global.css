@@ -1,0 +1,18 @@
+/* src/global.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Global UI density scale ──
+   Shrinks every Tailwind rem-based utility (p-4, text-sm, rounded-2xl,
+   gap-2, etc.) uniformly by ~12.5% — replicating the "compact/zoomed-out"
+   feel without touching every component's classes individually.
+   Only arbitrary hardcoded px values (e.g. text-[26px]) are unaffected —
+   those must be converted to rem manually per-file as we touch them. */
+html {
+  font-size: 80%; /* 16px → 14px base */
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}

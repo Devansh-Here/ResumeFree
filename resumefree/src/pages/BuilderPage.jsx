@@ -96,7 +96,7 @@ export default function BuilderPage() {
           <button
             key={tab}
             onClick={() => setMobileTab(tab)}
-            className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-widest transition-colors ${
+            className={`flex-1 py-2 text-[0.6875rem] font-semibold uppercase tracking-widest transition-colors ${
               mobileTab === tab
                 ? "text-[#059669] border-b-2 border-[#059669]"
                 : "text-[#4a6fa5]/60 hover:text-[#1e3a5f]"
@@ -124,12 +124,12 @@ export default function BuilderPage() {
             mobileTab === "preview" ? "hidden lg:flex" : "flex"
           }`}>
 
-            <div className="h-[45px] flex overflow-x-auto border-b border-[#cbd5e1] bg-[#fdfdfe] [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <div className="h-[2.8125rem] flex overflow-x-auto border-b border-[#cbd5e1] bg-[#fdfdfe] [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
               {SECTIONS.map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => setActiveSection(id)}
-                  className={`flex-shrink-0 px-5 h-full text-xs font-semibold tracking-wider uppercase
+                  className={`flex-shrink-0 px-4 h-full text-[0.6875rem] font-semibold tracking-wider uppercase
                                transition-all whitespace-nowrap border-b-2 -mb-px ${
                     activeSection === id
                       ? "text-[#0a1628] border-[#059669]"
@@ -141,31 +141,31 @@ export default function BuilderPage() {
               ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 sm:p-7">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {FORM_MAP[activeSection]}
             </div>
 
-            <div className="border-t border-[#cbd5e1] bg-[#fdfdfe] px-5 sm:px-7 py-3
+            <div className="border-t border-[#cbd5e1] bg-[#fdfdfe] px-4 sm:px-6 py-2.5
                              flex items-center justify-between">
               <button
                 onClick={goPrev}
                 disabled={currentIdx === 0}
-                className="text-sm text-[#4a6fa5] hover:text-[#0a1628]
+                className="text-[0.8125rem] text-[#4a6fa5] hover:text-[#0a1628]
                            disabled:opacity-25 disabled:cursor-not-allowed transition-colors font-medium"
               >
                 ← Prev
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {SECTIONS.map(({ id }, i) => (
                   <span
                     key={id}
                     className={`rounded-full transition-all duration-200 ${
                       id === activeSection
-                        ? "w-5 h-1.5 bg-[#059669]"
+                        ? "w-4 h-1 bg-[#059669]"
                         : i < currentIdx
-                        ? "w-1.5 h-1.5 bg-[#059669]/40"
-                        : "w-1.5 h-1.5 bg-[#cbd5e1]"
+                        ? "w-1 h-1 bg-[#059669]/40"
+                        : "w-1 h-1 bg-[#cbd5e1]"
                     }`}
                   />
                 ))}
@@ -174,7 +174,7 @@ export default function BuilderPage() {
               <button
                 onClick={goNext}
                 disabled={currentIdx === SECTIONS.length - 1}
-                className="text-sm font-semibold text-[#059669] hover:text-[#047857]
+                className="text-[0.8125rem] font-semibold text-[#059669] hover:text-[#047857]
                            disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
               >
                 Next →
@@ -187,9 +187,9 @@ export default function BuilderPage() {
             mobileTab === "form" ? "hidden lg:flex" : "flex"
           }`}>
 
-            <div className="h-[45px] flex items-center gap-2 px-4
+            <div className="h-[2.8125rem] flex items-center gap-2 px-3.5
                              border-b border-[#cbd5e1] bg-[#fdfdfe]/90 backdrop-blur-sm">
-              <span className="text-[10px] tracking-widest text-[#4a6fa5]/60 uppercase mr-auto font-semibold">
+              <span className="text-[0.625rem] tracking-widest text-[#4a6fa5]/60 uppercase mr-auto font-semibold">
                 Live Preview
               </span>
 
@@ -197,7 +197,7 @@ export default function BuilderPage() {
                 onClick={handleSaveCloud}
                 disabled={saving}
                 title={!user ? "Sign in to save" : savedId ? "Update saved resume" : "Save to cloud"}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold
                             transition-all disabled:opacity-50 disabled:cursor-not-allowed
                             ${saveSuccess
                               ? "bg-[#059669] text-white"
@@ -213,7 +213,7 @@ export default function BuilderPage() {
                   <>✓ Saved</>
                 ) : (
                   <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
@@ -225,8 +225,12 @@ export default function BuilderPage() {
               <DownloadButton />
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex justify-center">
-              <div className="w-full max-w-[680px]">
+            {/* This is the only real change in this file — see note below */}
+            <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 flex justify-center">
+              <div
+                className="w-full max-w-[42.5rem]"
+                style={{ zoom: 0.90 }}
+              >
                 <ResumePreview />
               </div>
             </div>

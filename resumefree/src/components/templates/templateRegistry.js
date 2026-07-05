@@ -4,6 +4,11 @@ import ModernTemplate from "./ModernTemplate.jsx";
 import MinimalTemplate from "./MinimalTemplate.jsx";
 import CompactTemplate from "./CompactTemplate.jsx";
 import ExecutiveTemplate from "./ExecutiveTemplate.jsx";
+import CorporateEliteTemplate from "./CorporateEliteTemplate.jsx";
+import StartupBoldTemplate from "./StartupBoldTemplate.jsx";
+import CreativeEdgeTemplate from "./CreativeEdgeTemplate.jsx";
+import TechnicalProTemplate from "./TechnicalProTemplate.jsx";
+import GridProfessionalTemplate from "./GridProfessionalTemplate.jsx";
 
 // Single source of truth for every resume template.
 // To add a new (premium) template later: build the component,
@@ -44,6 +49,41 @@ export const TEMPLATES = [
     description: "Formal serif headline. MBA/senior roles.",
     isPremium: false,
     component: ExecutiveTemplate,
+  },
+  {
+    id: "corporate-elite",
+    name: "Corporate Elite",
+    description: "Dark sidebar layout. Consulting/MBA-focused.",
+    isPremium: true,
+    component: CorporateEliteTemplate,
+  },
+  {
+    id: "startup-bold",
+    name: "Startup Bold",
+    description: "Emerald header band, chip-style skills.",
+    isPremium: true,
+    component: StartupBoldTemplate,
+  },
+  {
+    id: "creative-edge",
+    name: "Creative Edge",
+    description: "Timeline experience, serif headline, card projects.",
+    isPremium: true,
+    component: CreativeEdgeTemplate,
+  },
+  {
+    id: "technical-pro",
+    name: "Technical Pro",
+    description: "Stack-first layout for SDE/dev roles.",
+    isPremium: true,
+    component: TechnicalProTemplate,
+  },
+  {
+    id: "grid-professional",
+    name: "Grid Professional",
+    description: "Bordered card grid. Formal and structured.",
+    isPremium: true,
+    component: GridProfessionalTemplate,
   },
 ];
 

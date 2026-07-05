@@ -16,22 +16,37 @@ export default function PricingPage() {
   const [confirmPass, setConfirmPass] = useState(null);
 
   // Where to send the user after a successful purchase. Defaults to
-  // /dashboard (normal case — user browsed Pricing directly). If they were
-  // sent here from somewhere else (e.g. the Builder's "buy Advanced ATS
-  // add-on" nudge), that page passes `state: { returnTo: '/builder' }` via
-  // navigate(), and we honor it instead.
-  const [returnTo] = useState(location.state?.returnTo || "/dashboard");
+  // /dashboard (normal case — user browsed Pricing directly). Two ways this
+  // gets overridden:
+  //  1. Same-session, already-logged-in case: the caller (e.g. Builder's
+  //     "buy Advanced ATS add-on" nudge) passes state: { returnTo: '/builder' }
+  //     directly via navigate() — read from location.state below.
+  //  2. Logged-out case: the user got bounced to /auth first. returnTo
+  //     survives that whole detour as a query param (?returnTo=...) since
+  //     both the email/password redirect (AuthPage) and the Google OAuth
+  //     redirect (AuthCallback) land back here via a plain URL, not
+  //     React Router state.
+  const [returnTo, setReturnTo] = useState(
+    location.state?.returnTo || searchParams.get("returnTo") || "/dashboard"
+  );
 
   // If we landed here straight off a login redirect with ?confirm=placement
-  // (or ?confirm=addon_cover_letter etc.), and the user is now actually
-  // logged in, auto-open the confirm screen for that pass/addon instead of
-  // making them click it again.
+  // (or ?confirm=addon_cover_letter etc.), possibly with &returnTo=... too,
+  // and the user is now actually logged in, auto-open the confirm screen
+  // for that pass/addon instead of making them click it again.
   useEffect(() => {
     const pending = searchParams.get("confirm");
+    const returnToParam = searchParams.get("returnTo");
+
+    if (returnToParam) {
+      setReturnTo(returnToParam);
+    }
+
     if (pending && user) {
       setConfirmPass(pending);
       // clean the URL so a refresh doesn't re-trigger it
       searchParams.delete("confirm");
+      searchParams.delete("returnTo");
       setSearchParams(searchParams, { replace: true });
     }
   }, [user, searchParams, setSearchParams]);
@@ -40,9 +55,11 @@ export default function PricingPage() {
     // Passes AND add-ons both go through the same real payment flow now —
     // addons are no longer routed to /builder as a placeholder.
     if (!user) {
-      // Not logged in — auth first, carry the chosen pass/addon along so
-      // AuthPage can route back here with ?confirm= after login.
-      navigate("/auth", { state: { pendingPass: passKey } });
+      // Not logged in — auth first, carry the chosen pass/addon AND where
+      // to return to after purchase along, so AuthPage can route back here
+      // with ?confirm=&returnTo= after login (state for email/password,
+      // localStorage for Google OAuth's full-page redirect).
+      navigate("/auth", { state: { pendingPass: passKey, returnTo } });
       return;
     }
 

@@ -209,9 +209,16 @@ export default function AuthPage() {
   const location = useLocation();
   // Carried over from PricingPage when a logged-out user clicks a pass/addon.
   // Persisted to localStorage too, since OAuth (Google) does a full-page
-  // redirect that wipes out React Router's `location.state`.
+  // redirect that wipes out React Router's `location.state` — and so does
+  // the email confirmation flow (user leaves the app entirely to click a
+  // link in their inbox).
   const pendingPass = location.state?.pendingPass || null;
   const pendingPassDetails = pendingPass ? getPass(pendingPass) : null;
+  // Where PricingPage wants the user sent back to after the purchase
+  // completes (e.g. '/builder' if the purchase was triggered from the
+  // Builder). Only meaningful alongside pendingPass — if there's no pass
+  // being purchased, there's nothing to "return to" after.
+  const returnTo = location.state?.returnTo || null;
 
   const [mode, setMode] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
@@ -225,9 +232,27 @@ export default function AuthPage() {
   // Helper: where to go after a successful sign-in.
   const redirectAfterAuth = () => {
     if (pendingPass) {
-      navigate(`/pricing?confirm=${pendingPass}`);
+      const returnToParam = returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : '';
+      navigate(`/pricing?confirm=${pendingPass}${returnToParam}`);
     } else {
       navigate('/dashboard');
+    }
+  };
+
+  // Helper: stash pendingPass/returnTo in localStorage before any flow that
+  // does a full-page redirect/reload (Google OAuth, email confirmation).
+  // React Router's location.state does not survive either of those.
+  const stashPendingPassForRedirectFlow = () => {
+    if (pendingPass) {
+      localStorage.setItem('resumefree_pending_pass', pendingPass);
+      if (returnTo) {
+        localStorage.setItem('resumefree_pending_return_to', returnTo);
+      } else {
+        localStorage.removeItem('resumefree_pending_return_to');
+      }
+    } else {
+      localStorage.removeItem('resumefree_pending_pass');
+      localStorage.removeItem('resumefree_pending_return_to');
     }
   };
 
@@ -242,12 +267,48 @@ export default function AuthPage() {
         if (error) throw error;
         redirectAfterAuth();
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        // Email confirmation is also a full-page redirect — the user leaves
+        // the app, clicks a link in their inbox, and comes back on a fresh
+        // page load. React Router's location.state won't survive that, so
+        // stash pendingPass/returnTo in localStorage the same way the
+        // Google OAuth flow already does. AuthCallback.jsx picks these up
+        // after the confirmation redirect lands there.
+        stashPendingPassForRedirectFlow();
+
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          // BUG FIX: this was missing entirely, so Supabase fell back to
+          // its default Site URL (the app root) for the confirmation link
+          // instead of /auth/callback — which is why confirming always
+          // landed on the home page instead of resuming the purchase flow.
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
         if (error) throw error;
-        setMessage('Account ban gaya! Apna email check karo verify karne ke liye.');
+
+        // Supabase quirk (intentional, for email-enumeration protection):
+        // calling signUp() with an email that already belongs to a
+        // confirmed account does NOT return an error and does NOT send a
+        // new confirmation email — it silently returns a user-shaped
+        // response as if signup succeeded. The reliable way to detect this
+        // is `data.user.identities` being an empty array, which only
+        // happens for an already-registered email. Without this check, the
+        // UI wrongly tells the person to "check your email" and they never
+        // get one, with no indication that they should sign in instead.
+        if (data?.user?.identities?.length === 0) {
+          setError('An account with this email already exists. Please sign in instead.');
+          setMode('signin');
+          // No confirmation email will actually be sent in this case, so
+          // clear the stashed pendingPass/returnTo — nothing will consume
+          // them and we don't want stale state lingering in localStorage.
+          localStorage.removeItem('resumefree_pending_pass');
+          localStorage.removeItem('resumefree_pending_return_to');
+        } else {
+          setMessage('Account created! Check your email to verify it before signing in.');
+        }
       }
     } catch (err) {
-      setError(err.message || 'Kuch galat ho gaya, dobara try karo.');
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -258,14 +319,12 @@ export default function AuthPage() {
     setGoogleLoading(true);
     try {
       // Google OAuth does a full-page redirect, which wipes React Router's
-      // location.state — so stash the pending pass in localStorage instead.
-      // AuthCallback.jsx must read this key after OAuth completes and
-      // redirect to /pricing?confirm=<pass> instead of /dashboard if present.
-      if (pendingPass) {
-        localStorage.setItem('resumefree_pending_pass', pendingPass);
-      } else {
-        localStorage.removeItem('resumefree_pending_pass');
-      }
+      // location.state — so stash the pending pass (and where to return to
+      // after purchase) in localStorage instead. AuthCallback.jsx must read
+      // these keys after OAuth completes and redirect to
+      // /pricing?confirm=<pass>&returnTo=<returnTo> instead of /dashboard
+      // if present.
+      stashPendingPassForRedirectFlow();
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -273,14 +332,14 @@ export default function AuthPage() {
       });
       if (error) throw error;
     } catch (err) {
-      setError(err.message || 'Google sign-in fail ho gaya.');
+      setError(err.message || 'Google sign-in failed. Please try again.');
       setGoogleLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
     if (!email) {
-      setError('Pehle apna email daalo, fir reset link bhejenge.');
+      setError('Enter your email first, then we\'ll send you a reset link.');
       return;
     }
     setError('');
@@ -290,9 +349,9 @@ export default function AuthPage() {
         redirectTo: `${window.location.origin}/auth/callback`,
       });
       if (error) throw error;
-      setMessage('Reset link bhej diya — apna inbox check karo.');
+      setMessage('Reset link sent — check your inbox.');
     } catch (err) {
-      setError(err.message || 'Reset link bhejne mein dikkat aayi.');
+      setError(err.message || 'Something went wrong while sending the reset link.');
     }
   };
 
@@ -306,8 +365,8 @@ export default function AuthPage() {
           </h1>
           <p className="font-sohne text-sm text-graphite mb-8">
             {mode === 'signin'
-              ? 'Apne resumes aur progress tak wapas pahuncho'
-              : 'Free mein shuru karo, resume banao seconds mein'}
+              ? 'Get back to your resumes and progress'
+              : 'Start free, build your resume in seconds'}
           </p>
 
           {pendingPassDetails && (
@@ -369,7 +428,7 @@ export default function AuthPage() {
                   onClick={handleResetPassword}
                   className="text-rust hover:underline font-medium"
                 >
-                  Password bhool gaye?
+                  Forgot password?
                 </button>
               </div>
             )}
@@ -443,10 +502,10 @@ export default function AuthPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/30 to-transparent pointer-events-none" />
           <div className="absolute bottom-10 left-8 right-8">
             <p className="font-signifier text-2xl text-white mb-2">
-              Resume jo interview dilaye
+              The resume that gets you the interview
             </p>
             <p className="font-sohne text-sm text-white/70">
-              AI-improved bullets, Indian ATS templates, JD matching — sab ek jagah.
+              AI-improved bullets, Indian ATS templates, JD matching — all in one place.
             </p>
           </div>
         </div>

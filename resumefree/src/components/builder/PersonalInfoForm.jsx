@@ -2,10 +2,10 @@
 import { useResumeStore } from "../../store/resumeStore";
 
 const inputClass =
-  "w-full bg-white border border-[#cbd5e1] rounded-2xl px-4 py-3 text-sm text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#0a1628] focus:ring-2 focus:ring-[#0a1628]/8 transition-all duration-150";
+  "w-full bg-white border border-[#cbd5e1] rounded-2xl px-3.5 py-2.5 text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#0a1628] focus:ring-2 focus:ring-[#0a1628]/8 transition-all duration-150";
 
 const labelClass =
-  "block text-[11px] font-semibold tracking-widest uppercase text-[#4a6fa5] mb-2";
+  "block text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5] mb-1.5";
 
 function Field({ label, id, optional, children }) {
   return (
@@ -30,17 +30,17 @@ export default function PersonalInfoForm() {
   const handleChange = (field) => (e) => updatePersonal(field, e.target.value);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* Header */}
       <div>
         <h2
-          className="text-[26px] font-bold text-[#0a1628] leading-tight"
+          className="text-[1.375rem] font-bold text-[#0a1628] leading-tight"
           style={{ fontFamily: "'DM Serif Display', serif" }}
         >
           Personal Info
         </h2>
-        <p className="text-sm text-[#1e3a5f]/60 mt-1">
+        <p className="text-[0.8125rem] text-[#1e3a5f]/60 mt-1">
           This appears at the top of your resume. Keep it professional.
         </p>
       </div>
@@ -58,7 +58,7 @@ export default function PersonalInfoForm() {
       </Field>
 
       {/* Email + Phone */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <Field label="Email" id="email">
           <input
             id="email"
@@ -95,9 +95,9 @@ export default function PersonalInfoForm() {
       </Field>
 
       {/* Divider */}
-      <div className="flex items-center gap-3 py-1">
+      <div className="flex items-center gap-2.5 py-0.5">
         <div className="flex-1 h-px bg-[#cbd5e1]" />
-        <span className="text-[11px] font-semibold tracking-widest text-[#4a6fa5]/60 uppercase">
+        <span className="text-[0.6875rem] font-semibold tracking-widest text-[#4a6fa5]/60 uppercase">
           Online Profiles
         </span>
         <div className="flex-1 h-px bg-[#cbd5e1]" />
@@ -106,7 +106,7 @@ export default function PersonalInfoForm() {
       {/* LinkedIn */}
       <Field label="LinkedIn" id="linkedin" optional>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-[#4a6fa5]/60 select-none pointer-events-none">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[0.75rem] text-[#4a6fa5]/60 select-none pointer-events-none">
             linkedin.com/in/
           </span>
           <input
@@ -115,7 +115,7 @@ export default function PersonalInfoForm() {
             placeholder="arjun-sharma"
             value={p.linkedin}
             onChange={handleChange("linkedin")}
-            className={`${inputClass} pl-[7.5rem]`}
+            className={`${inputClass} pl-[6.75rem]`}
           />
         </div>
       </Field>
@@ -123,7 +123,7 @@ export default function PersonalInfoForm() {
       {/* GitHub */}
       <Field label="GitHub" id="github" optional>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-[#4a6fa5]/60 select-none pointer-events-none">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[0.75rem] text-[#4a6fa5]/60 select-none pointer-events-none">
             github.com/
           </span>
           <input
@@ -132,7 +132,7 @@ export default function PersonalInfoForm() {
             placeholder="arjun-sharma"
             value={p.github}
             onChange={handleChange("github")}
-            className={`${inputClass} pl-[5.75rem]`}
+            className={`${inputClass} pl-[5.25rem]`}
           />
         </div>
       </Field>
@@ -150,9 +150,9 @@ export default function PersonalInfoForm() {
       </Field>
 
       {/* Auto-save notice */}
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex items-center gap-2 pt-0.5">
         <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
-        <p className="text-[11px] text-[#4a6fa5]/70">
+        <p className="text-[0.6875rem] text-[#4a6fa5]/70">
           Auto-saved to your browser — no account needed
         </p>
       </div>
