@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import { runATSCheck, getScoreLabel, CATEGORY_LABELS } from '../utils/atsCheck'
 import { useResumeStore } from '../store/resumeStore'
 import { useAuthStore } from '../store/authStore'
+import { getATSRating } from './templates/templateRegistry'
 import UpgradeModal from './premium/UpgradeModal'
 
-export default function ATSCheckPanel() {
+export default function ATSCheckPanel({ onSwitchTemplate } = {}) {
   const navigate = useNavigate()
   const resumeData = useResumeStore((s) => s.resume)
+  const selectedTemplateId = useResumeStore((s) => s.selectedTemplateId)
   // Note: basic ATS check (score/matched/missing) is free for everyone —
   // this only gates the AI-generated "reach 90+" tips below.
   const hasAdvancedAccess = useAuthStore((s) => s.hasATSAdvancedAccess())
@@ -22,6 +24,9 @@ export default function ATSCheckPanel() {
   const [tips, setTips] = useState(null)
   const [tipsLoading, setTipsLoading] = useState(false)
   const [tipsError, setTipsError] = useState(null)
+
+  const templateAtsRating = getATSRating(selectedTemplateId)
+  const isModerateLayout = templateAtsRating === 'moderate'
 
   function handleClick() {
     if (result) { setOpen(true); return }
@@ -51,6 +56,11 @@ export default function ATSCheckPanel() {
   function handleBuyATSAddon() {
     setOpen(false)
     navigate('/pricing?confirm=addon_ats', { state: { returnTo: '/builder' } })
+  }
+
+  function handleSwitchTemplateClick() {
+    setOpen(false)
+    if (onSwitchTemplate) onSwitchTemplate()
   }
 
   async function handleGetTips() {
@@ -177,6 +187,31 @@ export default function ATSCheckPanel() {
                       Use JD Match for role-specific accuracy
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* NEW — Contextual ATS-safety tip for sidebar/multi-column templates */}
+              {result && isModerateLayout && (
+                <div
+                  className="rounded-2xl px-4 py-3.5"
+                  style={{ background: '#ecfdf5', border: '1px solid rgba(5,150,105,0.2)' }}
+                >
+                  <p className="text-[11px] font-semibold text-[#0a1628] mb-1 flex items-center gap-1.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    ⚠️ Sidebar layout in use
+                  </p>
+                  <p className="text-[11px] text-[#1e3a5f] leading-relaxed mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    Your current template has a sidebar/column layout. Some bulk-hiring ATS parsers (common at TCS/Infosys-style recruiters) can read side-by-side content out of order. A single-column template is safer for high-volume applications.
+                  </p>
+                  {onSwitchTemplate && (
+                    <button
+                      onClick={handleSwitchTemplateClick}
+                      type="button"
+                      className="text-[11px] font-semibold text-[#059669] hover:underline"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      Switch to a single-column template →
+                    </button>
+                  )}
                 </div>
               )}
 

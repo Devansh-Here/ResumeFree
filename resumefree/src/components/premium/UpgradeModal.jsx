@@ -68,6 +68,20 @@ export default function UpgradeModal({ onClose }) {
             const verifyData = await verifyRes.json();
             if (!verifyRes.ok) throw new Error(verifyData.error || "Verification failed");
 
+            // BUG FIX: this modal opens from inside the Builder (Sidebar's
+            // "Upgrade to Premium" button), and the payment happens BEFORE
+            // login — unlike PricingPage's flow (login first, pay after).
+            // Because of that, AuthCallback.jsx had nothing to tell it
+            // where to send the user back to once they click the login
+            // link in their email — it only ever checked for a
+            // `pendingPass` (a pass still waiting to be *bought*, which
+            // doesn't apply here since the purchase is already done). It
+            // silently fell back to /dashboard instead of returning to the
+            // Builder. Stash just the return destination — no pendingPass,
+            // since nothing is still pending — so AuthCallback.jsx can send
+            // the user straight back to where they were.
+            localStorage.setItem("resumefree_pending_return_to", "/builder");
+
             // 3. Send the passwordless login link
             await supabase.auth.signInWithOtp({
               email,

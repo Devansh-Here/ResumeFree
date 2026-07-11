@@ -28761,6 +28761,813 @@ function ExecutiveTemplate({ resume }) {
   );
 }
 
+// src/components/templates/CorporateEliteTemplate.jsx
+var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
+function hexToRgb(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return {
+    r: num >> 16 & 255,
+    g: num >> 8 & 255,
+    b: num & 255
+  };
+}
+function blendTowardBase(hex, baseHex, baseRatio) {
+  const a = hexToRgb(hex);
+  const b = hexToRgb(baseHex);
+  const r = Math.round(a.r * (1 - baseRatio) + b.r * baseRatio);
+  const g = Math.round(a.g * (1 - baseRatio) + b.g * baseRatio);
+  const bl = Math.round(a.b * (1 - baseRatio) + b.b * baseRatio);
+  return `rgb(${r}, ${g}, ${bl})`;
+}
+function accentAlpha(hex, alpha) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+function SectionHeading6({ title, dark, accentColor }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "mt-4 mb-2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-1.5", children: [
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        "span",
+        {
+          className: "w-1.5 h-1.5 rounded-full flex-shrink-0",
+          style: { backgroundColor: accentColor }
+        }
+      ),
+      /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+        "span",
+        {
+          className: `text-[10px] font-bold tracking-[0.15em] uppercase ${dark ? "text-white/90" : "text-[#0a1628]"}`,
+          style: { fontFamily: "'Inter', sans-serif" },
+          children: title
+        }
+      )
+    ] }),
+    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+      "div",
+      {
+        className: "h-[2px] w-8 mt-1 ml-3",
+        style: { backgroundColor: accentColor }
+      }
+    )
+  ] });
+}
+function EmptyField6({ text }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+}
+function CorporateEliteTemplate({ resume }) {
+  const { personal, education, experience, skills, projects } = resume;
+  const accentColor = resume.theme?.accentColor || "#059669";
+  const photoUrl = personal.photo?.processedDataUrl || null;
+  const nameInitial = personal.name?.trim()?.[0]?.toUpperCase() || "?";
+  const sidebarBg = blendTowardBase(accentColor, "#0a1628", 0.7);
+  const chipBg = accentAlpha(accentColor, 0.22);
+  const hasEducation = education.length > 0;
+  const hasExperience = experience.length > 0;
+  const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
+  const hasProjects = projects.length > 0;
+  const allSkills = [...skills.technical, ...skills.tools, ...skills.languages];
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+    "div",
+    {
+      className: "bg-white shadow-md rounded-sm w-full overflow-hidden",
+      style: {
+        fontFamily: "'Inter', sans-serif",
+        fontSize: "11px",
+        lineHeight: "1.5",
+        minHeight: "842px"
+      },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "h-[5px] w-full", style: { backgroundColor: accentColor } }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex", style: { minHeight: "837px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
+            "div",
+            {
+              className: "flex-shrink-0",
+              style: { width: "34%", backgroundColor: sidebarBg, color: "white", padding: "30px 22px" },
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                  "div",
+                  {
+                    className: "w-16 h-16 rounded-full overflow-hidden flex items-center justify-center mb-3 flex-shrink-0",
+                    style: {
+                      backgroundColor: photoUrl ? "transparent" : "rgba(255,255,255,0.08)",
+                      border: `2px solid ${accentColor}`
+                    },
+                    children: photoUrl ? /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                      "img",
+                      {
+                        src: photoUrl,
+                        alt: personal.name || "Profile photo",
+                        className: "w-full h-full object-cover"
+                      }
+                    ) : /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                      "span",
+                      {
+                        className: "text-[20px] text-white/70",
+                        style: { fontFamily: "'DM Serif Display', serif" },
+                        children: nameInitial
+                      }
+                    )
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                  "h1",
+                  {
+                    className: "text-[26px] leading-tight text-white mb-1",
+                    style: { fontFamily: "'DM Serif Display', serif" },
+                    children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Your Name" })
+                  }
+                ),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "h-[2px] w-12 mb-4", style: { backgroundColor: accentColor } }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "space-y-1 text-[10px] text-[#cbd5e1]", children: [
+                  personal.email && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.email }),
+                  personal.phone && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.phone }),
+                  personal.address && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.address }),
+                  !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "email \xB7 phone \xB7 city" })
+                ] }),
+                (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "space-y-1 mt-2 text-[10px]", style: { color: "#6ee7b7" }, children: [
+                  personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                    "linkedin.com/in/",
+                    personal.linkedin
+                  ] }),
+                  personal.github && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                    "github.com/",
+                    personal.github
+                  ] }),
+                  personal.portfolio && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.portfolio })
+                ] }),
+                hasSkills && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(SectionHeading6, { title: "Skills", dark: true, accentColor }),
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-wrap gap-1.5", children: allSkills.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                    "span",
+                    {
+                      className: "text-[9px] px-2 py-0.5 rounded-full",
+                      style: { backgroundColor: chipBg, color: "#e2e8f0" },
+                      children: s
+                    },
+                    i
+                  )) })
+                ] }),
+                hasEducation && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(SectionHeading6, { title: "Education", dark: true, accentColor }),
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "space-y-2.5", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "font-semibold text-[10.5px] text-white", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Degree" }) }),
+                    edu.college && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "text-[10px] text-[#cbd5e1]", children: edu.college }),
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "text-[9.5px] text-[#94a3b8] mt-0.5", children: [
+                      edu.year,
+                      edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { children: [
+                        " \xB7 ",
+                        edu.cgpa
+                      ] })
+                    ] })
+                  ] }, edu.id)) })
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex-1", style: { padding: "30px 28px", color: "#0a1628" }, children: [
+            hasExperience && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(SectionHeading6, { title: "Experience", accentColor }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "font-semibold text-[11.5px]", children: exp.role || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Role" }) }),
+                    exp.company && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { className: "text-[#4a6fa5]", children: [
+                      " \xB7 ",
+                      exp.company
+                    ] })
+                  ] }),
+                  exp.duration && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[#4a6fa5] flex-shrink-0 text-[10px]", children: exp.duration })
+                ] }),
+                exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                    "span",
+                    {
+                      className: "flex-shrink-0 mt-0.5",
+                      style: { color: accentColor },
+                      children: "\u25AA"
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { children: bullet })
+                ] }, i)) })
+              ] }, exp.id)) })
+            ] }),
+            hasProjects && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(import_jsx_runtime6.Fragment, { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(SectionHeading6, { title: "Projects", accentColor }),
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "space-y-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "font-semibold text-[11.5px]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Project Name" }) }),
+                  proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                    "span",
+                    {
+                      className: "text-[10px] flex-shrink-0",
+                      style: { color: accentColor },
+                      children: proj.techStack.join(", ")
+                    }
+                  )
+                ] }),
+                proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
+                    "span",
+                    {
+                      className: "flex-shrink-0 mt-0.5",
+                      style: { color: accentColor },
+                      children: "\u25AA"
+                    }
+                  ),
+                  /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { children: bullet })
+                ] }, i)) })
+              ] }, proj.id)) })
+            ] }),
+            !personal.name && !hasEducation && !hasExperience && !hasSkills && !hasProjects && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-col items-center justify-center h-64 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("p", { className: "text-[#cbd5e1] text-sm", children: [
+              "Start filling the form \u2014",
+              /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("br", {}),
+              "your resume will appear here."
+            ] }) })
+          ] })
+        ] })
+      ]
+    }
+  );
+}
+
+// src/components/templates/StartupBoldTemplate.jsx
+var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
+function SectionHeading7({ title }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex items-center gap-2 mt-4 mb-2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "w-2 h-2 rounded-sm bg-[#059669] flex-shrink-0" }),
+    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+      "span",
+      {
+        className: "text-[10.5px] font-bold tracking-[0.1em] uppercase text-[#0a1628]",
+        style: { fontFamily: "'Inter', sans-serif" },
+        children: title
+      }
+    )
+  ] });
+}
+function EmptyField7({ text }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+}
+function StartupBoldTemplate({ resume }) {
+  const { personal, education, experience, skills, projects } = resume;
+  const hasEducation = education.length > 0;
+  const hasExperience = experience.length > 0;
+  const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
+  const hasProjects = projects.length > 0;
+  const chip = (text, bg, color) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+    "span",
+    {
+      className: "text-[9.5px] px-2.5 py-1 rounded-full font-medium",
+      style: { backgroundColor: bg, color },
+      children: text
+    }
+  );
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
+    "div",
+    {
+      className: "bg-white shadow-md rounded-sm w-full overflow-hidden",
+      style: { fontFamily: "'Inter', sans-serif", fontSize: "11px", lineHeight: "1.5", minHeight: "842px" },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { backgroundColor: "#059669", padding: "26px 34px" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("h1", { className: "text-[24px] font-bold text-white tracking-tight", children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Your Name" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px]", style: { color: "#d1fae5" }, children: [
+            personal.email && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: personal.email }),
+            personal.phone && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: personal.phone }),
+            personal.address && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: personal.address })
+          ] }),
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px] text-white/90 font-medium", children: [
+            personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
+              "linkedin.com/in/",
+              personal.linkedin
+            ] }),
+            personal.github && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
+              "github.com/",
+              personal.github
+            ] }),
+            personal.portfolio && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: personal.portfolio })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { padding: "24px 34px", color: "#0a1628" }, children: [
+          hasSkills && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(SectionHeading7, { title: "Skills" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex flex-wrap gap-1.5", children: [
+              skills.technical.map((s, i) => chip(s, "#d1fae5", "#065f46")),
+              skills.tools.map((s, i) => chip(s, "#ecfdf5", "#047857")),
+              skills.languages.map((s, i) => chip(s, "#f8fafc", "#4a6fa5"))
+            ] })
+          ] }),
+          hasExperience && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(SectionHeading7, { title: "Experience" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "font-semibold text-[11.5px]", children: [
+                  exp.role || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Role" }),
+                  exp.company && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "text-[#059669] font-medium", children: [
+                    " @ ",
+                    exp.company
+                  ] })
+                ] }),
+                exp.duration && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+                  "span",
+                  {
+                    className: "flex-shrink-0 text-[9.5px] px-2 py-0.5 rounded-full",
+                    style: { backgroundColor: "#f8fafc", color: "#4a6fa5" },
+                    children: exp.duration
+                  }
+                )
+              ] }),
+              exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "flex-shrink-0 mt-0.5 text-[#059669]", children: "\u2192" }),
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: bullet })
+              ] }, i)) })
+            ] }, exp.id)) })
+          ] }),
+          hasProjects && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(SectionHeading7, { title: "Projects" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "space-y-2.5", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(
+              "div",
+              {
+                className: "rounded-xl border border-[#cbd5e1]/60 p-3",
+                style: { backgroundColor: "#fdfdfe" },
+                children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex items-start justify-between gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "font-semibold text-[11px]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Project Name" }) }) }),
+                  proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex flex-wrap gap-1 mt-1", children: proj.techStack.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
+                    "span",
+                    {
+                      className: "text-[9px] px-1.5 py-0.5 rounded",
+                      style: { backgroundColor: "#ecfdf5", color: "#047857" },
+                      children: t
+                    },
+                    i
+                  )) }),
+                  proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("ul", { className: "mt-1.5 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "flex-shrink-0 mt-0.5 text-[#059669]", children: "\u2192" }),
+                    /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: bullet })
+                  ] }, i)) })
+                ]
+              },
+              proj.id
+            )) })
+          ] }),
+          hasEducation && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)(import_jsx_runtime7.Fragment, { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(SectionHeading7, { title: "Education" }),
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "space-y-2", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "font-semibold text-[11px]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Degree" }) }),
+                edu.college && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { className: "text-[#4a6fa5]", children: [
+                  " \xB7 ",
+                  edu.college
+                ] })
+              ] }),
+              /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "text-right text-[#4a6fa5] flex-shrink-0", children: [
+                edu.year,
+                " ",
+                edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("span", { children: [
+                  "\xB7 ",
+                  edu.cgpa
+                ] })
+              ] })
+            ] }, edu.id)) })
+          ] }),
+          !personal.name && !hasEducation && !hasExperience && !hasSkills && !hasProjects && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex flex-col items-center justify-center h-64 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("p", { className: "text-[#cbd5e1] text-sm", children: [
+            "Start filling the form \u2014",
+            /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("br", {}),
+            "your resume will appear here."
+          ] }) })
+        ] })
+      ]
+    }
+  );
+}
+
+// src/components/templates/CreativeEdgeTemplate.jsx
+var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
+function SectionHeading8({ title }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "mt-4 mb-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+    "span",
+    {
+      className: "text-[11px] font-bold uppercase tracking-[0.12em]",
+      style: { color: "#059669", fontFamily: "'Inter', sans-serif" },
+      children: title
+    }
+  ) });
+}
+function EmptyField8({ text }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+}
+function CreativeEdgeTemplate({ resume }) {
+  const { personal, education, experience, skills, projects } = resume;
+  const hasEducation = education.length > 0;
+  const hasExperience = experience.length > 0;
+  const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
+  const hasProjects = projects.length > 0;
+  const allSkills = [...skills.technical, ...skills.tools, ...skills.languages];
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+    "div",
+    {
+      className: "bg-white shadow-md rounded-sm w-full",
+      style: { fontFamily: "'Inter', sans-serif", fontSize: "11px", lineHeight: "1.5", padding: "34px 38px", minHeight: "842px" },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex items-start justify-between gap-6 pb-4", style: { borderBottom: "2px solid #0a1628" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+            "h1",
+            {
+              className: "text-[30px] leading-none text-[#0a1628]",
+              style: { fontFamily: "'DM Serif Display', serif" },
+              children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EmptyField8, { text: "Your Name" })
+            }
+          ),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+            "div",
+            {
+              className: "text-right text-[10px] flex-shrink-0 pl-4",
+              style: { borderLeft: "2px solid #d1fae5", color: "#1e3a5f" },
+              children: [
+                personal.email && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.email }),
+                personal.phone && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.phone }),
+                personal.address && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.address }),
+                personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { color: "#059669" }, children: [
+                  "linkedin.com/in/",
+                  personal.linkedin
+                ] }),
+                personal.github && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { style: { color: "#059669" }, children: [
+                  "github.com/",
+                  personal.github
+                ] }),
+                personal.portfolio && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { color: "#059669" }, children: personal.portfolio })
+              ]
+            }
+          )
+        ] }),
+        hasExperience && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(import_jsx_runtime8.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(SectionHeading8, { title: "Experience" }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "space-y-4", children: experience.map((exp, idx) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "relative pl-5", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              "span",
+              {
+                className: "absolute left-0 top-1 w-2 h-2 rounded-full",
+                style: { backgroundColor: "#059669" }
+              }
+            ),
+            idx !== experience.length - 1 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              "span",
+              {
+                className: "absolute left-[3px] top-3 bottom-[-16px] w-px",
+                style: { backgroundColor: "#cbd5e1" }
+              }
+            ),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "font-semibold text-[11.5px] text-[#0a1628]", children: [
+                exp.role || /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EmptyField8, { text: "Role" }),
+                exp.company && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { className: "text-[#4a6fa5] font-normal", children: [
+                  " \xB7 ",
+                  exp.company
+                ] })
+              ] }),
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: exp.duration })
+            ] }),
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("ul", { className: "mt-1 space-y-0.5", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("li", { className: "text-[#1e3a5f]", children: [
+              "\u2014 ",
+              bullet
+            ] }, i)) })
+          ] }, exp.id)) })
+        ] }),
+        hasProjects && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(import_jsx_runtime8.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(SectionHeading8, { title: "Projects" }),
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "grid grid-cols-2 gap-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
+            "div",
+            {
+              className: "rounded-2xl p-3",
+              style: { backgroundColor: "#ecfdf5" },
+              children: [
+                /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "font-semibold text-[11px] text-[#0a1628]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EmptyField8, { text: "Project Name" }) }),
+                proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "text-[9.5px] mt-0.5", style: { color: "#047857" }, children: proj.techStack.join(" \xB7 ") }),
+                proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("ul", { className: "mt-1 space-y-0.5", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("li", { className: "text-[#1e3a5f] text-[10.5px]", children: [
+                  "\u2014 ",
+                  bullet
+                ] }, i)) })
+              ]
+            },
+            proj.id
+          )) })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex gap-8", children: [
+          hasEducation && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(SectionHeading8, { title: "Education" }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "space-y-2", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "font-semibold text-[11px] text-[#0a1628]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EmptyField8, { text: "Degree" }) }),
+              /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "text-[10px] text-[#4a6fa5]", children: [
+                edu.college,
+                " ",
+                edu.year && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { children: [
+                  "\xB7 ",
+                  edu.year
+                ] }),
+                " ",
+                edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("span", { children: [
+                  "\xB7 ",
+                  edu.cgpa
+                ] })
+              ] })
+            ] }, edu.id)) })
+          ] }),
+          hasSkills && /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex-1", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(SectionHeading8, { title: "Skills" }),
+            /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "flex flex-wrap gap-1.5", children: allSkills.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
+              "span",
+              {
+                className: "text-[9.5px] px-2 py-0.5 rounded-full",
+                style: {
+                  border: i % 2 === 0 ? "1px solid #059669" : "1px solid #cbd5e1",
+                  color: i % 2 === 0 ? "#059669" : "#4a6fa5"
+                },
+                children: s
+              },
+              i
+            )) })
+          ] })
+        ] }),
+        !personal.name && !hasEducation && !hasExperience && !hasSkills && !hasProjects && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "flex flex-col items-center justify-center h-64 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("p", { className: "text-[#cbd5e1] text-sm", children: [
+          "Start filling the form \u2014",
+          /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("br", {}),
+          "your resume will appear here."
+        ] }) })
+      ]
+    }
+  );
+}
+
+// src/components/templates/TechnicalProTemplate.jsx
+var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
+function SectionHeading9({ title }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-center gap-2 mt-4 mb-2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[#059669] text-[11px]", children: "//" }),
+    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+      "span",
+      {
+        className: "text-[10.5px] font-bold tracking-[0.1em] uppercase text-[#0a1628]",
+        children: title
+      }
+    )
+  ] });
+}
+function EmptyField9({ text }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+}
+function SkillCol({ label, items }) {
+  if (!items.length) return null;
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+    "div",
+    {
+      className: "flex-1 rounded-lg p-2.5",
+      style: { backgroundColor: "#f8fafc", border: "1px solid #cbd5e1" },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "text-[9px] font-bold uppercase tracking-wider text-[#4a6fa5] mb-1", children: label }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap gap-1", children: items.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+          "span",
+          {
+            className: "text-[9px] px-1.5 py-0.5 rounded",
+            style: { backgroundColor: "#0a1628", color: "#d1fae5" },
+            children: s
+          },
+          i
+        )) })
+      ]
+    }
+  );
+}
+function TechnicalProTemplate({ resume }) {
+  const { personal, education, experience, skills, projects } = resume;
+  const hasEducation = education.length > 0;
+  const hasExperience = experience.length > 0;
+  const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
+  const hasProjects = projects.length > 0;
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
+    "div",
+    {
+      className: "bg-white shadow-md rounded-sm w-full",
+      style: { fontFamily: "'Inter', sans-serif", fontSize: "11px", lineHeight: "1.5", padding: "30px 34px", minHeight: "842px" },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex items-start justify-between gap-4 pb-3", style: { borderBottom: "1px solid #cbd5e1" }, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h1", { className: "text-[22px] font-bold text-[#0a1628] tracking-tight", children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Your Name" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px] text-[#4a6fa5]", children: [
+            personal.email && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.email }),
+            personal.phone && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.phone }),
+            personal.address && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.address })
+          ] }),
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-0.5 text-[10px]", style: { color: "#059669" }, children: [
+            personal.github && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { children: [
+              "github.com/",
+              personal.github
+            ] }),
+            personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { children: [
+              "linkedin.com/in/",
+              personal.linkedin
+            ] }),
+            personal.portfolio && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.portfolio })
+          ] })
+        ] }) }),
+        hasSkills && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Stack" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Technical", items: skills.technical }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Tools", items: skills.tools }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Languages", items: skills.languages })
+          ] })
+        ] }),
+        hasExperience && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Experience" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "font-semibold text-[11.5px] text-[#0a1628]", children: [
+                exp.role || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Role" }),
+                exp.company && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "text-[#4a6fa5] font-normal", children: [
+                  " \xB7 ",
+                  exp.company
+                ] })
+              ] }),
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: exp.duration })
+            ] }),
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-shrink-0 text-[#059669]", children: "\u25B8" }),
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: bullet })
+            ] }, i)) })
+          ] }, exp.id)) })
+        ] }),
+        hasProjects && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Projects" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "space-y-2.5", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex items-start justify-between gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "font-semibold text-[11px] text-[#0a1628]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Project Name" }) }) }),
+            proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap gap-1 mt-1", children: proj.techStack.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+              "span",
+              {
+                className: "text-[9px] px-1.5 py-0.5 rounded",
+                style: { backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", color: "#1e3a5f" },
+                children: t
+              },
+              i
+            )) }),
+            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-shrink-0 text-[#059669]", children: "\u25B8" }),
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: bullet })
+            ] }, i)) })
+          ] }, proj.id)) })
+        ] }),
+        hasEducation && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Education" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap gap-x-6 gap-y-1", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "text-[10.5px]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "font-semibold text-[#0a1628]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Degree" }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "text-[#4a6fa5]", children: [
+              " \xB7 ",
+              edu.college,
+              " ",
+              edu.year && `\xB7 ${edu.year}`,
+              " ",
+              edu.cgpa && `\xB7 ${edu.cgpa}`
+            ] })
+          ] }, edu.id)) })
+        ] }),
+        !personal.name && !hasEducation && !hasExperience && !hasSkills && !hasProjects && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-col items-center justify-center h-64 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("p", { className: "text-[#cbd5e1] text-sm", children: [
+          "Start filling the form \u2014",
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("br", {}),
+          "your resume will appear here."
+        ] }) })
+      ]
+    }
+  );
+}
+
+// src/components/templates/GridProfessionalTemplate.jsx
+var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
+function SectionHeading10({ title }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "mb-2", children: [
+    /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[10px] font-bold tracking-[0.15em] uppercase text-[#0a1628]", children: title }),
+    /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "h-px bg-[#cbd5e1] mt-1" })
+  ] });
+}
+function EmptyField10({ text }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+}
+function GridProfessionalTemplate({ resume }) {
+  const { personal, education, experience, skills, projects } = resume;
+  const hasEducation = education.length > 0;
+  const hasExperience = experience.length > 0;
+  const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
+  const hasProjects = projects.length > 0;
+  return /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)(
+    "div",
+    {
+      className: "bg-white shadow-md rounded-sm w-full",
+      style: { fontFamily: "'Inter', sans-serif", fontSize: "11px", lineHeight: "1.5", padding: "30px 34px", minHeight: "842px" },
+      children: [
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "text-center pb-3 mb-4", style: { borderBottom: "2px solid #0a1628" }, children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("h1", { className: "text-[22px] font-bold text-[#0a1628]", children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(EmptyField10, { text: "Your Name" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 mt-1 text-[10px] text-[#1e3a5f]", children: [
+            personal.email && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { children: personal.email }),
+            personal.phone && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { children: [
+              "\xB7 ",
+              personal.phone
+            ] }),
+            personal.address && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { children: [
+              "\xB7 ",
+              personal.address
+            ] })
+          ] }),
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 mt-0.5 text-[10px] text-[#059669]", children: [
+            personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { children: [
+              "linkedin.com/in/",
+              personal.linkedin
+            ] }),
+            personal.github && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { children: [
+              "github.com/",
+              personal.github
+            ] }),
+            personal.portfolio && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { children: personal.portfolio })
+          ] })
+        ] }),
+        /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex gap-4", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex-shrink-0", style: { width: "30%" }, children: [
+            hasSkills && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "rounded-lg border border-[#cbd5e1] p-3 mb-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SectionHeading10, { title: "Skills" }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "space-y-1.5", children: [
+                skills.technical.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[9px] font-bold text-[#4a6fa5] uppercase", children: "Technical" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[10px] text-[#1e3a5f]", children: skills.technical.join(", ") })
+                ] }),
+                skills.tools.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[9px] font-bold text-[#4a6fa5] uppercase", children: "Tools" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[10px] text-[#1e3a5f]", children: skills.tools.join(", ") })
+                ] }),
+                skills.languages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[9px] font-bold text-[#4a6fa5] uppercase", children: "Languages" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[10px] text-[#1e3a5f]", children: skills.languages.join(", ") })
+                ] })
+              ] })
+            ] }),
+            hasEducation && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "rounded-lg border border-[#cbd5e1] p-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SectionHeading10, { title: "Education" }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "space-y-2", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "font-semibold text-[10.5px] text-[#0a1628]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(EmptyField10, { text: "Degree" }) }),
+                /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "text-[10px] text-[#4a6fa5]", children: edu.college }),
+                /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "text-[9.5px] text-[#4a6fa5]/80", children: [
+                  edu.year,
+                  " ",
+                  edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { children: [
+                    "\xB7 ",
+                    edu.cgpa
+                  ] })
+                ] })
+              ] }, edu.id)) })
+            ] })
+          ] }),
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex-1", children: [
+            hasExperience && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "rounded-lg border border-[#cbd5e1] p-3 mb-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SectionHeading10, { title: "Experience" }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "font-semibold text-[11.5px] text-[#0a1628]", children: [
+                    exp.role || /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(EmptyField10, { text: "Role" }),
+                    exp.company && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("span", { className: "text-[#4a6fa5] font-normal", children: [
+                      " \xB7 ",
+                      exp.company
+                    ] })
+                  ] }),
+                  exp.duration && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: exp.duration })
+                ] }),
+                exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "flex-shrink-0 mt-0.5", children: "\u2022" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { children: bullet })
+                ] }, i)) })
+              ] }, exp.id)) })
+            ] }),
+            hasProjects && /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "rounded-lg border border-[#cbd5e1] p-3", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(SectionHeading10, { title: "Projects" }),
+              /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "space-y-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { children: [
+                /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "font-semibold text-[11px] text-[#0a1628]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(EmptyField10, { text: "Project Name" }) }),
+                  proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: proj.techStack.join(", ") })
+                ] }),
+                proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { className: "flex-shrink-0 mt-0.5", children: "\u2022" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("span", { children: bullet })
+                ] }, i)) })
+              ] }, proj.id)) })
+            ] })
+          ] })
+        ] }),
+        !personal.name && !hasEducation && !hasExperience && !hasSkills && !hasProjects && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "flex flex-col items-center justify-center h-64 text-center", children: /* @__PURE__ */ (0, import_jsx_runtime10.jsxs)("p", { className: "text-[#cbd5e1] text-sm", children: [
+          "Start filling the form \u2014",
+          /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("br", {}),
+          "your resume will appear here."
+        ] }) })
+      ]
+    }
+  );
+}
+
 // src/components/templates/templateRegistry.js
 var TEMPLATES = [
   {
@@ -28768,6 +29575,7 @@ var TEMPLATES = [
     name: "Classic",
     description: "Clean, centered header. TCS/Infosys-safe.",
     isPremium: false,
+    supportsPhoto: false,
     component: ClassicTemplate
   },
   {
@@ -28775,6 +29583,7 @@ var TEMPLATES = [
     name: "Modern",
     description: "Left-aligned header with emerald accents.",
     isPremium: false,
+    supportsPhoto: false,
     component: ModernTemplate
   },
   {
@@ -28782,6 +29591,7 @@ var TEMPLATES = [
     name: "Minimal",
     description: "Ultra-clean, generous whitespace.",
     isPremium: false,
+    supportsPhoto: false,
     component: MinimalTemplate
   },
   {
@@ -28789,6 +29599,7 @@ var TEMPLATES = [
     name: "Compact",
     description: "Dense layout, startup/tech-forward.",
     isPremium: false,
+    supportsPhoto: false,
     component: CompactTemplate
   },
   {
@@ -28796,7 +29607,48 @@ var TEMPLATES = [
     name: "Executive",
     description: "Formal serif headline. MBA/senior roles.",
     isPremium: false,
+    supportsPhoto: false,
     component: ExecutiveTemplate
+  },
+  {
+    id: "corporate-elite",
+    name: "Corporate Elite",
+    description: "Dark sidebar layout. Consulting/MBA-focused.",
+    isPremium: true,
+    supportsPhoto: true,
+    component: CorporateEliteTemplate
+  },
+  {
+    id: "startup-bold",
+    name: "Startup Bold",
+    description: "Emerald header band, chip-style skills.",
+    isPremium: true,
+    supportsPhoto: true,
+    component: StartupBoldTemplate
+  },
+  {
+    id: "creative-edge",
+    name: "Creative Edge",
+    description: "Timeline experience, serif headline, card projects.",
+    isPremium: true,
+    supportsPhoto: true,
+    component: CreativeEdgeTemplate
+  },
+  {
+    id: "technical-pro",
+    name: "Technical Pro",
+    description: "Stack-first layout for SDE/dev roles.",
+    isPremium: true,
+    supportsPhoto: false,
+    component: TechnicalProTemplate
+  },
+  {
+    id: "grid-professional",
+    name: "Grid Professional",
+    description: "Bordered card grid. Formal and structured.",
+    isPremium: true,
+    supportsPhoto: true,
+    component: GridProfessionalTemplate
   }
 ];
 function getTemplate(id) {
@@ -28867,8 +29719,30 @@ async function handler(req, res) {
     const fullHtml = buildHtml(bodyHtml);
     browser = await getBrowser();
     const page = await browser.newPage();
+    page.on("console", (msg) => {
+      console.log("PAGE CONSOLE:", msg.type(), msg.text());
+    });
+    page.on("pageerror", (err) => {
+      console.log("PAGE ERROR:", err.message);
+    });
+    page.on("requestfailed", (req2) => {
+      console.log(
+        "REQUEST FAILED:",
+        req2.url(),
+        req2.failure()?.errorText
+      );
+    });
     await page.setContent(fullHtml, { waitUntil: "networkidle0" });
     await page.evaluate(() => document.fonts.ready);
+    const diag = await page.evaluate(() => {
+      const flexEl = document.querySelector(".flex");
+      if (!flexEl) return "NO .flex ELEMENT FOUND IN DOM";
+      const cs = getComputedStyle(flexEl);
+      const sidebarEl = document.querySelector('[style*="34%"]') || document.querySelector('[style*="background-color"]');
+      const sidebarWidth = sidebarEl ? getComputedStyle(sidebarEl).width : "sidebar el not found";
+      return `display=${cs.display}, sidebar-width=${sidebarWidth}`;
+    });
+    console.log("TAILWIND FLEX CHECK:", diag);
     const pdfBytes = await page.pdf({
       format: "A4",
       printBackground: true,

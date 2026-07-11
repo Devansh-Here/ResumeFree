@@ -1,4 +1,3 @@
-// src/components/templates/templateRegistry.js
 import ClassicTemplate from "./ClassicTemplate.jsx";
 import ModernTemplate from "./ModernTemplate.jsx";
 import MinimalTemplate from "./MinimalTemplate.jsx";
@@ -14,12 +13,30 @@ import GridProfessionalTemplate from "./GridProfessionalTemplate.jsx";
 // To add a new (premium) template later: build the component,
 // import it here, add one entry below with isPremium: true —
 // nothing else in the app needs to change.
+//
+// `supportsPhoto`: whether this template's layout has a spot for a
+// profile photo. Free templates intentionally keep this false — it
+// doubles as an ATS-safety default (single-column, no-photo layouts
+// parse better) AND as a natural reason for free users to try a
+// premium template. PhotoEditorPanel checks this flag via
+// `templateSupportsPhoto()` before rendering at all.
+//
+// `atsRating`: 'safe' | 'moderate' — how reliably this layout parses
+// in legacy/bulk-hiring ATS systems (TCS/Infosys/Capgemini-style).
+// 'safe' = single-column, linear top-to-bottom reading order.
+// 'moderate' = has a sidebar, grid, or any side-by-side column block
+// that a parser could read out of order. This is a DESIGN TRADEOFF
+// indicator shown to the user, not a hard restriction — see Section 5q
+// of the handoff doc. Assigned by visually auditing each template's
+// actual rendered layout (screenshots), not guessed from the name.
 export const TEMPLATES = [
   {
     id: "classic",
     name: "Classic",
     description: "Clean, centered header. TCS/Infosys-safe.",
     isPremium: false,
+    supportsPhoto: false,
+    atsRating: "safe",
     component: ClassicTemplate,
   },
   {
@@ -27,6 +44,8 @@ export const TEMPLATES = [
     name: "Modern",
     description: "Left-aligned header with emerald accents.",
     isPremium: false,
+    supportsPhoto: false,
+    atsRating: "safe",
     component: ModernTemplate,
   },
   {
@@ -34,6 +53,8 @@ export const TEMPLATES = [
     name: "Minimal",
     description: "Ultra-clean, generous whitespace.",
     isPremium: false,
+    supportsPhoto: false,
+    atsRating: "safe",
     component: MinimalTemplate,
   },
   {
@@ -41,6 +62,8 @@ export const TEMPLATES = [
     name: "Compact",
     description: "Dense layout, startup/tech-forward.",
     isPremium: false,
+    supportsPhoto: false,
+    atsRating: "safe",
     component: CompactTemplate,
   },
   {
@@ -48,6 +71,8 @@ export const TEMPLATES = [
     name: "Executive",
     description: "Formal serif headline. MBA/senior roles.",
     isPremium: false,
+    supportsPhoto: false,
+    atsRating: "safe",
     component: ExecutiveTemplate,
   },
   {
@@ -55,6 +80,8 @@ export const TEMPLATES = [
     name: "Corporate Elite",
     description: "Dark sidebar layout. Consulting/MBA-focused.",
     isPremium: true,
+    supportsPhoto: true,
+    atsRating: "moderate",
     component: CorporateEliteTemplate,
   },
   {
@@ -62,6 +89,8 @@ export const TEMPLATES = [
     name: "Startup Bold",
     description: "Emerald header band, chip-style skills.",
     isPremium: true,
+    supportsPhoto: true,
+    atsRating: "safe",
     component: StartupBoldTemplate,
   },
   {
@@ -69,6 +98,8 @@ export const TEMPLATES = [
     name: "Creative Edge",
     description: "Timeline experience, serif headline, card projects.",
     isPremium: true,
+    supportsPhoto: true,
+    atsRating: "moderate",
     component: CreativeEdgeTemplate,
   },
   {
@@ -76,6 +107,8 @@ export const TEMPLATES = [
     name: "Technical Pro",
     description: "Stack-first layout for SDE/dev roles.",
     isPremium: true,
+    supportsPhoto: false,
+    atsRating: "safe",
     component: TechnicalProTemplate,
   },
   {
@@ -83,10 +116,20 @@ export const TEMPLATES = [
     name: "Grid Professional",
     description: "Bordered card grid. Formal and structured.",
     isPremium: true,
+    supportsPhoto: true,
+    atsRating: "moderate",
     component: GridProfessionalTemplate,
   },
 ];
 
 export function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
+}
+
+export function templateSupportsPhoto(id) {
+  return !!getTemplate(id).supportsPhoto;
+}
+
+export function getATSRating(id) {
+  return getTemplate(id).atsRating || "safe";
 }

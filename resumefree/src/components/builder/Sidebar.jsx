@@ -18,7 +18,12 @@ import ATSContent from "../ATSContent";
 import TemplateSwitcherContent from "./TemplateSwitcherContent";
 import UpgradeModal from "../premium/UpgradeModal";
 
-const SIDEBAR_COLLAPSED = 72;
+// Matches the sidebar's actual collapsed rendered width: w-[4.5rem] × 14px
+// root font-size (global.css's 87.5% scale) = 63px. If the density scale
+// (global.css html{font-size}) or the sidebar's w-[...] class ever changes,
+// this number must be recalculated to match — it's raw px math, not
+// automatically synced.
+const SIDEBAR_COLLAPSED = 63;
 
 const NAV_ITEMS = [
   { id: "jd", icon: Target, label: "JD Match" },
@@ -83,11 +88,11 @@ export default function Sidebar() {
                    rounded-3xl border border-white/5
                    shadow-[0_4px_16px_-4px_rgba(10,22,40,0.25),0_1px_3px_rgba(10,22,40,0.15)]
                    transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-                   w-[72px] hover:w-[216px] z-20"
+                   w-[4.5rem] hover:w-[13.5rem] z-20"
         onMouseLeave={() => setProfileMenuOpen(false)}
       >
         {/* Nav items */}
-        <div className="flex-1 flex flex-col gap-1.5 pt-6 px-3">
+        <div className="flex-1 flex flex-col gap-1.5 pt-5 px-2.5">
           {NAV_ITEMS.map((item) => {
             const active = activePanel === item.id;
             const locked = item.id === "jd" && !hasJDMatcherAccess;
@@ -97,39 +102,38 @@ export default function Sidebar() {
                 key={item.id}
                 type="button"
                 onClick={() => handleItemClick(item)}
-                className={`group/navitem relative flex items-center h-11 rounded-2xl transition-all duration-150 whitespace-nowrap overflow-hidden ${
+                className={`group/navitem relative flex items-center h-10 rounded-2xl transition-all duration-150 whitespace-nowrap overflow-hidden ${
                   active ? "bg-white/10" : "hover:bg-white/5"
                 }`}
               >
                 {/* Active indicator bar */}
                 {active && (
                   <span
-                    className="absolute left-0 top-2 bottom-2 w-[3px] rounded-full bg-[#059669] origin-center"
+                    className="absolute left-0 top-2 bottom-2 w-[0.1875rem] rounded-full bg-[#059669] origin-center"
                     style={{ animation: "rf-active-bar-in 0.2s ease-out" }}
                   />
                 )}
 
-                {/* Icon column — w-12 (48px) matches the button's actual collapsed
-                    width (72px sidebar - 24px px-3 padding = 48px), so the icon
-                    is truly centered in the visible pill, not clipped/offset. */}
-                <span className="w-12 shrink-0 flex items-center justify-center relative">
+                {/* Icon column — matches the button's actual collapsed
+                    width so the icon is truly centered in the visible pill. */}
+                <span className="w-11 shrink-0 flex items-center justify-center relative">
                   <span
                     className={`rf-nav-icon-wrap flex items-center justify-center ${
                       active ? "text-[#059669]" : "text-white/55 group-hover/navitem:text-[#059669]"
                     }`}
                   >
-                    <Icon size={21} weight="duotone" />
+                    <Icon size={18} weight="duotone" />
                   </span>
                   {locked && (
-                    <span className="absolute top-0.5 right-2.5 w-3.5 h-3.5 rounded-full bg-[#0a1628] flex items-center justify-center">
-                      <LockSimple size={9} weight="bold" color="#f59e0b" />
+                    <span className="absolute top-0.5 right-2.5 w-3 h-3 rounded-full bg-[#0a1628] flex items-center justify-center">
+                      <LockSimple size={8} weight="bold" color="#f59e0b" />
                     </span>
                   )}
                 </span>
 
                 {/* Label */}
                 <span
-                  className={`text-[13px] font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 ${
+                  className={`text-[0.75rem] font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 ${
                     active ? "text-white" : "text-white/90"
                   }`}
                   style={{ fontFamily: "'Inter', sans-serif" }}
@@ -144,8 +148,8 @@ export default function Sidebar() {
         {/* Premium upsell — rotating purple/blue gradient ring around the border,
           continuous, to make it read as the one "premium" surface in the sidebar */}
         {!isPremium && (
-          <div className="px-3 mb-3">
-            <div className="relative rounded-2xl p-[1.5px] overflow-hidden">
+          <div className="px-2.5 mb-2.5">
+            <div className="relative rounded-2xl p-[0.09375rem] overflow-hidden">
               {/* Oversized rotating conic-gradient layer — only the ~1.5px edge peeks out
                   as a border since the button sits on top with its own solid background */}
               <div
@@ -158,16 +162,16 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setUpgradeOpen(true)}
-                className="relative z-10 w-full flex items-center h-11 rounded-2xl transition-all duration-150 overflow-hidden"
+                className="relative z-10 flex items-center h-10 w-11 group-hover:w-full rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
                 style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)" }}
               >
-                <span className="w-12 shrink-0 flex items-center justify-center">
+                <span className="w-11 shrink-0 flex items-center justify-center">
                   <span className="rf-nav-icon-wrap flex items-center justify-center text-[#fde68a]">
-                    <Sparkle size={19} weight="duotone" />
+                    <Sparkle size={17} weight="duotone" />
                   </span>
                 </span>
                 <span
-                  className="text-[12px] font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 whitespace-nowrap"
+                  className="text-[0.6875rem] font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 whitespace-nowrap"
                   style={{ fontFamily: "'Inter', sans-serif" }}
                 >
                   Upgrade to Premium
@@ -178,22 +182,22 @@ export default function Sidebar() {
         )}
 
         {/* Profile */}
-        <div className="border-t border-white/10 px-3 py-3 relative">
+        <div className="border-t border-white/10 px-2.5 py-2.5 relative">
           <button
             type="button"
             onClick={() => setProfileMenuOpen((p) => !p)}
-            className="w-full flex items-center h-11 rounded-2xl hover:bg-white/5 transition-all duration-150"
+            className="w-full flex items-center h-10 rounded-2xl hover:bg-white/5 transition-all duration-150"
           >
-            <span className="w-12 shrink-0 flex items-center justify-center">
+            <span className="w-11 shrink-0 flex items-center justify-center">
               <span
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold text-white"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[0.6875rem] font-bold text-white"
                 style={{ background: user ? "#059669" : "#4a6fa5", fontFamily: "'Inter', sans-serif" }}
               >
                 {initial}
               </span>
             </span>
             <span
-              className="text-[13px] font-medium text-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 truncate"
+              className="text-[0.75rem] font-medium text-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 delay-75 truncate"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {displayName}
@@ -202,7 +206,7 @@ export default function Sidebar() {
 
           {profileMenuOpen && (
             <div
-              className="absolute bottom-[calc(100%+8px)] left-3 w-44 bg-white rounded-2xl overflow-hidden py-1.5"
+              className="absolute bottom-[calc(100%+0.5rem)] left-2.5 w-40 bg-white rounded-2xl overflow-hidden py-1.5"
               style={{
                 border: "1px solid #e2e8f0",
                 boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.14) 0px 12px 24px -6px",
@@ -214,19 +218,19 @@ export default function Sidebar() {
                   <button
                     type="button"
                     onClick={() => navigate("/dashboard")}
-                    className="w-full flex items-center gap-2.5 text-left px-4 py-2 text-[13px] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
+                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   >
-                    <SquaresFour size={15} weight="duotone" color="#4a6fa5" />
+                    <SquaresFour size={14} weight="duotone" color="#4a6fa5" />
                     Dashboard
                   </button>
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2.5 text-left px-4 py-2 text-[13px] text-[#dc2626] hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#dc2626] hover:bg-red-50 transition-colors"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   >
-                    <SignOut size={15} weight="duotone" color="#dc2626" />
+                    <SignOut size={14} weight="duotone" color="#dc2626" />
                     Sign out
                   </button>
                 </>
@@ -234,10 +238,10 @@ export default function Sidebar() {
                 <button
                   type="button"
                   onClick={() => navigate("/auth")}
-                  className="w-full flex items-center gap-2.5 text-left px-4 py-2 text-[13px] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
+                  className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
                   style={{ fontFamily: "'Inter', sans-serif" }}
                 >
-                  <SignIn size={15} weight="duotone" color="#4a6fa5" />
+                  <SignIn size={14} weight="duotone" color="#4a6fa5" />
                   Log in
                 </button>
               )}
@@ -251,9 +255,11 @@ export default function Sidebar() {
         <JDMatcherContent onClose={() => setActivePanel(null)} />
       </SlideOverPanel>
 
-      <SlideOverPanel open={activePanel === "ats"} onClose={() => setActivePanel(null)} sidebarWidth={SIDEBAR_COLLAPSED}>
-        <ATSContent onClose={() => setActivePanel(null)} />
-      </SlideOverPanel>
+      <ATSContent
+        open={activePanel === "ats"}
+        onClose={() => setActivePanel(null)}
+        onSwitchTemplate={() => setActivePanel("templates")}
+      />
 
       <TemplateSwitcherContent
         open={activePanel === "templates"}

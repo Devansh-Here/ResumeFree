@@ -1,5 +1,11 @@
 // src/components/builder/PersonalInfoForm.jsx
+import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
+import { useAuthStore } from "../../store/authStore";
+import PhotoEditorPanel from "../premium/PhotoEditorPanel";
+import ColorThemePicker from "../premium/ColorThemePicker";
+import PhotoFeatureShowcaseModal from "../premium/PhotoFeatureShowcaseModal";
+import { templateSupportsPhoto } from "../templates/templateRegistry";
 
 const inputClass =
   "w-full bg-white border border-[#cbd5e1] rounded-2xl px-3.5 py-2.5 text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#0a1628] focus:ring-2 focus:ring-[#0a1628]/8 transition-all duration-150";
@@ -23,9 +29,46 @@ function Field({ label, id, optional, children }) {
   );
 }
 
+function SectionDivider({ label }) {
+  return (
+    <div className="flex items-center gap-2.5 py-0.5">
+      <div className="flex-1 h-px bg-[#cbd5e1]" />
+      <span className="text-[0.6875rem] font-semibold tracking-widest text-[#4a6fa5]/60 uppercase">
+        {label}
+      </span>
+      <div className="flex-1 h-px bg-[#cbd5e1]" />
+    </div>
+  );
+}
+
+function PhotoFeatureDiscoveryHint() {
+  const [showModal, setShowModal] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        className="w-full flex items-center gap-3 text-left bg-[#ecfdf5] border border-[#059669]/20 rounded-2xl px-4 py-3 hover:border-[#059669]/40 transition-colors duration-150"
+      >
+        <span className="text-lg shrink-0">📷</span>
+        <span className="text-[0.75rem] text-[#1e3a5f] leading-snug">
+          <span className="font-semibold text-[#0a1628]">Want a photo on your resume?</span>{" "}
+          Some premium templates support it — tap to see how it works.
+        </span>
+      </button>
+
+      {showModal && (
+        <PhotoFeatureShowcaseModal onClose={() => setShowModal(false)} />
+      )}
+    </>
+  );
+}
+
 export default function PersonalInfoForm() {
-  const { resume, updatePersonal } = useResumeStore();
+  const { resume, updatePersonal, selectedTemplateId } = useResumeStore();
+  const isPremium = useAuthStore((s) => s.isPremium());
   const p = resume.personal;
+  const photoAllowed = templateSupportsPhoto(selectedTemplateId);
 
   const handleChange = (field) => (e) => updatePersonal(field, e.target.value);
 
@@ -44,6 +87,16 @@ export default function PersonalInfoForm() {
           This appears at the top of your resume. Keep it professional.
         </p>
       </div>
+
+      {/* Profile Photo (premium — background removal + custom backgrounds).
+          Only shown when the SELECTED TEMPLATE has a spot for a photo —
+          see supportsPhoto in templateRegistry.js */}
+      {photoAllowed && <PhotoEditorPanel />}
+
+      {/* Discovery hint — shown to free users ONLY when their current
+          template doesn't support a photo, so the feature is never
+          completely invisible to someone who hasn't browsed templates. */}
+      {!photoAllowed && !isPremium && <PhotoFeatureDiscoveryHint />}
 
       {/* Full Name */}
       <Field label="Full Name" id="name">
@@ -95,13 +148,7 @@ export default function PersonalInfoForm() {
       </Field>
 
       {/* Divider */}
-      <div className="flex items-center gap-2.5 py-0.5">
-        <div className="flex-1 h-px bg-[#cbd5e1]" />
-        <span className="text-[0.6875rem] font-semibold tracking-widest text-[#4a6fa5]/60 uppercase">
-          Online Profiles
-        </span>
-        <div className="flex-1 h-px bg-[#cbd5e1]" />
-      </div>
+      <SectionDivider label="Online Profiles" />
 
       {/* LinkedIn */}
       <Field label="LinkedIn" id="linkedin" optional>
@@ -148,6 +195,12 @@ export default function PersonalInfoForm() {
           className={inputClass}
         />
       </Field>
+
+      {/* Divider */}
+      <SectionDivider label="Resume Style" />
+
+      {/* Accent Color (premium) */}
+      <ColorThemePicker />
 
       {/* Auto-save notice */}
       <div className="flex items-center gap-2 pt-0.5">

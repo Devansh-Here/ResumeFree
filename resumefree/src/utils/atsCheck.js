@@ -126,6 +126,15 @@ const ROLE_PROFILES = {
 // Default: general / fresher — show everything
 const DEFAULT_RELEVANT = new Set(Object.values(ATS_KEYWORDS).flat())
 
+// Ordered list for a role-selector dropdown. `key: null` = auto-detect,
+// mirroring the existing default behavior of runATSCheck/scoreText when no
+// override is passed. Consumed by the new Resume Checker's RoleSelector —
+// safe to also reuse anywhere else a role dropdown is needed later.
+export const ROLE_OPTIONS = [
+  { key: null, label: 'Auto-detect from resume' },
+  ...Object.entries(ROLE_PROFILES).map(([key, p]) => ({ key, label: p.label })),
+]
+
 // ── Boundary-aware keyword matching ─────────────────────────────────────────
 function matchesKeyword(text, keyword) {
   if (keyword.includes(' ')) return text.includes(keyword)
@@ -140,7 +149,7 @@ function matchesKeyword(text, keyword) {
   return new RegExp('(?<![a-z0-9])' + keyword + '(?![a-z0-9])', 'i').test(text)
 }
 
-// ── Text extraction ──────────────────────────────────────────────────────────
+// ── Text extraction (structured resumeData -> plain text) ──────────────────
 function extractResumeText(resumeData) {
   const parts = []
   if (resumeData.personal?.summary) parts.push(resumeData.personal.summary)
@@ -177,10 +186,20 @@ function detectRole(text) {
   return bestScore >= 0.2 ? bestRole : null
 }
 
-// ── Main ATS check ───────────────────────────────────────────────────────────
-export function runATSCheck(resumeData) {
-  const text         = extractResumeText(resumeData)
-  const detectedRole = detectRole(text)
+// ── Core scoring logic (works on plain text) ────────────────────────────────
+// Extracted out of the old runATSCheck so it can be reused for raw text
+// extracted from an uploaded PDF/DOCX (Resume Checker page), not just the
+// structured in-app resumeData object. Algorithm is byte-for-byte identical
+// to what runATSCheck used to do inline — this is a pure reorganization,
+// not a behavior change.
+//
+// @param {string} text - lowercase-or-not plain text to scan (will be
+//   lowercased internally where needed, matching prior behavior).
+// @param {string|null} roleOverride - one of ROLE_PROFILES' keys to force a
+//   specific role instead of auto-detecting. Pass null/undefined for the
+//   original auto-detect behavior.
+export function scoreText(text, roleOverride = null) {
+  const detectedRole = roleOverride && ROLE_PROFILES[roleOverride] ? roleOverride : detectRole(text)
   const profile      = detectedRole ? ROLE_PROFILES[detectedRole] : null
   const roleLabel    = profile ? profile.label : 'General / Fresher'
   const relevantSet  = profile ? profile.relevant : DEFAULT_RELEVANT
@@ -221,6 +240,14 @@ export function runATSCheck(resumeData) {
   const relevantMissing = missing.filter((m) => relevantSet.has(m.word))
 
   return { score, matched, missing: relevantMissing, categoryBreakdown, roleLabel, detectedRole }
+}
+
+// ── Main ATS check (structured resumeData) ──────────────────────────────────
+// Unchanged public signature/behavior — existing callers (ATSCheckPanel etc.)
+// keep working exactly as before. Now a thin wrapper around scoreText().
+export function runATSCheck(resumeData, roleOverride = null) {
+  const text = extractResumeText(resumeData)
+  return scoreText(text, roleOverride)
 }
 
 export function getScoreLabel(score) {

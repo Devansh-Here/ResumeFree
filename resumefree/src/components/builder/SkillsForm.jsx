@@ -57,11 +57,11 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
 
   return (
     <div
-      className="bg-white border border-[#cbd5e1] rounded-3xl p-5 space-y-3"
+      className="bg-white border border-[#cbd5e1] rounded-3xl p-4 space-y-2.5"
       style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 4px 12px -2px" }}
     >
       <label
-        className="block text-[11px] font-semibold tracking-widest uppercase text-[#4a6fa5]"
+        className="block text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5]"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
         {label}
@@ -69,13 +69,13 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
 
       {/* Tags + Input box */}
       <div
-        className="min-h-[48px] flex flex-wrap gap-2 p-3 bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl cursor-text focus-within:border-[#059669] focus-within:ring-2 focus-within:ring-[#059669]/15 transition-all duration-150"
+        className="min-h-[2.625rem] flex flex-wrap gap-1.5 p-2.5 bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl cursor-text focus-within:border-[#059669] focus-within:ring-2 focus-within:ring-[#059669]/15 transition-all duration-150"
         onClick={() => document.getElementById(`input-${category}`).focus()}
       >
         {skills.map((skill) => (
           <span
             key={skill}
-            className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] text-[#0a1628] text-xs px-3 py-1 rounded-full"
+            className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] text-[#0a1628] text-[0.75rem] px-2.5 py-0.5 rounded-full"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             {skill}
@@ -103,13 +103,13 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
           onKeyDown={handleKeyDown}
           onFocus={() => setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-          className="flex-1 min-w-[120px] bg-transparent text-sm text-[#0a1628] placeholder:text-[#4a6fa5]/50 outline-none"
+          className="flex-1 min-w-[7.5rem] bg-transparent text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 outline-none"
           style={{ fontFamily: "'Inter', sans-serif" }}
         />
       </div>
 
       <p
-        className="text-[11px] text-[#4a6fa5]/60"
+        className="text-[0.6875rem] text-[#4a6fa5]/60"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
         Type and press Enter or comma to add · Backspace to remove last
@@ -122,7 +122,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
             <button
               key={s}
               onMouseDown={() => handleAdd(s)}
-              className="w-full text-left px-4 py-2.5 text-sm text-[#4a6fa5] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
+              className="w-full text-left px-3.5 py-2 text-[0.8125rem] text-[#4a6fa5] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {s}
@@ -135,7 +135,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
       {notAdded.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           <span
-            className="text-[11px] text-[#4a6fa5]/60 self-center mr-1"
+            className="text-[0.6875rem] text-[#4a6fa5]/60 self-center mr-1"
             style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Quick add:
@@ -144,7 +144,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
             <button
               key={s}
               onClick={() => handleAdd(s)}
-              className="text-xs px-3 py-1 rounded-full border border-[#cbd5e1] text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
+              className="text-[0.75rem] px-2.5 py-0.5 rounded-full border border-[#cbd5e1] text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
               style={{ fontFamily: "'Inter', sans-serif" }}
             >
               + {s}
@@ -164,18 +164,18 @@ export default function SkillsForm() {
   const handleRemove = (category, newSkills) => updateSkills(category, newSkills);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* Header */}
       <div>
         <h2
-          className="text-2xl text-[#0a1628]"
+          className="text-[1.375rem] text-[#0a1628]"
           style={{ fontFamily: "'DM Serif Display', serif" }}
         >
           Skills
         </h2>
         <p
-          className="text-xs text-[#4a6fa5] mt-1"
+          className="text-[0.75rem] text-[#4a6fa5] mt-1"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           Add skills relevant to the jobs you're applying for. ATS scans these first.
@@ -183,10 +183,10 @@ export default function SkillsForm() {
       </div>
 
       {/* ATS tip */}
-      <div className="bg-[#d1fae5] border border-[#059669]/20 rounded-2xl p-3.5 flex items-center gap-3">
+      <div className="bg-[#d1fae5] border border-[#059669]/20 rounded-2xl p-3 flex items-center gap-2.5">
         <span className="text-[#059669] flex-shrink-0">✦</span>
         <p
-          className="text-xs text-[#1e3a5f] leading-relaxed"
+          className="text-[0.75rem] text-[#1e3a5f] leading-relaxed"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           <span className="font-semibold text-[#059669]">ATS tip:</span> Add skills exactly as they appear in the job description. "React.js" and "ReactJS" are different to an ATS.
@@ -198,10 +198,10 @@ export default function SkillsForm() {
       <SkillCategory category="languages" skills={skills.languages} onAdd={handleAdd} onRemove={handleRemove} />
 
       {/* Auto-save notice */}
-      <div className="flex items-center gap-2 pt-1">
+      <div className="flex items-center gap-2 pt-0.5">
         <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
         <p
-          className="text-[11px] text-[#4a6fa5]"
+          className="text-[0.6875rem] text-[#4a6fa5]"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
           Auto-saved to your browser — no account needed

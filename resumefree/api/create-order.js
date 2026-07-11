@@ -1,17 +1,30 @@
 // api/create-order.js — Vercel Serverless Function
 // Creates a Razorpay order. Called by the frontend before opening checkout.
+//
+// FIXED: this file was still on the old subscription model (`plan`:
+// 'monthly'/'yearly', hardcoded paise amounts). UpgradeModal.jsx sends
+// `pass_type` ('sprint' | 'placement' | 'season' | 'addon_*') per the
+// Section 5m pass-based pricing migration — that mismatch is why every
+// purchase attempt threw "Invalid plan" regardless of which pass was
+// selected. Now reads `pass_type` and derives the amount server-side from
+// PASS_DETAILS (single source of truth), so the client can never influence
+// the amount actually charged.
+import { PASS_DETAILS } from "../src/utils/passes.js";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { plan } = req.body || {};
-  const AMOUNTS = { monthly: 19900, yearly: 49900 }; // paise
-  const amount = AMOUNTS[plan];
+  const { pass_type } = req.body || {};
+  const pass = PASS_DETAILS[pass_type];
 
-  if (!amount) {
+  if (!pass) {
     return res.status(400).json({ error: "Invalid plan" });
   }
+
+  // PASS_DETAILS prices are in rupees — Razorpay needs paise.
+  const amount = pass.price * 100;
 
   const keyId = process.env.VITE_RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -32,7 +45,7 @@ export default async function handler(req, res) {
         amount,
         currency: "INR",
         receipt: `rcpt_${Date.now()}`,
-        notes: { plan },
+        notes: { pass_type },
       }),
     });
 

@@ -100,7 +100,7 @@ function AutoSaveIndicator() {
       className="hidden sm:flex items-center gap-1.5 select-none"
       style={{
         fontFamily: "'Inter', sans-serif",
-        fontSize: "12px",
+        fontSize: "0.75rem",
         fontWeight: 500,
         color: state === "saved" ? "#059669" : "#4a6fa5",
         animation: state === "saving"
@@ -118,7 +118,7 @@ function AutoSaveIndicator() {
         </>
       ) : (
         <>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="shrink-0">
             <circle cx="7" cy="7" r="6.5" fill="#d1fae5" stroke="#059669" strokeWidth="1"/>
             <path d="M4.5 7l2 2 3-3" stroke="#059669" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round"/>
@@ -133,7 +133,7 @@ function AutoSaveIndicator() {
 /* ── Animated Premium Badge (rotating gradient ring) ── */
 function PremiumBadge() {
   return (
-    <span className="relative inline-flex items-center rounded-full p-[1.5px] overflow-hidden">
+    <span className="relative inline-flex items-center rounded-full p-[0.09375rem] overflow-hidden">
       <span
         className="absolute inset-[-150%] rf-badge-spin"
         style={{
@@ -141,7 +141,7 @@ function PremiumBadge() {
             "conic-gradient(from 0deg, transparent 0deg, #059669 70deg, #34d399 130deg, #a7f3d0 165deg, transparent 210deg, transparent 360deg)",
         }}
       />
-      <span className="relative z-10 flex items-center gap-1 px-3 py-1 rounded-full bg-apricot-wash font-sohne text-[12px] text-rust tracking-[-0.009em] whitespace-nowrap">
+      <span className="relative z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-apricot-wash font-sohne text-[0.75rem] text-rust tracking-[-0.009em] whitespace-nowrap">
         ✦ Premium
       </span>
     </span>
@@ -154,9 +154,9 @@ function HomeIconButton() {
     <Link
       to="/"
       aria-label="Back to home"
-      className="rf-home-btn flex items-center justify-center w-8 h-8 rounded-full border border-dove text-graphite transition-all duration-300"
+      className="rf-home-btn flex items-center justify-center w-7 h-7 rounded-full border border-dove text-graphite transition-all duration-300"
     >
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="rf-home-icon">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="rf-home-icon">
         <path
           d="M2 7.3L8 2.2l6 5.1"
           stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"
@@ -180,7 +180,7 @@ function HomeIconButton() {
 /* ── Dropdown menu icons (small line icons, same stroke language as HomeIconButton) ── */
 const MenuIcons = {
   dashboard: (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
       <rect x="2" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
       <rect x="8.5" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
       <rect x="2" y="8.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.4" />
@@ -188,7 +188,7 @@ const MenuIcons = {
     </svg>
   ),
   resumes: (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
       <path d="M4 1.8h5.4L12.2 4.6V14a.7.7 0 01-.7.7H4a.7.7 0 01-.7-.7V2.5a.7.7 0 01.7-.7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       <path d="M9.4 1.8V4.6h2.8" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       <path d="M5.3 8.2h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -196,19 +196,19 @@ const MenuIcons = {
     </svg>
   ),
   premium: (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
       <path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2 .7-4.3-3.1-3 4.3-.6L8 1.6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
     </svg>
   ),
   logout: (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
       <path d="M6.4 14H2.7a.7.7 0 01-.7-.7V2.7a.7.7 0 01.7-.7h3.7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M10.6 11.2L14 8l-3.4-3.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M14 8H6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   coverletter: (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
       <path d="M2.5 3.5h11a.7.7 0 01.7.7v7.6a.7.7 0 01-.7.7h-11a.7.7 0 01-.7-.7V4.2a.7.7 0 01.7-.7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
       <path d="M2.8 4.3L8 8.4l5.2-4.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -295,7 +295,7 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
       {/* pulsing ring — only visible while menu is open */}
       <span
         aria-hidden="true"
-        className="absolute -inset-[3px] rounded-full pointer-events-none transition-opacity duration-200"
+        className="absolute -inset-[0.1875rem] rounded-full pointer-events-none transition-opacity duration-200"
         style={{
           opacity: open ? 1 : 0,
           animation: open ? "rf-avatar-ring-pulse 1.6s cubic-bezier(0.4,0,0.2,1) infinite" : "none",
@@ -308,7 +308,7 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
         onClick={handleAvatarClick}
         aria-label="Open profile menu"
         aria-expanded={open}
-        className="rf-avatar-btn relative flex items-center justify-center w-9 h-9 rounded-full shrink-0 transition-all duration-200"
+        className="rf-avatar-btn relative flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-all duration-200"
         style={{
           background: dark ? "rgba(255,255,255,0.1)" : "#0a1628",
           border: dark ? "1.5px solid rgba(255,255,255,0.2)" : "1.5px solid #0a1628",
@@ -316,7 +316,7 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
         }}
       >
         <span
-          className="font-sohne text-[13px]"
+          className="font-sohne text-[0.75rem]"
           style={{ fontWeight: 600, color: "#ffffff" }}
         >
           {initial}
@@ -326,7 +326,7 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
       {/* dropdown — always mounted so close can animate too, just
           transitions opacity/scale/pointer-events based on `open` */}
       <div
-        className="absolute right-0 top-[calc(100%+10px)] w-[212px] origin-top-right rounded-2xl overflow-hidden z-[80] transition-all"
+        className="absolute right-0 top-[calc(100%+0.625rem)] w-[13.25rem] origin-top-right rounded-2xl overflow-hidden z-[80] transition-all"
         style={{
           background: "rgba(10,22,40,0.96)",
           backdropFilter: "blur(20px) saturate(160%)",
@@ -342,11 +342,11 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
             : "cubic-bezier(0.4,0,0.2,1)",
         }}
       >
-        <div className="px-3.5 py-3 border-b border-white/8">
-          <p className="font-sohne text-[12px] text-white/45 truncate" style={{ fontWeight: 500 }}>
+        <div className="px-3 py-2.5 border-b border-white/8">
+          <p className="font-sohne text-[0.6875rem] text-white/45 truncate" style={{ fontWeight: 500 }}>
             Signed in as
           </p>
-          <p className="font-sohne text-[13px] text-white truncate" style={{ fontWeight: 600 }}>
+          <p className="font-sohne text-[0.75rem] text-white truncate" style={{ fontWeight: 600 }}>
             {email || "—"}
           </p>
         </div>
@@ -357,7 +357,7 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
               key={item.key}
               type="button"
               onClick={item.onClick}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl font-sohne text-[13px] transition-all duration-150 text-left ${
+              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-sohne text-[0.75rem] transition-all duration-150 text-left ${
                 item.danger
                   ? "text-white/55 hover:text-[#f87171] hover:bg-[#f87171]/10"
                   : "text-white/70 hover:text-white hover:bg-white/8"
@@ -387,7 +387,7 @@ function LoginLink({ dark = true }) {
   return (
     <Link
       to="/auth"
-      className={`font-sohne text-[13px] tracking-[-0.009em] transition-colors duration-200 whitespace-nowrap px-1 ${
+      className={`font-sohne text-[0.75rem] tracking-[-0.009em] transition-colors duration-200 whitespace-nowrap px-1 ${
         dark ? "text-white/55 hover:text-white" : "text-graphite hover:text-ink"
       }`}
     >
@@ -423,7 +423,7 @@ function GlassLink({ href, children, onClick }) {
     </>
   );
 
-  const className = "relative px-4 py-2 font-sohne text-[13px] text-white/55 hover:text-white transition-colors duration-200 rounded-buttons group tracking-[-0.009em]";
+  const className = "relative px-3.5 py-1.5 font-sohne text-[0.75rem] text-white/55 hover:text-white transition-colors duration-200 rounded-buttons group tracking-[-0.009em]";
 
   const handleHashClick = (e) => {
     e.preventDefault();
@@ -461,7 +461,7 @@ function ShimmerButton({ to, children }) {
   return (
     <Link
       to={to}
-      className="relative inline-flex items-center gap-2 px-5 py-2 font-sohne text-[13px] text-white rounded-buttons overflow-hidden group"
+      className="relative inline-flex items-center gap-2 px-4 py-1.5 font-sohne text-[0.75rem] text-white rounded-buttons overflow-hidden group"
       style={{
         fontWeight: 500,
         background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
@@ -488,7 +488,7 @@ function ShimmerButton({ to, children }) {
         style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)" }}
       />
       <span className="relative z-10 tracking-[-0.009em]">{children}</span>
-      <span className="relative z-10 text-white/90 text-[11px]">⚡</span>
+      <span className="relative z-10 text-white/90 text-[0.6875rem]">⚡</span>
     </Link>
   );
 }
@@ -588,21 +588,21 @@ export default function Navbar() {
         `}</style>
 
         <nav className="w-full border-b border-dove/20 bg-white sticky top-0 z-50 ">
-          <div className="w-full px-8 sm:px-12 h-14 flex items-center justify-between">
+          <div className="w-full px-6 sm:px-10 h-[3.125rem] flex items-center justify-between">
 
-            <Link to="/" className="flex items-center gap-2.5">
+            <Link to="/" className="flex items-center gap-2">
               <span
-                className="border border-ink/50 px-1.5 py-0.5 font-sohne text-[9px] font-semibold text-ink tracking-widest"
+                className="border border-ink/50 px-1.5 py-0.5 font-sohne text-[0.5625rem] font-semibold text-ink tracking-widest"
                 style={{ borderRadius: "3px" }}
               >
                 ATS
               </span>
-              <span className="font-signifier text-[17px] text-ink" style={{ letterSpacing: "-0.2px" }}>
+              <span className="font-signifier text-[0.9375rem] text-ink" style={{ letterSpacing: "-0.2px" }}>
                 ResumeFree
               </span>
             </Link>
 
-            <div className="flex items-center gap-7">
+            <div className="flex items-center gap-5">
               <AutoSaveIndicator />
               {isPremium && <PremiumBadge />}
               {user ? (
@@ -677,7 +677,7 @@ export default function Navbar() {
         <nav
           className="rf-glassnav mx-auto w-full"
           style={{
-            maxWidth: "1440px",
+            maxWidth: "90rem",
             borderRadius: "24px",
             background: "rgba(10,22,40,0.72)",
             backdropFilter: "blur(20px) saturate(160%)",
@@ -690,27 +690,27 @@ export default function Navbar() {
           }}
         >
           {/* Desktop */}
-          <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center w-full pl-8 pr-3 h-16">
+          <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center w-full pl-6 pr-2.5 h-[3.5rem]">
 
-            <Link to="/" className="flex items-center gap-2.5">
+            <Link to="/" className="flex items-center gap-2">
               <span
-                className="border border-white/25 px-1.5 py-0.5 font-sohne text-[9px] font-semibold text-white/80 tracking-widest"
+                className="border border-white/25 px-1.5 py-0.5 font-sohne text-[0.5625rem] font-semibold text-white/80 tracking-widest"
                 style={{ borderRadius: "3px" }}
               >
                 ATS
               </span>
-              <span className="font-signifier text-[18px] text-white leading-none" style={{ letterSpacing: "-0.23px" }}>
+              <span className="font-signifier text-[1rem] text-white leading-none" style={{ letterSpacing: "-0.23px" }}>
                 ResumeFree
               </span>
             </Link>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               {NAV_LINKS.map(({ label, href }) => (
                 <GlassLink key={label} href={href}>{label}</GlassLink>
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-4">
+            <div className="flex items-center justify-end gap-3.5">
               {user ? (
                 <ProfileAvatar
                   email={user.email}
@@ -723,20 +723,20 @@ export default function Navbar() {
               )}
               <Link
                 to="/builder"
-                className="group relative inline-flex items-center gap-2.5 px-5 py-2 bg-white rounded-buttons overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="group relative inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-buttons overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 style={{ border: "1.5px solid rgba(10,22,40,0.15)" }}
                 onMouseEnter={e => e.currentTarget.style.background = "#0a1628"}
                 onMouseLeave={e => e.currentTarget.style.background = "#ffffff"}
               >
-                <span className="relative flex items-center justify-center w-5 h-5">
+                <span className="relative flex items-center justify-center w-4 h-4">
                   <span className="absolute w-1.5 h-1.5 rounded-full bg-ink transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-0 group-hover:scale-0" />
                   <span className="absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-white">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="text-white">
                       <path d="M2 7H12M12 7L7.5 2.5M12 7L7.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </span>
                 </span>
-                <span className="font-sohne text-[13px] text-ink group-hover:text-white transition-colors duration-500 tracking-[-0.009em]" style={{ fontWeight: 500 }}>
+                <span className="font-sohne text-[0.75rem] text-ink group-hover:text-white transition-colors duration-500 tracking-[-0.009em]" style={{ fontWeight: 500 }}>
                   Start Building
                 </span>
               </Link>
@@ -744,19 +744,19 @@ export default function Navbar() {
           </div>
 
           {/* Mobile */}
-          <div className="md:hidden flex items-center justify-between pl-5 pr-3 h-14">
-            <Link to="/" className="flex items-center gap-2.5">
+          <div className="md:hidden flex items-center justify-between pl-4 pr-2.5 h-[3.125rem]">
+            <Link to="/" className="flex items-center gap-2">
               <span
-                className="border border-white/25 px-1.5 py-0.5 font-sohne text-[9px] font-semibold text-white/80 tracking-widest"
+                className="border border-white/25 px-1.5 py-0.5 font-sohne text-[0.5625rem] font-semibold text-white/80 tracking-widest"
                 style={{ borderRadius: "3px" }}
               >
                 ATS
               </span>
-              <span className="font-signifier text-[16px] text-white" style={{ letterSpacing: "-0.2px" }}>
+              <span className="font-signifier text-[0.875rem] text-white" style={{ letterSpacing: "-0.2px" }}>
                 ResumeFree
               </span>
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {user && (
                 <ProfileAvatar
                   email={user.email}
@@ -766,13 +766,13 @@ export default function Navbar() {
                 />
               )}
               <button
-                className="flex flex-col gap-[5px] p-3"
+                className="flex flex-col gap-[0.3125rem] p-2.5"
                 onClick={() => setMenuOpen(!menuOpen)}
                 aria-label="Toggle menu"
               >
-                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[6px]" : ""}`} />
-                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} />
-                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[6px]" : ""}`} />
+                <span className={`block w-[1.125rem] h-px bg-white/70 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[0.375rem]" : ""}`} />
+                <span className={`block w-[1.125rem] h-px bg-white/70 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} />
+                <span className={`block w-[1.125rem] h-px bg-white/70 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[0.375rem]" : ""}`} />
               </button>
             </div>
           </div>
@@ -783,7 +783,7 @@ export default function Navbar() {
           <div
             className="md:hidden mx-auto mt-2 overflow-hidden"
             style={{
-              maxWidth: "1440px",
+              maxWidth: "90rem",
               borderRadius: "20px",
               background: "rgba(10,22,40,0.9)",
               backdropFilter: "blur(20px) saturate(160%)",
@@ -793,11 +793,11 @@ export default function Navbar() {
               pointerEvents: "auto",
             }}
           >
-            <div className="px-4 py-3 flex flex-col gap-1">
+            <div className="px-3.5 py-2.5 flex flex-col gap-1">
               {NAV_LINKS.map(({ label, href }) => (
                 <a key={label}
                   href={href}
-                  className="px-4 py-3 font-sohne text-[14px] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  className="px-3.5 py-2.5 font-sohne text-[0.8125rem] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
                   onClick={handleMobileHashClick(href)}
                 >
                   {label}
@@ -806,7 +806,7 @@ export default function Navbar() {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="px-4 py-3 font-sohne text-[14px] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  className="px-3.5 py-2.5 font-sohne text-[0.8125rem] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
                   onClick={() => setMenuOpen(false)}
                 >
                   My Profile
@@ -814,14 +814,14 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/auth"
-                  className="px-4 py-3 font-sohne text-[14px] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  className="px-3.5 py-2.5 font-sohne text-[0.8125rem] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
                   onClick={() => setMenuOpen(false)}
                 >
                   Log in
                 </Link>
               )}
             </div>
-            <div className="px-4 pb-4 border-t border-white/8 pt-3">
+            <div className="px-3.5 pb-3.5 border-t border-white/8 pt-2.5">
               <ShimmerButton to="/builder">Start Building</ShimmerButton>
             </div>
           </div>

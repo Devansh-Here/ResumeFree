@@ -12,6 +12,13 @@ const DEFAULT_RESUME = {
     linkedin: "",
     github: "",
     portfolio: "",
+    // ── Photo (premium feature — see PhotoEditorPanel.jsx) ──
+    photo: {
+      originalDataUrl: null, // exactly what the user uploaded
+      processedDataUrl: null, // bg-removed + new bg applied, final image used in templates
+      backgroundType: "none", // 'none' | 'color' | 'image'
+      backgroundValue: null, // hex color OR uploaded bg image dataUrl
+    },
   },
   education: [
     // { id, degree, college, cgpa, year }
@@ -27,6 +34,10 @@ const DEFAULT_RESUME = {
   projects: [
     // { id, name, description, techStack: [], bullets: [""] }
   ],
+  // ── Theme (premium feature — see ColorThemePicker.jsx) ──
+  theme: {
+    accentColor: "#059669",
+  },
 };
 
 export const useResumeStore = create(
@@ -49,6 +60,43 @@ export const useResumeStore = create(
           resume: {
             ...state.resume,
             personal: { ...state.resume.personal, [field]: value },
+          },
+        })),
+
+      // ── Photo (premium — PhotoEditorPanel.jsx) ──────────
+      updatePhoto: (partial) =>
+        set((state) => ({
+          resume: {
+            ...state.resume,
+            personal: {
+              ...state.resume.personal,
+              photo: { ...state.resume.personal.photo, ...partial },
+            },
+          },
+        })),
+
+      clearPhoto: () =>
+        set((state) => ({
+          resume: {
+            ...state.resume,
+            personal: {
+              ...state.resume.personal,
+              photo: {
+                originalDataUrl: null,
+                processedDataUrl: null,
+                backgroundType: "none",
+                backgroundValue: null,
+              },
+            },
+          },
+        })),
+
+      // ── Theme (premium — ColorThemePicker.jsx) ──────────
+      updateTheme: (partial) =>
+        set((state) => ({
+          resume: {
+            ...state.resume,
+            theme: { ...state.resume.theme, ...partial },
           },
         })),
 
@@ -260,6 +308,41 @@ export const useResumeStore = create(
     }),
     {
       name: "resumefree-data", // localStorage key
+      version: 1, // bump this whenever DEFAULT_RESUME's shape changes again
+
+      // ── Safe migration for existing users ──────────────────
+      // Older localStorage data (saved before `theme`/`personal.photo`
+      // existed) won't have those fields. Without this, calling
+      // updateTheme()/updatePhoto() on an old resume would spread into
+      // `undefined` and crash. This deep-merges persisted data ONTO the
+      // current defaults — so old fields are preserved, and any NEW
+      // fields we add later (theme, photo, and future ones) always get
+      // a safe default without wiping the user's actual resume content.
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState || {};
+        const persistedResume = persisted.resume || {};
+
+        return {
+          ...currentState,
+          ...persisted,
+          resume: {
+            ...currentState.resume,
+            ...persistedResume,
+            personal: {
+              ...currentState.resume.personal,
+              ...(persistedResume.personal || {}),
+              photo: {
+                ...currentState.resume.personal.photo,
+                ...(persistedResume.personal?.photo || {}),
+              },
+            },
+            theme: {
+              ...currentState.resume.theme,
+              ...(persistedResume.theme || {}),
+            },
+          },
+        };
+      },
     }
   )
 );

@@ -31,14 +31,24 @@ export default function AuthCallback() {
         await useAuthStore.getState().fetchProfile();
         setStatus("done");
 
-        // If the user clicked a pass/addon before logging in (Google OAuth
-        // does a full-page redirect, so AuthPage stashed it in localStorage
-        // instead of React Router state — see AuthPage.jsx's
-        // handleGoogleSignIn), send them back to Pricing to finish the
-        // purchase instead of dropping them on the builder. `returnTo`
-        // (where PricingPage should send them AFTER the purchase completes,
-        // e.g. '/builder') rides along the same way, only meaningful when
-        // pendingPass is also present.
+        // Two DIFFERENT localStorage-stash flows can land here, and they
+        // mean different things:
+        //
+        // 1. `resumefree_pending_pass` — set by AuthPage.jsx (Google OAuth
+        //    or email/password signup from PricingPage). The user chose a
+        //    pass BEFORE logging in and hasn't paid yet — send them back to
+        //    /pricing to actually complete the purchase.
+        //
+        // 2. `resumefree_pending_return_to` ALONE, with NO pending pass —
+        //    set by UpgradeModal.jsx (Sidebar's "Upgrade to Premium").
+        //    BUG FIX: that flow pays FIRST and only logs in afterwards via
+        //    a magic link, so by the time we land here the purchase is
+        //    already complete — there is nothing left to "confirm" on
+        //    /pricing. Previously this case fell through the `else` branch
+        //    below and always went to /dashboard, silently dropping the
+        //    user out of the Builder they were just working in. Now we
+        //    check for a bare returnTo (no pendingPass) and honor it
+        //    directly.
         const pendingPass = localStorage.getItem("resumefree_pending_pass");
         const pendingReturnTo = localStorage.getItem("resumefree_pending_return_to");
         localStorage.removeItem("resumefree_pending_pass");
@@ -50,6 +60,10 @@ export default function AuthCallback() {
               ? `&returnTo=${encodeURIComponent(pendingReturnTo)}`
               : "";
             navigate(`/pricing?confirm=${pendingPass}${returnToParam}`);
+          } else if (pendingReturnTo) {
+            // Purchase (if any) already completed before this login step —
+            // just send the user back where they were, no /pricing detour.
+            navigate(pendingReturnTo);
           } else {
             navigate("/dashboard");
           }
