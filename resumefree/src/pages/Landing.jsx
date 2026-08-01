@@ -1,14 +1,40 @@
 // src/pages/Landing.jsx
-import Hero         from "../components/landing/Hero";
-import Features     from "../components/landing/Features";
-import HowItWorks   from "../components/landing/HowItWorks";
-import Testimonials from "../components/landing/Testimonials";
-import FAQ          from "../components/landing/FAQ";
-import FinalCTA     from "../components/landing/FinalCTA";
-import Footer       from "../components/layout/Footer";
-import Navbar       from "../components/layout/Navbar";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Hero          from "../components/landing/Hero";
+import Features      from "../components/landing/Features";
+import HowItWorks    from "../components/landing/HowItWorks";
+import Testimonials  from "../components/landing/Testimonials";
+import PricingSection from "../components/landing/PricingSection";
+import FAQ            from "../components/landing/FAQ";
+import FinalCTA        from "../components/landing/FinalCTA";
+import Footer           from "../components/layout/Footer";
+import Navbar            from "../components/layout/Navbar";
+import PassConfirmModal  from "../components/premium/PassConfirmModal";
+import { useAuthStore }   from "../store/authStore";
 
 export default function Landing() {
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const [confirmPass, setConfirmPass] = useState(null);
+
+  // UX AUDIT FIX: PricingSection was rendered nowhere on the landing page —
+  // visitors had to navigate away to /pricing to see cost/value before
+  // committing to "Start Building". This is the single biggest conversion
+  // gap found in the audit (missing trust signal before the main CTA).
+  // Wired here with the exact same purchase flow as PricingPage.jsx:
+  // logged-out -> /auth (carrying pendingPass + returnTo), logged-in ->
+  // confirm modal inline, right on this page.
+  const returnTo = "/builder";
+
+  const handleSelectPass = (passKey) => {
+    if (!user) {
+      navigate("/auth", { state: { pendingPass: passKey, returnTo } });
+      return;
+    }
+    setConfirmPass(passKey);
+  };
+
   return (
     <div className="bg-white min-h-screen">
 
@@ -54,13 +80,31 @@ export default function Landing() {
           }}
         />
       </div>
+
       {/* ── White sections below ── */}
       <Features />
       <HowItWorks />
       <Testimonials />
+
+      {/* Pricing — placed after social proof (Testimonials), before FAQ.
+          Standard SaaS flow: build trust -> show price -> handle
+          objections (FAQ) -> final push (FinalCTA). */}
+      <PricingSection onSelectPass={handleSelectPass} />
+
       <FAQ />
       <FinalCTA />
       <Footer attachedTop />
+
+      {confirmPass && (
+        <PassConfirmModal
+          passKey={confirmPass}
+          onClose={() => setConfirmPass(null)}
+          onSuccess={async () => {
+            await useAuthStore.getState().fetchProfile();
+            navigate(returnTo);
+          }}
+        />
+      )}
     </div>
   );
 }

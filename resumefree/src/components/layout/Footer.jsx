@@ -1,6 +1,9 @@
 // src/components/layout/Footer.jsx
 import { Link } from "react-router-dom";
 
+const UI_FONT = "'Inter', sans-serif";
+const DISPLAY_FONT = "'DM Serif Display', serif";
+
 const ABOUT_LINKS = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Pricing",      href: "/pricing" },
@@ -12,13 +15,27 @@ const HELPFUL_LINKS = [
   { label: "ATS Checker",   href: "/#how-it-works" },
   { label: "JD Matcher",    href: "/#how-it-works" },
   { label: "Resume Templates", href: "/#how-it-works" },
-  { label: "FAQ",           href: "/pricing" },
+  // FIX (consistency bug): was pointing to "/pricing" — Navbar's own
+  // "FAQ" link points to "/#faq". Same label must land on the same
+  // place across surfaces (Nielsen — Consistency & Standards).
+  { label: "FAQ",           href: "/#faq" },
 ];
 const SOCIALS = [
   { label: "Instagram", href: "https://instagram.com" },
   { label: "Twitter",   href: "https://twitter.com" },
   { label: "LinkedIn",  href: "https://linkedin.com" },
 ];
+
+// ── WCAG AA contrast fix ──
+// Body/link/contact text was rgba(255,255,255,0.35) and copyright text
+// was rgba(255,255,255,0.2) against the #0a1628 footer background.
+// Measured contrast ratios: ~3.2:1 and ~2:1 respectively — both fail
+// WCAG AA's 4.5:1 minimum for normal-size text (this project's own
+// Consistency Checklist requires AA). Bumped to 0.5 / 0.48, which land
+// at ~5:1 / ~4.9:1 — safely AA-compliant while keeping the same visual
+// hierarchy (headings 0.8 > body links 0.5 > copyright 0.48).
+const MUTED_TEXT = "rgba(255,255,255,0.5)";
+const COPYRIGHT_TEXT = "rgba(255,255,255,0.48)";
 
 // Pass `attachedTop` when Footer sits directly below FinalCTA on the same
 // page (e.g. Landing) — this drops the top margin/rounding so the two
@@ -77,19 +94,18 @@ export default function Footer({ attachedTop = false }) {
             <div className="lg:pr-4">
               <Link to="/" className="flex items-center gap-2.5 w-fit mb-4">
                 <span
-                  className="border border-white/20 px-1.5 py-0.5 font-sohne text-[9px] font-semibold text-white/60 tracking-widest"
-                  style={{ borderRadius: "3px" }}
+                  className="border border-white/20 px-2 py-0.5 rounded-full"
+                  style={{ fontFamily: UI_FONT, fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.6)", letterSpacing: "0.05em" }}
                 >
                   ATS
                 </span>
                 <span
-                  className="font-signifier text-[20px] text-white leading-none"
-                  style={{ letterSpacing: "-0.2px" }}
+                  style={{ fontFamily: DISPLAY_FONT, fontSize: "20px", color: "#ffffff", letterSpacing: "-0.2px", lineHeight: 1 }}
                 >
                   ResumeFree
                 </span>
               </Link>
-              <p className="font-sohne text-[13.5px] leading-relaxed text-white/35 tracking-[-0.006em]">
+              <p style={{ fontFamily: UI_FONT, fontSize: "13.5px", lineHeight: 1.6, color: MUTED_TEXT, letterSpacing: "-0.006em" }}>
                 Free AI Resume Builder for Indian students — no sign-up,
                 no watermark, download your PDF instantly.
               </p>
@@ -97,7 +113,10 @@ export default function Footer({ attachedTop = false }) {
 
             {/* Col 2 — About Us */}
             <div>
-              <h4 className="font-sohne text-[12px] font-semibold uppercase tracking-widest text-white/80 mb-4">
+              <h4
+                className="uppercase mb-4"
+                style={{ fontFamily: UI_FONT, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.8)" }}
+              >
                 About Us
               </h4>
               <ul className="flex flex-col gap-3">
@@ -105,7 +124,8 @@ export default function Footer({ attachedTop = false }) {
                   <li key={label}>
                     <Link
                       to={href}
-                      className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
+                      className="hover:text-white/85 transition-colors"
+                      style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}
                     >
                       {label}
                     </Link>
@@ -116,7 +136,10 @@ export default function Footer({ attachedTop = false }) {
 
             {/* Col 3 — Helpful Links */}
             <div>
-              <h4 className="font-sohne text-[12px] font-semibold uppercase tracking-widest text-white/80 mb-4">
+              <h4
+                className="uppercase mb-4"
+                style={{ fontFamily: UI_FONT, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.8)" }}
+              >
                 Helpful Links
               </h4>
               <ul className="flex flex-col gap-3">
@@ -124,7 +147,8 @@ export default function Footer({ attachedTop = false }) {
                   <li key={label}>
                     <Link
                       to={href}
-                      className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
+                      className="hover:text-white/85 transition-colors"
+                      style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}
                     >
                       {label}
                     </Link>
@@ -135,7 +159,10 @@ export default function Footer({ attachedTop = false }) {
 
             {/* Col 4 — Contact Us */}
             <div>
-              <h4 className="font-sohne text-[12px] font-semibold uppercase tracking-widest text-white/80 mb-4">
+              <h4
+                className="uppercase mb-4"
+                style={{ fontFamily: UI_FONT, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.8)" }}
+              >
                 Contact Us
               </h4>
               <ul className="flex flex-col gap-3.5">
@@ -143,9 +170,14 @@ export default function Footer({ attachedTop = false }) {
                   <svg className="w-4 h-4 text-[#059669] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  
-                    <a href="mailto:hello@resumefree.in"
-                    className="font-sohne text-[14px] text-white/35 hover:text-white/70 transition-colors tracking-[-0.009em]"
+                  {/* FLAGGED — not changed: href says hello@resumefree.in
+                      but displayed text is a personal Gmail address. Devansh
+                      to confirm which is the real/final contact email before
+                      this is wired to one consistent value. */}
+                  <a
+                    href="mailto:hello@resumefree.in"
+                    className="hover:text-white/85 transition-colors"
+                    style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}
                   >
                     kartikgpt0305@gmail.com
                   </a>
@@ -154,7 +186,7 @@ export default function Footer({ attachedTop = false }) {
                   <svg className="w-4 h-4 text-[#059669] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <span className="font-sohne text-[14px] text-white/35 tracking-[-0.009em]">
+                  <span style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}>
                     +91 90241 06492
                   </span>
                 </li>
@@ -163,7 +195,7 @@ export default function Footer({ attachedTop = false }) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="font-sohne text-[14px] text-white/35 tracking-[-0.009em]">
+                  <span style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}>
                     Jaipur, Rajasthan, India
                   </span>
                 </li>
@@ -177,9 +209,13 @@ export default function Footer({ attachedTop = false }) {
           {/* Bottom row — socials + copyright */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
+              {/* FLAGGED — not changed: these are generic placeholder URLs
+                  (instagram.com / twitter.com / linkedin.com), not real
+                  profile handles. Swap in real links once ready — the
+                  Instagram handle was already reserved per earlier session. */}
               {SOCIALS.map(({ label, href }) => (
-                
-                  <a key={label}
+                <a
+                  key={label}
                   href={href}
                   target="_blank"
                   rel="noreferrer"
@@ -190,7 +226,7 @@ export default function Footer({ attachedTop = false }) {
                 </a>
               ))}
             </div>
-            <p className="font-sohne text-[13px] text-white/20 tracking-[-0.009em] shrink-0">
+            <p style={{ fontFamily: UI_FONT, fontSize: "13px", color: COPYRIGHT_TEXT, letterSpacing: "-0.009em" }} className="shrink-0">
               © {new Date().getFullYear()} ResumeFree. All rights reserved.
             </p>
           </div>

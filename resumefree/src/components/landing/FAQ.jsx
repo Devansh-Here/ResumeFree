@@ -1,4 +1,12 @@
 // src/components/landing/FAQ.jsx
+//
+// UX AUDIT FIX: accordion had no ARIA wiring — a screen reader user had no
+// way to know whether a given question was expanded or collapsed, or which
+// content block a question's button controlled. Added aria-expanded on the
+// trigger button, aria-controls linking it to the answer's id, and
+// role="region" + aria-labelledby on the answer so it reads as a proper
+// labeled disclosure widget (WCAG 4.1.2 Name, Role, Value).
+
 import { useState } from "react";
 
 const FAQ_ITEMS = [
@@ -39,6 +47,7 @@ const FAQ_ITEMS = [
 function ChevronIcon({ open }) {
   return (
     <span
+      aria-hidden="true"
       className="rf-faq-chevron flex items-center justify-center w-7 h-7 rounded-full border border-dove shrink-0 transition-all duration-300"
       style={{
         background: open ? "#0a1628" : "transparent",
@@ -59,13 +68,19 @@ function ChevronIcon({ open }) {
   );
 }
 
-function FAQItem({ item, isOpen, onToggle }) {
+function FAQItem({ item, index, isOpen, onToggle }) {
+  const buttonId  = `faq-button-${index}`;
+  const contentId = `faq-content-${index}`;
+
   return (
     <div
       className="rf-faq-item border-b border-dove/60 last:border-b-0"
     >
       <button
+        id={buttonId}
         onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-controls={contentId}
         className="w-full flex items-center justify-between gap-4 py-5 sm:py-6 text-left group"
       >
         <span
@@ -81,6 +96,9 @@ function FAQItem({ item, isOpen, onToggle }) {
       </button>
 
       <div
+        id={contentId}
+        role="region"
+        aria-labelledby={buttonId}
         className="grid transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{
           gridTemplateRows: isOpen ? "1fr" : "0fr",
@@ -107,7 +125,6 @@ export default function FAQ() {
       <style>{`
         .rf-faq-item button:hover .rf-faq-chevron {
           border-color: #0a1628;
-          transform: scale(1.06) ${openIndex !== null ? "" : ""};
         }
       `}</style>
 
@@ -141,6 +158,7 @@ export default function FAQ() {
             <FAQItem
               key={item.q}
               item={item}
+              index={i}
               isOpen={openIndex === i}
               onToggle={() => setOpenIndex(openIndex === i ? null : i)}
             />
@@ -156,7 +174,7 @@ export default function FAQ() {
           >
             Email us
           </a>{" "}
-          — founder replies personally, usually within a day.
+          — our team replies, usually within a day.
         </p>
       </div>
     </section>

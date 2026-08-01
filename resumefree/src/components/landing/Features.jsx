@@ -1,4 +1,13 @@
 // src/components/landing/Features.jsx
+//
+// UX AUDIT FIX: small-text uses of `rust` (#059669, ~3.3-3.8:1 on light
+// backgrounds) fail WCAG AA (needs 4.5:1 for normal-weight text under
+// 18px/14px-bold). #059669 is fine for backgrounds/borders/icons (only
+// needs 3:1) but not as small body/label text. Swapped those specific
+// spots to #047857 (~4.8-5.5:1) — a darker emerald already present
+// elsewhere in the codebase (FinalCTA's gradient), so no new color is
+// being introduced, just reused correctly for this contrast requirement.
+
 import ScrollGlow from '../ui/ScrollGlow'
 /* ─── Mini Visuals ─── */
 
@@ -13,16 +22,16 @@ function AIBulletVisual() {
       </div>
       <div className="flex items-center gap-2 px-2">
         <div className="flex-1 h-px bg-dove/50" />
-        <span className="font-sohne text-[11px] text-rust">✨ AI</span>
+        <span className="font-sohne text-[11px] text-[#047857]">✨ AI</span>
         <div className="flex-1 h-px bg-dove/50" />
       </div>
       <div className="bg-apricot-wash border border-rust/30 rounded-inputs p-4 relative">
-        <p className="font-sohne text-[11px] tracking-widest text-rust uppercase mb-2">✓ After</p>
+        <p className="font-sohne text-[11px] tracking-widest text-[#047857] uppercase mb-2">✓ After</p>
         <p className="font-sohne text-[14px] text-ink leading-[1.5]">
           Optimized MySQL queries for 500-record inventory system, reducing load time from{" "}
           <span className="font-[500]">3s → 400ms</span>
         </p>
-        <span className="absolute -top-2.5 -right-2 font-sohne text-[9px] font-[500] text-rust border border-rust/50 bg-white px-1.5 py-0.5 rounded" style={{ transform: "rotate(-6deg)" }}>
+        <span className="absolute -top-2.5 -right-2 font-sohne text-[10px] font-[500] text-[#047857] border border-rust/50 bg-white px-1.5 py-0.5 rounded" style={{ transform: "rotate(-6deg)" }}>
           ATS PASS ✓
         </span>
       </div>
@@ -46,14 +55,14 @@ function JDMatcherVisual() {
       style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 8px 16px -4px" }}>
       <div className="px-4 py-3 bg-fog border-b border-dove/40 flex items-center justify-between">
         <span className="font-sohne text-[11px] text-graphite tracking-[-0.009em]">JD Keyword Match</span>
-        <span className="font-sohne text-[11px] font-[500] text-rust">65 / 100</span>
+        <span className="font-sohne text-[11px] font-[500] text-[#047857]">65 / 100</span>
       </div>
       <div className="p-4 flex flex-wrap gap-2">
         {keywords.map(({ word, match }) => (
           <span key={word}
             className={`font-sohne text-[12px] px-2.5 py-1 rounded-tags border tracking-[-0.009em] ${
               match
-                ? "bg-apricot-wash border-rust/30 text-rust"
+                ? "bg-apricot-wash border-rust/30 text-[#047857]"
                 : "bg-fog border-dove/50 text-graphite"
             }`}>
             {match ? "✓" : "+"} {word}
@@ -127,7 +136,7 @@ function PDFVisual() {
           ))}
         </div>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="font-sohne text-[10px] font-[500] text-rust border border-rust/50 px-2 py-0.5 rounded bg-white/90"
+          <span className="font-sohne text-[11px] font-[500] text-[#047857] border border-rust/50 px-2 py-0.5 rounded bg-white/90"
             style={{ transform: "rotate(-12deg)" }}>
             NO WATERMARK
           </span>
@@ -181,7 +190,7 @@ function AutoSaveVisual() {
         <span className="font-sohne text-[11px] text-graphite tracking-[-0.009em]">Auto-Save Log</span>
         <span className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-rust animate-pulse" />
-          <span className="font-sohne text-[11px] text-rust">Live</span>
+          <span className="font-sohne text-[11px] text-[#047857]">Live</span>
         </span>
       </div>
       <div className="p-4 space-y-3">
@@ -193,14 +202,14 @@ function AutoSaveVisual() {
         ].map(({ time, action, bold }) => (
           <div key={time} className="flex items-center gap-3">
             <span className="font-sohne text-[11px] text-dove w-8 shrink-0 tracking-[-0.009em]">{time}</span>
-            <span className={`font-sohne text-[13px] tracking-[-0.009em] ${bold ? "text-rust font-[500]" : "text-graphite"}`}>
+            <span className={`font-sohne text-[13px] tracking-[-0.009em] ${bold ? "text-[#047857] font-[500]" : "text-graphite"}`}>
               {action}
             </span>
           </div>
         ))}
       </div>
       <div className="mx-4 mb-4 bg-apricot-wash border border-rust/20 rounded-inputs p-3">
-        <p className="font-sohne text-[11px] text-rust tracking-[-0.009em]">
+        <p className="font-sohne text-[11px] text-[#047857] tracking-[-0.009em]">
           localStorage · 0 accounts · 0 servers · your device only
         </p>
       </div>
@@ -309,7 +318,7 @@ export default function Features() {
                 <span className={`font-sohne text-[11px] px-2.5 py-1 rounded-tags tracking-[-0.009em] ${
                   premium
                     ? "bg-ink/8 text-ink border border-ink/15"
-                    : "bg-apricot-wash text-rust border border-rust/20"
+                    : "bg-apricot-wash text-[#047857] border border-rust/20"
                 }`}>
                   {tag}
                 </span>

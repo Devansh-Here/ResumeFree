@@ -5,6 +5,9 @@ import { useAuthStore } from "../../store/authStore";
 import { useResumeStore } from "../../store/resumeStore";
 import UpgradeModal from "../premium/UpgradeModal";
 
+const UI_FONT = "'Inter', sans-serif";
+const DISPLAY_FONT = "'DM Serif Display', serif";
+
 const NAV_LINKS = [
   { label: "Home",         href: "/#"             },
   { label: "How It Works", href: "/#how-it-works" },
@@ -99,7 +102,7 @@ function AutoSaveIndicator() {
       key={state}
       className="hidden sm:flex items-center gap-1.5 select-none"
       style={{
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: UI_FONT,
         fontSize: "0.75rem",
         fontWeight: 500,
         color: state === "saved" ? "#059669" : "#4a6fa5",
@@ -130,7 +133,10 @@ function AutoSaveIndicator() {
   );
 }
 
-/* ── Animated Premium Badge (rotating gradient ring) ── */
+/* ── Animated Premium Badge (rotating gradient ring) ──
+   The conic-gradient ring is an explicitly established "alive" pattern
+   (Section 1.5 of the redesign rulebook) — kept as-is. It's a motion
+   accent, not a decorative background gradient. */
 function PremiumBadge() {
   return (
     <span className="relative inline-flex items-center rounded-full p-[0.09375rem] overflow-hidden">
@@ -141,7 +147,10 @@ function PremiumBadge() {
             "conic-gradient(from 0deg, transparent 0deg, #059669 70deg, #34d399 130deg, #a7f3d0 165deg, transparent 210deg, transparent 360deg)",
         }}
       />
-      <span className="relative z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-apricot-wash font-sohne text-[0.75rem] text-rust tracking-[-0.009em] whitespace-nowrap">
+      <span
+        className="relative z-10 flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap"
+        style={{ background: "#d1fae5", color: "#059669", fontFamily: UI_FONT, fontSize: "0.75rem", letterSpacing: "-0.009em" }}
+      >
         ✦ Premium
       </span>
     </span>
@@ -221,10 +230,11 @@ const MenuIcons = {
    the Home icon door-hinge), and grows a pulsing emerald ring while
    the menu is open. Menu items cascade in with a small stagger.
 
-   ASSUMPTION: authStore exposes a `signOut` action with this name —
-   not yet verified against the real authStore.js file. If it's named
-   differently, only the `useAuthStore((s) => s.signOut)` line below
-   needs updating. */
+   Sign-out uses a red text state on hover — this is a deliberate,
+   documented exception to the Steep palette (Section 1.1): the palette
+   has no destructive/danger color, and red is the standard semantic
+   for a destructive action. Scoped to this one state only, not used
+   as a general accent anywhere else. */
 function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -315,10 +325,7 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
           boxShadow: open ? "0 0 0 3px rgba(5,150,105,0.18)" : "none",
         }}
       >
-        <span
-          className="font-sohne text-[0.75rem]"
-          style={{ fontWeight: 600, color: "#ffffff" }}
-        >
+        <span style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 600, color: "#ffffff" }}>
           {initial}
         </span>
       </button>
@@ -343,10 +350,10 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
         }}
       >
         <div className="px-3 py-2.5 border-b border-white/8">
-          <p className="font-sohne text-[0.6875rem] text-white/45 truncate" style={{ fontWeight: 500 }}>
+          <p style={{ fontFamily: UI_FONT, fontSize: "0.6875rem", fontWeight: 500, color: "rgba(255,255,255,0.45)" }} className="truncate">
             Signed in as
           </p>
-          <p className="font-sohne text-[0.75rem] text-white truncate" style={{ fontWeight: 600 }}>
+          <p style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 600, color: "#ffffff" }} className="truncate">
             {email || "—"}
           </p>
         </div>
@@ -357,12 +364,14 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
               key={item.key}
               type="button"
               onClick={item.onClick}
-              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl font-sohne text-[0.75rem] transition-all duration-150 text-left ${
+              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 text-left ${
                 item.danger
                   ? "text-white/55 hover:text-[#f87171] hover:bg-[#f87171]/10"
                   : "text-white/70 hover:text-white hover:bg-white/8"
               }`}
               style={{
+                fontFamily: UI_FONT,
+                fontSize: "0.75rem",
                 fontWeight: 500,
                 opacity: open ? 1 : 0,
                 transform: open ? "translateY(0)" : "translateY(-3px)",
@@ -387,9 +396,10 @@ function LoginLink({ dark = true }) {
   return (
     <Link
       to="/auth"
-      className={`font-sohne text-[0.75rem] tracking-[-0.009em] transition-colors duration-200 whitespace-nowrap px-1 ${
+      className={`transition-colors duration-200 whitespace-nowrap px-1 ${
         dark ? "text-white/55 hover:text-white" : "text-graphite hover:text-ink"
       }`}
+      style={{ fontFamily: UI_FONT, fontSize: "0.75rem", letterSpacing: "-0.009em" }}
     >
       Log in
     </Link>
@@ -401,7 +411,12 @@ function LoginLink({ dark = true }) {
    reliably scroll to the target section even though it's an SPA route —
    React Router's <Link> does NOT auto-scroll to hash targets on its own.
    Scroll itself now goes through magicScrollToHash (custom eased curve +
-   landing glow pulse) instead of the native smooth scroll. */
+   landing glow pulse) instead of the native smooth scroll.
+
+   The frosted-glass hover fill (translucent gradient + blur) is the
+   glassmorphism aesthetic Devansh chose — kept intentionally. This is
+   distinct from the banned decorative button gradients: it's a structural
+   glass-panel effect providing depth, not a branded fill color. */
 function GlassLink({ href, children, onClick }) {
   const isRoute = href.startsWith("/");
   const navigate = useNavigate();
@@ -423,7 +438,8 @@ function GlassLink({ href, children, onClick }) {
     </>
   );
 
-  const className = "relative px-3.5 py-1.5 font-sohne text-[0.75rem] text-white/55 hover:text-white transition-colors duration-200 rounded-buttons group tracking-[-0.009em]";
+  const className = "relative px-3.5 py-1.5 text-white/55 hover:text-white transition-colors duration-200 rounded-buttons group";
+  const style = { fontFamily: UI_FONT, fontSize: "0.75rem", letterSpacing: "-0.009em" };
 
   const handleHashClick = (e) => {
     e.preventDefault();
@@ -443,52 +459,41 @@ function GlassLink({ href, children, onClick }) {
 
   if (isRoute) {
     return (
-      <a href={href} onClick={handleHashClick} className={className}>
+      <a href={href} onClick={handleHashClick} className={className} style={style}>
         {inner}
       </a>
     );
   }
 
   return (
-    <a href={href} onClick={onClick} className={className}>
+    <a href={href} onClick={onClick} className={className} style={style}>
       {inner}
     </a>
   );
 }
 
-/* ── Shimmer Button ── */
-function ShimmerButton({ to, children }) {
+/* ── CTA Button (mobile menu) ──
+   Solid emerald fill, no gradient, no shine-sweep — the decorative
+   gradient + shimmer this used to have read as a dated "SaaS button"
+   trend and is explicitly banned by the Steep rules (Section 1.1).
+   Motion comes from a clean lift + icon-transform on hover instead,
+   reusing the same overshoot easing as the rest of the "alive" system. */
+function CtaButton({ to, children }) {
   return (
     <Link
       to={to}
-      className="relative inline-flex items-center gap-2 px-4 py-1.5 font-sohne text-[0.75rem] text-white rounded-buttons overflow-hidden group"
+      className="rf-cta-btn relative inline-flex items-center gap-2 px-4 py-2 rounded-buttons"
       style={{
-        fontWeight: 500,
-        background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
-        boxShadow: "0 0 0 1px rgba(5,150,105,0.5), 0 4px 16px rgba(5,150,105,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
-        transition: "all 0.3s ease",
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = "0 0 0 1px rgba(5,150,105,0.8), 0 6px 24px rgba(5,150,105,0.5), inset 0 1px 0 rgba(255,255,255,0.25)"
-        e.currentTarget.style.transform = "scale(1.03)"
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = "0 0 0 1px rgba(5,150,105,0.5), 0 4px 16px rgba(5,150,105,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
-        e.currentTarget.style.transform = "scale(1)"
+        background: "#059669",
+        transition: "transform 0.25s cubic-bezier(.34,1.56,.64,1), background 0.2s ease",
       }}
     >
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out"
-        style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)" }}
-      />
-      <span
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-[45%] rounded-t-buttons pointer-events-none"
-        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)" }}
-      />
-      <span className="relative z-10 tracking-[-0.009em]">{children}</span>
-      <span className="relative z-10 text-white/90 text-[0.6875rem]">⚡</span>
+      <span style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 500, color: "#ffffff", letterSpacing: "-0.009em" }}>
+        {children}
+      </span>
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="rf-cta-arrow">
+        <path d="M2 7H12M12 7L7.5 2.5M12 7L7.5 11.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
     </Link>
   );
 }
@@ -592,12 +597,12 @@ export default function Navbar() {
 
             <Link to="/" className="flex items-center gap-2">
               <span
-                className="border border-ink/50 px-1.5 py-0.5 font-sohne text-[0.5625rem] font-semibold text-ink tracking-widest"
-                style={{ borderRadius: "3px" }}
+                className="border border-ink/50 px-2 py-0.5 rounded-full"
+                style={{ fontFamily: UI_FONT, fontSize: "0.5625rem", fontWeight: 600, color: "#0a1628", letterSpacing: "0.05em" }}
               >
                 ATS
               </span>
-              <span className="font-signifier text-[0.9375rem] text-ink" style={{ letterSpacing: "-0.2px" }}>
+              <span style={{ fontFamily: DISPLAY_FONT, fontSize: "0.9375rem", color: "#0a1628", letterSpacing: "-0.2px" }}>
                 ResumeFree
               </span>
             </Link>
@@ -630,6 +635,21 @@ export default function Navbar() {
      corners (not a pill) — covers the full top width. Outer wrapper
      has pointer-events:none so it never blocks clicks on the page
      below it; only the actual <nav> bar re-enables pointer-events.
+
+     ── P0 FIX (UI/UX audit — ghost text bleed-through) ──
+     Previously this bar sat at a flat rgba(10,22,40,0.72) regardless of
+     scroll position. At 72% opacity, backdrop-blur alone wasn't enough
+     to fully occlude page content scrolling underneath — bright/light
+     sections showed through as visible "ghosting" behind the nav's own
+     text and links, breaking Gestalt Figure/Ground separation and
+     reducing effective contrast below WCAG 2.2 AA in places. Fix: the
+     background now steps up to a near-opaque 0.95 once the page is
+     scrolled (matching the already-solid-feeling ProfileAvatar dropdown
+     at 0.96), with a slightly higher 0.85 baseline even at the top of
+     the page. White nav text against this near-solid ink background
+     sits well above AA/AAA contrast at every scroll position. The
+     transition itself is already handled by .rf-glassnav's existing
+     `background 0.3s ease`, so this is a value-only change.
 
      If signed in, a profile avatar (initials circle) sits before the
      "Start Building" button and opens an animated dropdown menu. If
@@ -668,6 +688,21 @@ export default function Navbar() {
           0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.55); }
           100% { box-shadow: 0 0 0 8px rgba(5,150,105,0); }
         }
+        .rf-cta-btn:hover {
+          background: #047857 !important;
+          transform: translateY(-1px) scale(1.03);
+        }
+        .rf-cta-btn:hover .rf-cta-arrow {
+          animation: rf-cta-arrow-shift 0.45s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes rf-cta-arrow-shift {
+          0%   { transform: translateX(0); }
+          50%  { transform: translateX(3px); }
+          100% { transform: translateX(0); }
+        }
+        .rf-start-building:hover {
+          background: #0a1628 !important;
+        }
       `}</style>
 
       <div
@@ -675,11 +710,15 @@ export default function Navbar() {
         style={{ zIndex: 1000, pointerEvents: "none" }}
       >
         <nav
-          className="rf-glassnav mx-auto w-full"
+          className="rf-glassnav mx-auto w-full rounded-3xl"
           style={{
             maxWidth: "90rem",
-            borderRadius: "24px",
-            background: "rgba(10,22,40,0.72)",
+            /* P0 fix: opacity now scroll-aware — near-opaque once scrolled,
+               and higher even at rest, so page content never bleeds through
+               the nav's own text (see comment block above). */
+            background: scrolled
+              ? "rgba(10,22,40,0.95)"
+              : "rgba(10,22,40,0.85)",
             backdropFilter: "blur(20px) saturate(160%)",
             WebkitBackdropFilter: "blur(20px) saturate(160%)",
             border: "1px solid rgba(255,255,255,0.12)",
@@ -694,12 +733,12 @@ export default function Navbar() {
 
             <Link to="/" className="flex items-center gap-2">
               <span
-                className="border border-white/25 px-1.5 py-0.5 font-sohne text-[0.5625rem] font-semibold text-white/80 tracking-widest"
-                style={{ borderRadius: "3px" }}
+                className="border border-white/25 px-2 py-0.5 rounded-full"
+                style={{ fontFamily: UI_FONT, fontSize: "0.5625rem", fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: "0.05em" }}
               >
                 ATS
               </span>
-              <span className="font-signifier text-[1rem] text-white leading-none" style={{ letterSpacing: "-0.23px" }}>
+              <span style={{ fontFamily: DISPLAY_FONT, fontSize: "1rem", color: "#ffffff", letterSpacing: "-0.23px", lineHeight: 1 }}>
                 ResumeFree
               </span>
             </Link>
@@ -723,10 +762,8 @@ export default function Navbar() {
               )}
               <Link
                 to="/builder"
-                className="group relative inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-buttons overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                className="rf-start-building group relative inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-buttons overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 style={{ border: "1.5px solid rgba(10,22,40,0.15)" }}
-                onMouseEnter={e => e.currentTarget.style.background = "#0a1628"}
-                onMouseLeave={e => e.currentTarget.style.background = "#ffffff"}
               >
                 <span className="relative flex items-center justify-center w-4 h-4">
                   <span className="absolute w-1.5 h-1.5 rounded-full bg-ink transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-0 group-hover:scale-0" />
@@ -736,7 +773,10 @@ export default function Navbar() {
                     </svg>
                   </span>
                 </span>
-                <span className="font-sohne text-[0.75rem] text-ink group-hover:text-white transition-colors duration-500 tracking-[-0.009em]" style={{ fontWeight: 500 }}>
+                <span
+                  className="text-ink group-hover:text-white transition-colors duration-500"
+                  style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 500, letterSpacing: "-0.009em" }}
+                >
                   Start Building
                 </span>
               </Link>
@@ -747,12 +787,12 @@ export default function Navbar() {
           <div className="md:hidden flex items-center justify-between pl-4 pr-2.5 h-[3.125rem]">
             <Link to="/" className="flex items-center gap-2">
               <span
-                className="border border-white/25 px-1.5 py-0.5 font-sohne text-[0.5625rem] font-semibold text-white/80 tracking-widest"
-                style={{ borderRadius: "3px" }}
+                className="border border-white/25 px-2 py-0.5 rounded-full"
+                style={{ fontFamily: UI_FONT, fontSize: "0.5625rem", fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: "0.05em" }}
               >
                 ATS
               </span>
-              <span className="font-signifier text-[0.875rem] text-white" style={{ letterSpacing: "-0.2px" }}>
+              <span style={{ fontFamily: DISPLAY_FONT, fontSize: "0.875rem", color: "#ffffff", letterSpacing: "-0.2px" }}>
                 ResumeFree
               </span>
             </Link>
@@ -765,14 +805,17 @@ export default function Navbar() {
                   onUpgradeClick={() => setUpgradeOpen(true)}
                 />
               )}
+              {/* Fitts's Law fix: hamburger hit-area bumped to an exact
+                  44x44px tap target (was ~38x38px via p-2.5 padding
+                  alone). Visual bar size/spacing unchanged. */}
               <button
-                className="flex flex-col gap-[0.3125rem] p-2.5"
+                className="flex flex-col items-center justify-center gap-[0.3125rem] w-11 h-11 shrink-0"
                 onClick={() => setMenuOpen(!menuOpen)}
                 aria-label="Toggle menu"
               >
-                <span className={`block w-[1.125rem] h-px bg-white/70 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[0.375rem]" : ""}`} />
-                <span className={`block w-[1.125rem] h-px bg-white/70 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} />
-                <span className={`block w-[1.125rem] h-px bg-white/70 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[0.375rem]" : ""}`} />
+                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "rotate-45 translate-y-[0.375rem]" : ""}`} />
+                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "opacity-0" : ""}`} />
+                <span className={`block w-5 h-px bg-white/70 transition-all duration-200 ${menuOpen ? "-rotate-45 -translate-y-[0.375rem]" : ""}`} />
               </button>
             </div>
           </div>
@@ -781,11 +824,10 @@ export default function Navbar() {
         {/* Mobile dropdown */}
         {menuOpen && (
           <div
-            className="md:hidden mx-auto mt-2 overflow-hidden"
+            className="md:hidden mx-auto mt-2 overflow-hidden rounded-3xl"
             style={{
               maxWidth: "90rem",
-              borderRadius: "20px",
-              background: "rgba(10,22,40,0.9)",
+              background: "rgba(10,22,40,0.95)",
               backdropFilter: "blur(20px) saturate(160%)",
               WebkitBackdropFilter: "blur(20px) saturate(160%)",
               border: "1px solid rgba(255,255,255,0.12)",
@@ -794,10 +836,14 @@ export default function Navbar() {
             }}
           >
             <div className="px-3.5 py-2.5 flex flex-col gap-1">
+              {/* Fitts's Law fix: vertical padding bumped from py-2.5 to
+                  py-3.5 on every mobile menu link so each row's tap
+                  target lands at ~44px tall instead of ~36px. */}
               {NAV_LINKS.map(({ label, href }) => (
                 <a key={label}
                   href={href}
-                  className="px-3.5 py-2.5 font-sohne text-[0.8125rem] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  className="px-3.5 py-3.5 text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all"
+                  style={{ fontFamily: UI_FONT, fontSize: "0.8125rem", letterSpacing: "-0.009em" }}
                   onClick={handleMobileHashClick(href)}
                 >
                   {label}
@@ -806,7 +852,8 @@ export default function Navbar() {
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="px-3.5 py-2.5 font-sohne text-[0.8125rem] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  className="px-3.5 py-3.5 text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all"
+                  style={{ fontFamily: UI_FONT, fontSize: "0.8125rem", letterSpacing: "-0.009em" }}
                   onClick={() => setMenuOpen(false)}
                 >
                   My Profile
@@ -814,7 +861,8 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/auth"
-                  className="px-3.5 py-2.5 font-sohne text-[0.8125rem] text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all tracking-[-0.009em]"
+                  className="px-3.5 py-3.5 text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all"
+                  style={{ fontFamily: UI_FONT, fontSize: "0.8125rem", letterSpacing: "-0.009em" }}
                   onClick={() => setMenuOpen(false)}
                 >
                   Log in
@@ -822,7 +870,7 @@ export default function Navbar() {
               )}
             </div>
             <div className="px-3.5 pb-3.5 border-t border-white/8 pt-2.5">
-              <ShimmerButton to="/builder">Start Building</ShimmerButton>
+              <CtaButton to="/builder">Start Building</CtaButton>
             </div>
           </div>
         )}

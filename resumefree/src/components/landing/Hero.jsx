@@ -1,5 +1,5 @@
 // src/components/landing/Hero.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 const BULLETS = [
@@ -20,26 +20,56 @@ const BULLETS = [
   },
 ];
 
+const AUTO_CYCLE_MS = 3800;
+
 export default function Hero({ dark = false }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [showAfter, setShowAfter] = useState(false);
   const [stamped,   setStamped]   = useState(false);
+  const isFirstReveal = useRef(true);
 
+  // UX AUDIT FIX — reveal/stamp timing.
+  // Keyed on `activeIdx` alone, so it fires identically whether `activeIdx`
+  // changed because the auto-cycle advanced OR because the user clicked a
+  // dot manually. First reveal keeps the original slower 700ms/1200ms feel;
+  // every subsequent change uses the snappier 350ms/850ms timing.
   useEffect(() => {
-    const init = setTimeout(() => {
-      setShowAfter(true);
-      setTimeout(() => setStamped(true), 500);
-    }, 700);
-    const cycle = setInterval(() => {
-      setShowAfter(false); setStamped(false);
-      setTimeout(() => {
-        setActiveIdx(i => (i + 1) % BULLETS.length);
-        setTimeout(() => setShowAfter(true), 350);
-        setTimeout(() => setStamped(true), 850);
-      }, 300);
-    }, 3800);
-    return () => { clearTimeout(init); clearInterval(cycle); };
-  }, []);
+    setShowAfter(false);
+    setStamped(false);
+    const revealDelay = isFirstReveal.current ? 700 : 350;
+    const stampDelay  = isFirstReveal.current ? 1200 : 850;
+    isFirstReveal.current = false;
+
+    const t1 = setTimeout(() => setShowAfter(true), revealDelay);
+    const t2 = setTimeout(() => setStamped(true), stampDelay);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [activeIdx]);
+
+  // UX AUDIT FIX — auto-cycle bug + reduced-motion.
+  // BUG (was): this interval ran independently of `activeIdx`, so clicking
+  // a dot manually didn't reset the countdown — the auto-cycle could jump
+  // to the next bullet moments after a manual selection, fighting the
+  // user's own action (violates "user control and freedom").
+  // FIX: depend the effect on `activeIdx`. Every time it changes — from
+  // auto-advance OR a manual click — the old interval is cleared and a
+  // fresh one starts, so a manual pick always gets the full 3.8s before
+  // anything auto-advances again.
+  // ALSO: respects prefers-reduced-motion — if set, no interval is created
+  // at all (WCAG 2.2.2-friendly for users sensitive to continuous motion);
+  // manual dot navigation still works either way.
+  useEffect(() => {
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) return;
+
+    const timer = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % BULLETS.length);
+    }, AUTO_CYCLE_MS);
+
+    return () => clearInterval(timer);
+  }, [activeIdx]);
 
   const bullet = BULLETS[activeIdx];
 
@@ -116,16 +146,17 @@ export default function Hero({ dark = false }) {
               </a>
             </div>
 
-            {/* Trust micro-copy */}
+            {/* Trust micro-copy — UX AUDIT FIX: was text-white/30 (~2.67:1,
+                fails WCAG AA). Bumped to text-white/55 (~6.1:1, passes). */}
             <p
-              className="mt-4 font-sohne text-white/30 tracking-[-0.009em]"
+              className="mt-4 font-sohne text-white/55 tracking-[-0.009em]"
               style={{ fontSize: "13px" }}
             >
               No credit card · No account · Just your resume
             </p>
 
             {/* ── Stats inline strip ── */}
-            <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-4 gap-4">
+            <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { value: "0",     label: "sign-ups" },
                 { value: "₹0",   label: "to download" },
@@ -139,8 +170,10 @@ export default function Hero({ dark = false }) {
                   >
                     {value}
                   </p>
+                  {/* UX AUDIT FIX: was text-white/40 (~3.80:1, fails AA for
+                      13px normal text). Bumped to text-white/60 (~7:1). */}
                   <p
-                    className="mt-1.5 font-sohne text-white/40 tracking-[-0.009em]"
+                    className="mt-1.5 font-sohne text-white/60 tracking-[-0.009em]"
                     style={{ fontSize: "13px" }}
                   >
                     {label}
@@ -155,7 +188,9 @@ export default function Hero({ dark = false }) {
 
             {/* Role pill above card */}
             <div className="flex items-center justify-between mb-3 px-1">
-              <span className="font-sohne text-[12px] text-white/40 tracking-[-0.009em]">
+              {/* UX AUDIT FIX: was text-white/40 (~3.80:1, fails AA).
+                  Bumped to text-white/60 (~7:1). */}
+              <span className="font-sohne text-[12px] text-white/60 tracking-[-0.009em]">
                 AI Bullet Improver
               </span>
               <span className="px-3 py-1 rounded-tags bg-white/10 font-sohne text-[12px] text-white/70 tracking-[-0.009em] transition-all duration-300">
@@ -228,16 +263,16 @@ export default function Hero({ dark = false }) {
 
               {/* Progress dots */}
               <div className="flex items-center justify-between px-5 py-3 border-t border-dove/20 bg-fog">
-                <div className="flex gap-1.5">
-                  {BULLETS.map((_, i) => (
+                <div className="flex gap-1.5" role="tablist" aria-label="Example bullet improvements">
+                  {BULLETS.map((b, i) => (
                     <button
                       key={i}
-                      onClick={() => {
-                        setShowAfter(false); setStamped(false); setActiveIdx(i);
-                        setTimeout(() => setShowAfter(true), 300);
-                        setTimeout(() => setStamped(true), 750);
-                      }}
-                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      type="button"
+                      role="tab"
+                      aria-selected={i === activeIdx}
+                      aria-label={`Show ${b.role} example`}
+                      onClick={() => setActiveIdx(i)}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-rust focus-visible:outline-offset-2 ${
                         i === activeIdx ? "bg-rust" : "bg-dove/50"
                       }`}
                     />
@@ -249,9 +284,10 @@ export default function Hero({ dark = false }) {
               </div>
             </div>
 
-            {/* Social proof below card */}
+            {/* Social proof below card — UX AUDIT FIX: was text-white/25
+                (~2.23:1, fails AA badly). Bumped to text-white/55 (~6.1:1). */}
             <p
-              className="mt-4 text-center font-sohne text-white/25 tracking-[-0.009em] px-2"
+              className="mt-4 text-center font-sohne text-white/55 tracking-[-0.009em] px-2"
               style={{ fontSize: "12px" }}
             >
               Other resume builders charge ₹500+ with hidden fees. ResumeFree doesn&apos;t.

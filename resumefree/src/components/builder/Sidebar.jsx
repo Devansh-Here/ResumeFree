@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Target,
@@ -43,9 +43,36 @@ export default function Sidebar() {
   const [activePanel, setActivePanel] = useState(null);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileRef = useRef(null);
 
   const displayName = user ? (profile?.full_name || profile?.name || user?.email?.split("@")[0] || "User") : "Guest";
   const initial = user ? displayName.charAt(0).toUpperCase() : "?";
+
+  // Close the profile menu on Escape (keyboard users) or a click/tap
+  // outside its own container (mouse + touch users) — previously this
+  // only closed via onMouseLeave on the whole sidebar, which is a dead
+  // end for anyone not using a mouse.
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+
+    function handleKeyDown(e) {
+      if (e.key === "Escape") setProfileMenuOpen(false);
+    }
+    function handlePointerDown(e) {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [profileMenuOpen]);
 
   function handleItemClick(item) {
     if (item.isRoute) {
@@ -75,19 +102,51 @@ export default function Sidebar() {
           from { transform: scaleY(0); }
           to   { transform: scaleY(1); }
         }
+        @keyframes rf-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
         .rf-nav-icon-wrap {
           transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
         }
         button:hover .rf-nav-icon-wrap {
           transform: scale(1.14);
         }
+        .rf-sidebar-shell {
+          transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .rf-premium-ring-spin {
+          animation: rf-spin 4s linear infinite;
+        }
+        .rf-dropdown-in {
+          animation: rf-sidebar-item-in 0.15s ease-out;
+        }
+        .rf-active-bar {
+          animation: rf-active-bar-in 0.2s ease-out;
+        }
+
+        /* Respect prefers-reduced-motion: kill continuous/decorative motion,
+           let state changes (active tab, dropdown open) happen instantly
+           rather than removing them outright — user still gets the visual
+           result, just without the animated transition getting there. */
+        @media (prefers-reduced-motion: reduce) {
+          .rf-nav-icon-wrap,
+          .rf-sidebar-shell {
+            transition: none !important;
+          }
+          .rf-premium-ring-spin {
+            animation: none !important;
+          }
+          .rf-dropdown-in,
+          .rf-active-bar {
+            animation: none !important;
+          }
+        }
       `}</style>
 
       <div
-        className="group relative h-full flex flex-col bg-[#0a1628] shrink-0 overflow-hidden
+        className="rf-sidebar-shell group relative h-full flex flex-col bg-[#0a1628] shrink-0 overflow-hidden
                    rounded-3xl border border-white/5
-                   shadow-[0_4px_16px_-4px_rgba(10,22,40,0.25),0_1px_3px_rgba(10,22,40,0.15)]
-                   transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
                    w-[4.5rem] hover:w-[13.5rem] z-20"
         onMouseLeave={() => setProfileMenuOpen(false)}
       >
@@ -102,15 +161,16 @@ export default function Sidebar() {
                 key={item.id}
                 type="button"
                 onClick={() => handleItemClick(item)}
-                className={`group/navitem relative flex items-center h-10 rounded-2xl transition-all duration-150 whitespace-nowrap overflow-hidden ${
+                aria-pressed={active}
+                className={`group/navitem relative flex items-center h-10 rounded-2xl transition-all duration-150 whitespace-nowrap overflow-hidden
+                            focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1628] ${
                   active ? "bg-white/10" : "hover:bg-white/5"
                 }`}
               >
                 {/* Active indicator bar */}
                 {active && (
                   <span
-                    className="absolute left-0 top-2 bottom-2 w-[0.1875rem] rounded-full bg-[#059669] origin-center"
-                    style={{ animation: "rf-active-bar-in 0.2s ease-out" }}
+                    className="rf-active-bar absolute left-0 top-2 bottom-2 w-[0.1875rem] rounded-full bg-[#059669] origin-center"
                   />
                 )}
 
@@ -139,6 +199,7 @@ export default function Sidebar() {
                   style={{ fontFamily: "'Inter', sans-serif" }}
                 >
                   {item.label}
+                  {locked && <span className="sr-only"> (Premium feature — locked)</span>}
                 </span>
               </button>
             );
@@ -153,7 +214,7 @@ export default function Sidebar() {
               {/* Oversized rotating conic-gradient layer — only the ~1.5px edge peeks out
                   as a border since the button sits on top with its own solid background */}
               <div
-                className="absolute inset-[-150%] animate-[spin_4s_linear_infinite]"
+                className="rf-premium-ring-spin absolute inset-[-150%]"
                 style={{
                   background:
                     "conic-gradient(from 0deg, transparent 0%, #818cf8 15%, #a78bfa 30%, #60a5fa 45%, transparent 60%, transparent 100%)",
@@ -162,8 +223,9 @@ export default function Sidebar() {
               <button
                 type="button"
                 onClick={() => setUpgradeOpen(true)}
-                className="relative z-10 flex items-center h-10 w-11 group-hover:w-full rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden"
-                style={{ background: "linear-gradient(135deg, #059669 0%, #047857 100%)" }}
+                className="relative z-10 flex items-center h-10 w-11 group-hover:w-full rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden
+                           bg-[#059669] hover:bg-[#047857]
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1628]"
               >
                 <span className="w-11 shrink-0 flex items-center justify-center">
                   <span className="rf-nav-icon-wrap flex items-center justify-center text-[#fde68a]">
@@ -182,11 +244,14 @@ export default function Sidebar() {
         )}
 
         {/* Profile */}
-        <div className="border-t border-white/10 px-2.5 py-2.5 relative">
+        <div className="border-t border-white/10 px-2.5 py-2.5 relative" ref={profileRef}>
           <button
             type="button"
             onClick={() => setProfileMenuOpen((p) => !p)}
-            className="w-full flex items-center h-10 rounded-2xl hover:bg-white/5 transition-all duration-150"
+            aria-haspopup="menu"
+            aria-expanded={profileMenuOpen}
+            className="w-full flex items-center h-10 rounded-2xl hover:bg-white/5 transition-all duration-150
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1628]"
           >
             <span className="w-11 shrink-0 flex items-center justify-center">
               <span
@@ -206,29 +271,31 @@ export default function Sidebar() {
 
           {profileMenuOpen && (
             <div
-              className="absolute bottom-[calc(100%+0.5rem)] left-2.5 w-40 bg-white rounded-2xl overflow-hidden py-1.5"
+              role="menu"
+              className="rf-dropdown-in absolute z-30 bottom-[calc(100%+0.5rem)] left-2.5 w-40 bg-white rounded-2xl overflow-hidden py-1.5"
               style={{
                 border: "1px solid #e2e8f0",
                 boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.14) 0px 12px 24px -6px",
-                animation: "rf-sidebar-item-in 0.15s ease-out",
               }}
             >
               {user ? (
                 <>
                   <button
                     type="button"
-                    onClick={() => navigate("/dashboard")}
-                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    role="menuitem"
+                    onClick={() => { setProfileMenuOpen(false); navigate("/dashboard"); }}
+                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]/40 focus-visible:ring-inset"
                   >
                     <SquaresFour size={14} weight="duotone" color="#4a6fa5" />
                     Dashboard
                   </button>
                   <button
                     type="button"
-                    onClick={handleSignOut}
-                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#dc2626] hover:bg-red-50 transition-colors"
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    role="menuitem"
+                    onClick={() => { setProfileMenuOpen(false); handleSignOut(); }}
+                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#dc2626] hover:bg-red-50 transition-colors
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]/40 focus-visible:ring-inset"
                   >
                     <SignOut size={14} weight="duotone" color="#dc2626" />
                     Sign out
@@ -237,9 +304,10 @@ export default function Sidebar() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => navigate("/auth")}
-                  className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
+                  role="menuitem"
+                  onClick={() => { setProfileMenuOpen(false); navigate("/auth"); }}
+                  className="w-full flex items-center gap-2.5 text-left px-3.5 py-2 text-[0.75rem] text-[#1e3a5f] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]/40 focus-visible:ring-inset"
                 >
                   <SignIn size={14} weight="duotone" color="#4a6fa5" />
                   Log in

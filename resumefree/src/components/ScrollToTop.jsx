@@ -6,6 +6,10 @@ export default function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
     if (hash) {
       // Give the target page (e.g. Landing, after navigating from another
       // route) a moment to actually render its sections before we try to
@@ -15,7 +19,10 @@ export default function ScrollToTop() {
       const scrollToHash = () => {
         const el = document.getElementById(id);
         if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          el.scrollIntoView({
+            behavior: prefersReducedMotion ? "auto" : "smooth",
+            block: "start",
+          });
           return true;
         }
         return false;

@@ -34,9 +34,20 @@ const DEFAULT_RESUME = {
   projects: [
     // { id, name, description, techStack: [], bullets: [""] }
   ],
-  // ── Theme (premium feature — see ColorThemePicker.jsx) ──
+  // ── Theme (premium feature — see CustomizeContent.jsx / ColorThemePicker.jsx) ──
+  // NOTE: linkColor and photoBorder.color are nullable — null means
+  // "inherit from accentColor" so the whole theme still feels coordinated
+  // by default, without forcing every user to pick 3 separate colors.
   theme: {
     accentColor: "#059669",
+    linkColor: null, // null = same as accentColor
+    textColor: "#0a1628",
+    fontFamily: "inter", // key into FONT_OPTIONS, see utils/fontOptions.js
+    photoBorder: {
+      style: "circle", // 'circle' | 'square' | 'none'
+      color: null, // null = same as accentColor
+      width: 2, // px
+    },
   },
 };
 
@@ -91,12 +102,25 @@ export const useResumeStore = create(
           },
         })),
 
-      // ── Theme (premium — ColorThemePicker.jsx) ──────────
+      // ── Theme (premium — CustomizeContent.jsx) ──────────
       updateTheme: (partial) =>
         set((state) => ({
           resume: {
             ...state.resume,
             theme: { ...state.resume.theme, ...partial },
+          },
+        })),
+
+      // Nested photoBorder needs its own merge action so callers can
+      // update just `style` or just `width` without clobbering the rest.
+      updatePhotoBorder: (partial) =>
+        set((state) => ({
+          resume: {
+            ...state.resume,
+            theme: {
+              ...state.resume.theme,
+              photoBorder: { ...state.resume.theme.photoBorder, ...partial },
+            },
           },
         })),
 
@@ -311,16 +335,16 @@ export const useResumeStore = create(
       version: 1, // bump this whenever DEFAULT_RESUME's shape changes again
 
       // ── Safe migration for existing users ──────────────────
-      // Older localStorage data (saved before `theme`/`personal.photo`
-      // existed) won't have those fields. Without this, calling
-      // updateTheme()/updatePhoto() on an old resume would spread into
-      // `undefined` and crash. This deep-merges persisted data ONTO the
-      // current defaults — so old fields are preserved, and any NEW
-      // fields we add later (theme, photo, and future ones) always get
-      // a safe default without wiping the user's actual resume content.
+      // Older localStorage data (saved before `theme.linkColor`,
+      // `theme.textColor`, `theme.fontFamily`, `theme.photoBorder` existed)
+      // won't have those fields. This deep-merges persisted data ONTO the
+      // current defaults so old fields are preserved, and any NEW fields
+      // we add later always get a safe default without wiping the user's
+      // actual resume content.
       merge: (persistedState, currentState) => {
         const persisted = persistedState || {};
         const persistedResume = persisted.resume || {};
+        const persistedTheme = persistedResume.theme || {};
 
         return {
           ...currentState,
@@ -338,7 +362,11 @@ export const useResumeStore = create(
             },
             theme: {
               ...currentState.resume.theme,
-              ...(persistedResume.theme || {}),
+              ...persistedTheme,
+              photoBorder: {
+                ...currentState.resume.theme.photoBorder,
+                ...(persistedTheme.photoBorder || {}),
+              },
             },
           },
         };

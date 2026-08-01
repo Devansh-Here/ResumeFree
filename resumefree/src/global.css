@@ -3,16 +3,74 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Global UI density scale ──
-   Shrinks every Tailwind rem-based utility (p-4, text-sm, rounded-2xl,
-   gap-2, etc.) uniformly by ~12.5% — replicating the "compact/zoomed-out"
-   feel without touching every component's classes individually.
-   Only arbitrary hardcoded px values (e.g. text-[26px]) are unaffected —
-   those must be converted to rem manually per-file as we touch them. */
-html {
-  font-size: 80%; /* 16px → 14px base */
+/* ══════════════════════════════════════════════
+   DESIGN SYSTEM v2 — SINGLE SOURCE OF TRUTH
+   (Tokens adapted for inspiration — colors/type/spacing only.
+   No copied imagery/mascots/logos — those will be original.)
+   ══════════════════════════════════════════════ */
+:root {
+  /* Colors */
+  --color-iris-violet: #7451f2;      /* primary accent — CTA, active states */
+  --color-deep-iris: #5952a1;        /* secondary/outline stroke */
+  --color-cobalt-info: #0072c6;      /* info badges only */
+  --color-powder-blue: #d6e5ff;      /* info surface bg */
+  --color-graphite-ink: #272727;     /* primary text, headings, CTA bg */
+  --color-slate: #5d5d5d;            /* body text */
+  --color-ash: #4f4f4f;              /* secondary text, nav metadata */
+  --color-mauve-dust: #a69ea7;       /* muted dividers */
+  --color-fog: #858585;              /* placeholder, low-emphasis captions */
+  --color-charcoal-hairline: #333333;/* link text */
+  --color-mist: #e0e0e0;             /* borders, hairlines */
+  --color-soft-snow: #f6f6f6;        /* card/section elevation */
+  --color-paper-white: #ffffff;      /* page canvas */
+  --color-pure-black: #000000;
+
+  /* Status colors (ATS "moderate" warning — functional, not brand accent) */
+  --color-amber-50: #fffbeb;
+  --color-amber-200: #fde68a;
+  --color-amber-500: #f59e0b;
+  --color-amber-700: #b45309;
+
+  /* Fonts */
+  --font-heading: 'Lustria', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, monospace;
+
+  /* Radius — sharp system: 4px everywhere, 100px only for pills/badges */
+  --radius-buttons: 4px;
+  --radius-cards: 4px;
+  --radius-inputs: 4px;
+  --radius-images: 4px;
+  --radius-tags: 100px;
+
+  /* Shadow — reserved for primary CTA button only */
+  --shadow-cta: rgba(0, 0, 0, 0.2) 0px 2px 4px 0px;
+
+  /* Motion */
+  --ease-overshoot: cubic-bezier(.34, 1.56, .64, 1);
 }
 
-body {
-  -webkit-font-smoothing: antialiased;
+/* ══════════════════════════════════════════════
+   SHARED KEYFRAMES — unchanged, motion patterns
+   are independent of the visual/brand refresh
+   ══════════════════════════════════════════════ */
+@keyframes rf-modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
+.rf-modal-in { animation: rf-modal-in 0.22s var(--ease-overshoot); }
+
+@keyframes rf-dot-fall {
+  0%, 100% { transform: translateY(0px); opacity: 0.4; }
+  50%      { transform: translateY(4px); opacity: 1; }
+}
+.rf-dot { animation: rf-dot-fall 0.8s ease-in-out infinite; }
+
+@keyframes rf-burst {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+.rf-burst { animation: rf-burst 0.55s ease-out forwards; }
+
+html { font-size: 80%; }
+body { -webkit-font-smoothing: antialiased; }
