@@ -1,20 +1,77 @@
+/* global process */
+import { createClient } from "@supabase/supabase-js";
+
 // api/jd-match.js — Vercel Serverless Function
+const MAX_BULLETS = 40;
+const MAX_SKILLS = 80;
+const MAX_BULLET_TEXT_CHARS = 16000;
+const MAX_SKILL_CHARS = 80;
+const MAX_JOB_DESCRIPTION_CHARS = 8000;
+
+function cleanText(value, maxLength) {
+  return typeof value === "string"
+    ? value.split(String.fromCharCode(0)).join(" ").replace(/\s+/g, " ").trim().slice(0, maxLength)
+    : "";
+}
+
+async function requireJdAccess(req) {
+  const authorization = req.headers?.authorization || "";
+  const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+  if (!accessToken || !process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+    return false;
+  }
+
+  const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: { user }, error: userError } = await supabase.auth.getUser(accessToken);
+  if (userError || !user) return false;
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("is_premium, premium_expires_at, addon_jd_tailoring_unlocked")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profileError || !profile) return false;
+
+  const activePass = profile.is_premium
+    && profile.premium_expires_at
+    && new Date(profile.premium_expires_at).getTime() > Date.now();
+  return Boolean(activePass || profile.addon_jd_tailoring_unlocked);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { bullets, skills, jobDescription } = req.body || {};
-
-  if (!Array.isArray(bullets) || bullets.length === 0) {
-    return res.status(400).json({ error: "Add at least one bullet to your resume first." });
+  if (!(await requireJdAccess(req))) {
+    return res.status(403).json({ error: "JD tailoring access is required for this report." });
   }
-  if (!jobDescription || jobDescription.trim().length < 20) {
+
+  const body = req.body && typeof req.body === "object" ? req.body : {};
+  const rawBullets = Array.isArray(body.bullets) ? body.bullets.slice(0, MAX_BULLETS) : [];
+  const bullets = rawBullets
+    .map((bullet, index) => ({
+      label: cleanText(bullet?.label || `B${index + 1}`, 80),
+      text: cleanText(bullet?.text, MAX_BULLET_TEXT_CHARS),
+    }))
+    .filter((bullet) => bullet.text.length > 0);
+  const skills = (Array.isArray(body.skills) ? body.skills : [])
+    .slice(0, MAX_SKILLS)
+    .map((skill) => cleanText(skill, MAX_SKILL_CHARS))
+    .filter(Boolean);
+  const jobDescription = cleanText(body.jobDescription, MAX_JOB_DESCRIPTION_CHARS);
+
+  if (bullets.length === 0) {
+    return res.status(400).json({ error: "Add readable resume text before matching a job description." });
+  }
+  if (jobDescription.length < 20) {
     return res.status(400).json({ error: "Paste the full job description first." });
   }
 
   const bulletLines = bullets.map((b) => `${b.label}: ${b.text}`).join("\n");
-  const skillsLine  = (skills || []).join(", ") || "(none listed)";
+  const skillsLine  = skills.join(", ") || "(none listed)";
 
   // ── Client-side match score (deterministic, not AI-generated) ────────────
   // We compute this ourselves so it cannot be hallucinated.
@@ -22,7 +79,7 @@ export default async function handler(req, res) {
   const jdWords = new Set(
     jobDescription
       .toLowerCase()
-      .split(/[\s,.()\[\]{};:!"'\/\\|<>]+/)
+      .split(/[\s,.(){};:!"'\\|<>]+/)
       .filter((w) => w.length >= 3)
   );
 
@@ -30,7 +87,7 @@ export default async function handler(req, res) {
     [...skills, ...bullets.map((b) => b.text)]
       .join(" ")
       .toLowerCase()
-      .split(/[\s,.()\[\]{};:!"'\/\\|<>]+/)
+      .split(/[\s,.(){};:!"'\\|<>]+/)
       .filter((w) => w.length >= 3)
   );
 
@@ -137,8 +194,6 @@ Return ONLY a raw JSON object (no markdown, no explanation):
       .filter((s) => s && s.label && s.tailored && s.original)
       .filter((s) => {
         // Extract all numbers from original and tailored
-        const origNumbers = (s.original.match(/\d+/g) || []).sort().join(",");
-        const tailoredNumbers = (s.tailored.match(/\d+/g) || []).sort().join(",");
         // Reject if tailored has numbers not in original (hallucinated metrics)
         const tailoredExtra = (s.tailored.match(/\d+/g) || []).filter(
           (n) => !(s.original.match(/\d+/g) || []).includes(n)
@@ -155,7 +210,7 @@ Return ONLY a raw JSON object (no markdown, no explanation):
     });
 
   } catch (error) {
-    console.error("jd-match error:", error);
+    console.error("jd-match error:", error?.message || "Unknown server error");
     return res.status(500).json({ error: "Something went wrong. Try again." });
   }
 }

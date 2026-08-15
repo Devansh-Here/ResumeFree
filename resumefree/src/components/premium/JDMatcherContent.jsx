@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
+import { supabase } from "../../utils/supabaseClient";
 
 function collectBullets(resume) {
   const items = [];
@@ -57,9 +58,17 @@ export default function JDMatcherContent({ onClose }) {
       ...(resume.skills?.languages || []),
     ];
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Sign in with an eligible pass or JD Tailoring add-on to use this report.");
+      }
+
       const res = await fetch("/api/jd-match", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ bullets: bullets.map(({ label, text }) => ({ label, text })), skills, jobDescription: jd }),
       });
       const data = await res.json();

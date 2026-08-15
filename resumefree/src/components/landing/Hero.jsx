@@ -137,8 +137,15 @@ export default function Hero({ dark = false }) {
               >
                 Build my resume — it&apos;s free &rarr;
               </Link>
-              
-                <a href="#how-it-works"
+              <Link
+                to="/resume-checker"
+                className="border border-white/30 px-5 py-3.5 font-sohne text-white/75 transition-all duration-200 hover:-translate-y-0.5 hover:border-white hover:bg-white/10 hover:text-white active:scale-[0.97] rounded-buttons"
+                style={{ fontSize: "14px", fontWeight: 500 }}
+              >
+                Check an existing resume
+              </Link>
+
+              <a href="#how-it-works"
                 className="font-sohne text-white/50 hover:text-white transition-colors tracking-[-0.009em]"
                 style={{ fontSize: "14px" }}
               >

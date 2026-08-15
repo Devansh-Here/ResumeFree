@@ -10,6 +10,7 @@ import AuthPage        from "./pages/AuthPage";
 import ProfilePage     from "./pages/ProfilePage";
 import PricingPage     from "./pages/PricingPage";
 import CoverLetterPage from "./pages/CoverLetterPage";
+import ResumeCheckerPage from "./pages/ResumeCheckerPage";
 import ScrollToTop     from "./components/ScrollToTop";
 import { useAuthStore } from "./store/authStore";
 
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/dashboard"     element={<ProfilePage />} />
         <Route path="/pricing"       element={<PricingPage />} />
         <Route path="/cover-letter"  element={<CoverLetterPage />} />
+        <Route path="/resume-checker" element={<ResumeCheckerPage />} />
       </Routes>
     </BrowserRouter>
   );

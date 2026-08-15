@@ -24,8 +24,24 @@
   --color-soft-snow: #f6f6f6;        /* card/section elevation */
   --color-paper-white: #ffffff;      /* page canvas */
   --color-pure-black: #000000;
+  --color-violet-wash: 243 240 255;
+  --color-violet-wash-border: 198 185 255;
 
-  /* Status colors (ATS "moderate" warning — functional, not brand accent) */
+  /* Semantic status colors — functional, not brand accent */
+  --color-success-bg: 236 253 245;
+  --color-success-border: 167 243 208;
+  --color-success-text: 5 150 105;
+  --color-warning-bg: 255 251 235;
+  --color-warning-border: 253 230 138;
+  --color-warning-text: 180 83 9;
+  --color-error-bg: 254 242 242;
+  --color-error-border: 252 165 165;
+  --color-error-text: 220 38 38;
+  --color-info-bg: 214 229 255;
+  --color-info-border: 168 198 255;
+  --color-info-text: 0 114 198;
+
+  /* Legacy amber aliases retained for existing surfaces. */
   --color-amber-50: #fffbeb;
   --color-amber-200: #fde68a;
   --color-amber-500: #f59e0b;
@@ -65,6 +81,10 @@
   50%      { transform: translateY(4px); opacity: 1; }
 }
 .rf-dot { animation: rf-dot-fall 0.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-dot { animation: none; }
+}
 
 @keyframes rf-burst {
   0%   { transform: translate(0,0) scale(1); opacity: 1; }
