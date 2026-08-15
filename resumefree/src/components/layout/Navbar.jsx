@@ -621,6 +621,13 @@ export default function Navbar() {
               ) : (
                 <LoginLink dark={false} />
               )}
+              <Link
+                to="/resume-checker"
+                className="inline-flex items-center px-2 py-1 text-[0.6875rem] font-medium text-ink hover:text-emerald-700 transition-colors"
+                style={{ fontFamily: UI_FONT }}
+              >
+                Check Resume
+              </Link>
               <HomeIconButton />
             </div>
 
@@ -706,29 +713,27 @@ export default function Navbar() {
         }
       `}</style>
 
-      <div
-        className="fixed top-0 left-0 right-0 px-2 sm:px-3 pt-2"
-        style={{ zIndex: 1000, pointerEvents: "none" }}
+      <nav
+        className="fixed top-0 left-0 right-0 px-2 sm:px-3 pt-2 rf-glassnav mx-auto w-full rounded-3xl"
+        style={{
+          zIndex: 1000,
+          pointerEvents: "auto",
+          isolation: "isolate",
+          maxWidth: "90rem",
+          /* P0 fix: opacity now scroll-aware — near-opaque once scrolled,
+             and higher even at rest, so page content never bleeds through
+             the nav's own text (see comment block above). */
+          background: scrolled
+            ? "rgba(10,22,40,0.95)"
+            : "rgba(10,22,40,0.85)",
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: scrolled
+            ? "0 12px 32px -8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)"
+            : "0 8px 24px -10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+        }}
       >
-        <nav
-          className="rf-glassnav mx-auto w-full rounded-3xl"
-          style={{
-            maxWidth: "90rem",
-            /* P0 fix: opacity now scroll-aware — near-opaque once scrolled,
-               and higher even at rest, so page content never bleeds through
-               the nav's own text (see comment block above). */
-            background: scrolled
-              ? "rgba(10,22,40,0.95)"
-              : "rgba(10,22,40,0.85)",
-            backdropFilter: "blur(20px) saturate(160%)",
-            WebkitBackdropFilter: "blur(20px) saturate(160%)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            boxShadow: scrolled
-              ? "0 12px 32px -8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)"
-              : "0 8px 24px -10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
-            pointerEvents: "auto",
-          }}
-        >
           {/* Desktop */}
           <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center w-full pl-6 pr-2.5 h-[3.5rem]">
 
@@ -798,6 +803,13 @@ export default function Navbar() {
               </span>
             </Link>
             <div className="flex items-center gap-1.5">
+              <Link
+                to="/resume-checker"
+                className="inline-flex items-center px-1.5 py-1 text-[0.625rem] font-medium text-ink hover:text-emerald-700 transition-colors"
+                style={{ fontFamily: UI_FONT }}
+              >
+                Check Resume
+              </Link>
               {user && (
                 <ProfileAvatar
                   email={user.email}
@@ -820,7 +832,6 @@ export default function Navbar() {
               </button>
             </div>
           </div>
-        </nav>
 
         {/* Mobile dropdown */}
         {menuOpen && (
@@ -875,7 +886,7 @@ export default function Navbar() {
             </div>
           </div>
         )}
-      </div>
+      </nav>
 
       {upgradeOpen && <UpgradeModal onClose={() => setUpgradeOpen(false)} />}
     </>
