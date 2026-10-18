@@ -9,32 +9,47 @@
    No copied imagery/mascots/logos — those will be original.)
    ══════════════════════════════════════════════ */
 :root {
-  /* Colors */
-  --color-iris-violet: #7451f2;      /* primary accent — CTA, active states */
-  --color-deep-iris: #5952a1;        /* secondary/outline stroke */
-  --color-cobalt-info: #0072c6;      /* info badges only */
-  --color-powder-blue: #d6e5ff;      /* info surface bg */
-  --color-graphite-ink: #272727;     /* primary text, headings, CTA bg */
-  --color-slate: #5d5d5d;            /* body text */
-  --color-ash: #4f4f4f;              /* secondary text, nav metadata */
-  --color-mauve-dust: #a69ea7;       /* muted dividers */
-  --color-fog: #858585;              /* placeholder, low-emphasis captions */
-  --color-charcoal-hairline: #333333;/* link text */
-  --color-mist: #e0e0e0;             /* borders, hairlines */
-  --color-soft-snow: #f6f6f6;        /* card/section elevation */
-  --color-paper-white: #ffffff;      /* page canvas */
-  --color-pure-black: #000000;
+  --color-iris-violet: 116 81 242;       /* #7451f2 — primary accent */
+  --color-deep-iris: 89 82 161;          /* #5952a1 — secondary/outline stroke */
+  --color-cobalt-info: 0 114 198;        /* #0072c6 — info badges only */
+  --color-powder-blue: 214 229 255;      /* #d6e5ff — info surface bg */
+  --color-graphite-ink: 39 39 39;        /* #272727 — primary text, headings, CTA bg */
+  --color-slate: 93 93 93;               /* #5d5d5d — body text */
+  --color-ash: 79 79 79;                 /* #4f4f4f — secondary text, nav metadata */
+  --color-mauve-dust: 166 158 167;       /* #a69ea7 — muted dividers */
+  --color-fog: 133 133 133;              /* #858585 — placeholder, low-emphasis captions */
+  --color-charcoal-hairline: 51 51 51;   /* #333333 — link text */
+  --color-mist: 224 224 224;             /* #e0e0e0 — borders, hairlines */
+  --color-soft-snow: 246 246 246;        /* #f6f6f6 — card/section elevation */
+  --color-paper-white: 255 255 255;      /* #ffffff — page canvas */
+  --color-pure-black: 0 0 0;
 
-  /* Status colors (ATS "moderate" warning — functional, not brand accent) */
-  --color-amber-50: #fffbeb;
-  --color-amber-200: #fde68a;
-  --color-amber-500: #f59e0b;
-  --color-amber-700: #b45309;
+  --color-success-bg: 209 250 229;      /* #d1fae5 */
+  --color-success-border: 167 243 208;  /* #a7f3d0 */
+  --color-success-text: 5 150 105;      /* #059669 */
 
-  /* Fonts */
-  --font-heading: 'Lustria', Georgia, serif;
+  --color-warning-bg: 255 251 235;      /* #fffbeb */
+  --color-warning-border: 253 230 138;  /* #fde68a */
+  --color-warning-text: 180 83 9;       /* #b45309 */
+
+  --color-error-bg: 254 242 242;        /* #fef2f2 */
+  --color-error-border: 252 165 165;    /* #fca5a5 */
+  --color-error-text: 220 38 38;        /* #dc2626 */
+
+  --color-info-bg: 214 229 255;         /* #d6e5ff */
+  --color-info-border: 168 198 255;     /* #a8c6ff */
+  --color-info-text: 0 114 198;         /* #0072c6 */
+
+  /* Fonts — heading: Lustria → Fraunces (premium + playful serif).
+     mono/label token: Martian Mono → Bricolage Grotesque (per Devansh's
+     call — geometric + playful, works better than a coding-mono feel for
+     uppercase tracked labels/tabs/badges). Token name kept as
+     `--font-mono` for now so no class names need renaming across the
+     codebase (labelClass, entryLabelClass, tab buttons etc. already use
+     `font-mono` utility) — it just points to a different actual font. */
+  --font-heading: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
-  --font-mono: 'Martian Mono', ui-monospace, monospace;
+  --font-mono: 'Bricolage Grotesque', system-ui, sans-serif;
 
   /* Radius — sharp system: 4px everywhere, 100px only for pills/badges */
   --radius-buttons: 4px;
@@ -60,6 +75,17 @@
 }
 .rf-modal-in { animation: rf-modal-in 0.22s var(--ease-overshoot); }
 
+/* Preview panel — subtle drifting violet gradient (decorative, multi-stop) */
+@keyframes rf-gradient-drift {
+  0%   { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+  50%  { transform: translate(-4%, 3%) rotate(6deg) scale(1.08); }
+  100% { transform: translate(0%, 0%) rotate(0deg) scale(1); }
+}
+.rf-gradient-drift {
+  animation: rf-gradient-drift 10s ease-in-out infinite;
+  will-change: transform;
+}
+
 @keyframes rf-dot-fall {
   0%, 100% { transform: translateY(0px); opacity: 0.4; }
   50%      { transform: translateY(4px); opacity: 1; }
@@ -74,3 +100,30 @@
 
 html { font-size: 80%; }
 body { -webkit-font-smoothing: antialiased; }
+
+@keyframes rf-accent-draw {
+  from { width: 0; opacity: 0; }
+  to { width: 20px; opacity: 1; }
+}
+
+@keyframes rf-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+.rf-heading-accent {
+  display: inline-flex;
+  align-items: center;
+}
+
+.rf-heading-accent::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 3px;
+  border-radius: 100px;
+  background: rgb(var(--color-iris-violet));
+  margin-right: 8px;
+  flex-shrink: 0;
+  animation: rf-accent-draw 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}

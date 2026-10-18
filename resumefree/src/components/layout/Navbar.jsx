@@ -5,9 +5,6 @@ import { useAuthStore } from "../../store/authStore";
 import { useResumeStore } from "../../store/resumeStore";
 import UpgradeModal from "../premium/UpgradeModal";
 
-const UI_FONT = "'Inter', sans-serif";
-const DISPLAY_FONT = "'DM Serif Display', serif";
-
 const NAV_LINKS = [
   { label: "Home",         href: "/#"             },
   { label: "How It Works", href: "/#how-it-works" },
@@ -16,11 +13,7 @@ const NAV_LINKS = [
   { label: "FAQ",          href: "/#faq"          },
 ];
 
-/* ── Custom eased scroll (matches the sliding-indicator easing family) ──
-   Native scrollTo({behavior:"smooth"}) uses the browser's own easing,
-   which feels inconsistent across browsers. This uses the same
-   cubic-bezier(0.4,0,0.2,1) curve as the rest of the "alive" UI so a
-   nav click feels like part of the same motion language. */
+/* ── Custom eased scroll ── */
 function easeInOutQuart(t) {
   return t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
 }
@@ -42,11 +35,9 @@ function magicScrollTo(targetY, duration = 850) {
   requestAnimationFrame(step);
 }
 
-/* ── Glow pulse on the section we just landed on ── */
 function pulseSection(el) {
   if (!el) return;
   el.classList.remove("rf-section-pulse");
-  // force reflow so the animation can re-trigger on repeat clicks
   void el.offsetWidth;
   el.classList.add("rf-section-pulse");
   setTimeout(() => el.classList.remove("rf-section-pulse"), 900);
@@ -61,9 +52,74 @@ function magicScrollToHash(hash, navOffset = 90) {
   if (el) {
     const top = el.getBoundingClientRect().top + window.scrollY - navOffset;
     magicScrollTo(top);
-    // pulse slightly after the scroll lands
     setTimeout(() => pulseSection(el), 870);
   }
+}
+
+/* ── Liquid glass pointer tracking ── */
+function useGlassPointer(ref) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handleMove = (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty("--mx", `${x}%`);
+      el.style.setProperty("--my", `${y}%`);
+    };
+    const handleEnter = () => el.classList.add("rf-glass-hover");
+    const handleLeave = () => el.classList.remove("rf-glass-hover");
+    el.addEventListener("mousemove", handleMove);
+    el.addEventListener("mouseenter", handleEnter);
+    el.addEventListener("mouseleave", handleLeave);
+    return () => {
+      el.removeEventListener("mousemove", handleMove);
+      el.removeEventListener("mouseenter", handleEnter);
+      el.removeEventListener("mouseleave", handleLeave);
+    };
+  }, [ref]);
+}
+
+/* ── Scroll-spy — tracks which hash-section is currently in view
+   on the landing page, so the matching nav link can stay permanently
+   "active" (purple text + glow) instead of only lighting up on hover. */
+function useActiveHash(location) {
+  const [activeHash, setActiveHash] = useState("");
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setActiveHash("");
+      return;
+    }
+
+    const sectionIds = ["how-it-works", "testimonials", "faq"];
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visible.length > 0) {
+          setActiveHash(visible[0].target.id);
+        } else if (window.scrollY < 200) {
+          setActiveHash("");
+        }
+      },
+      { rootMargin: "-100px 0px -60% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] }
+    );
+
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
+  return activeHash;
 }
 
 // ── Auto-save pop indicator ──
@@ -100,12 +156,10 @@ function AutoSaveIndicator() {
   return (
     <div
       key={state}
-      className="hidden sm:flex items-center gap-1.5 select-none"
+      className={`hidden sm:flex items-center gap-1.5 select-none font-body text-[12px] font-medium ${
+        state === "saved" ? "text-success-text" : "text-ash"
+      }`}
       style={{
-        fontFamily: UI_FONT,
-        fontSize: "0.75rem",
-        fontWeight: 500,
-        color: state === "saved" ? "#059669" : "#4a6fa5",
         animation: state === "saving"
           ? "fadeSlideIn 0.2s ease-out forwards"
           : "wholePop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards",
@@ -113,17 +167,14 @@ function AutoSaveIndicator() {
     >
       {state === "saving" ? (
         <>
-          <div
-            className="w-3 h-3 rounded-full border-2 animate-spin shrink-0"
-            style={{ borderColor: "#cbd5e1", borderTopColor: "#4a6fa5" }}
-          />
+          <div className="w-3 h-3 rounded-full border-2 animate-spin shrink-0 border-mist border-t-ash" />
           <span>Saving…</span>
         </>
       ) : (
         <>
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="shrink-0">
-            <circle cx="7" cy="7" r="6.5" fill="#d1fae5" stroke="#059669" strokeWidth="1"/>
-            <path d="M4.5 7l2 2 3-3" stroke="#059669" strokeWidth="1.5"
+            <circle cx="7" cy="7" r="6.5" className="fill-success-bg stroke-success-text" strokeWidth="1"/>
+            <path d="M4.5 7l2 2 3-3" className="stroke-success-text" strokeWidth="1.5"
               strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <span>Saved</span>
@@ -133,10 +184,7 @@ function AutoSaveIndicator() {
   );
 }
 
-/* ── Animated Premium Badge (rotating gradient ring) ──
-   The conic-gradient ring is an explicitly established "alive" pattern
-   (Section 1.5 of the redesign rulebook) — kept as-is. It's a motion
-   accent, not a decorative background gradient. */
+/* ── Animated Premium Badge ── */
 function PremiumBadge() {
   return (
     <span className="relative inline-flex items-center rounded-full p-[0.09375rem] overflow-hidden">
@@ -144,12 +192,16 @@ function PremiumBadge() {
         className="absolute inset-[-150%] rf-badge-spin"
         style={{
           background:
-            "conic-gradient(from 0deg, transparent 0deg, #059669 70deg, #34d399 130deg, #a7f3d0 165deg, transparent 210deg, transparent 360deg)",
+            "conic-gradient(from 0deg, transparent 0deg, #7451f2 70deg, #9b7ff5 130deg, #d4c8fb 165deg, transparent 210deg, transparent 360deg)",
         }}
       />
       <span
-        className="relative z-10 flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap"
-        style={{ background: "#d1fae5", color: "#059669", fontFamily: UI_FONT, fontSize: "0.75rem", letterSpacing: "-0.009em" }}
+        className="rf-glass relative z-10 flex items-center gap-1 px-2.5 py-1 rounded-full whitespace-nowrap font-body text-[12px]"
+        style={{
+          background: "rgba(116,81,242,0.16)",
+          color: "#7451f2",
+          letterSpacing: "-0.009em",
+        }}
       >
         ✦ Premium
       </span>
@@ -157,15 +209,16 @@ function PremiumBadge() {
   );
 }
 
-/* ── Home icon button — door swings open on hover ── */
+/* ── Home icon button ── */
 function HomeIconButton() {
   return (
     <Link
       to="/"
       aria-label="Back to home"
-      className="rf-home-btn flex items-center justify-center w-7 h-7 rounded-full border border-dove text-graphite transition-all duration-300"
+      className="rf-home-btn rf-glass rf-liquid-press flex items-center justify-center w-7 h-7 rounded-full border border-mist text-ash transition-all duration-300"
+      style={{ background: "rgba(255,255,255,0.35)" }}
     >
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="rf-home-icon">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="rf-home-icon relative z-10">
         <path
           d="M2 7.3L8 2.2l6 5.1"
           stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"
@@ -186,7 +239,7 @@ function HomeIconButton() {
   );
 }
 
-/* ── Dropdown menu icons (small line icons, same stroke language as HomeIconButton) ── */
+/* ── Dropdown menu icons ── */
 const MenuIcons = {
   dashboard: (
     <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -224,17 +277,7 @@ const MenuIcons = {
   ),
 };
 
-/* ── Profile avatar — initials circle that opens an animated dropdown
-   menu instead of navigating directly. The avatar itself reacts on
-   click (squash + tilt bounce, reusing the same overshoot easing as
-   the Home icon door-hinge), and grows a pulsing emerald ring while
-   the menu is open. Menu items cascade in with a small stagger.
-
-   Sign-out uses a red text state on hover — this is a deliberate,
-   documented exception to the Steep palette (Section 1.1): the palette
-   has no destructive/danger color, and red is the standard semantic
-   for a destructive action. Scoped to this one state only, not used
-   as a general accent anywhere else. */
+/* ── Profile avatar dropdown ── */
 function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -244,7 +287,6 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
 
   const initial = (email || "?").trim().charAt(0).toUpperCase();
 
-  // click-outside + escape to close
   useEffect(() => {
     if (!open) return;
     const handlePointer = (e) => {
@@ -264,7 +306,6 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
   }, [open]);
 
   const handleAvatarClick = () => {
-    // replay the click-bounce animation even on rapid repeat clicks
     const el = btnRef.current;
     if (el) {
       el.classList.remove("rf-avatar-clicked");
@@ -302,7 +343,6 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
 
   return (
     <div ref={wrapRef} className="relative">
-      {/* pulsing ring — only visible while menu is open */}
       <span
         aria-hidden="true"
         className="absolute -inset-[0.1875rem] rounded-full pointer-events-none transition-opacity duration-200"
@@ -318,28 +358,24 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
         onClick={handleAvatarClick}
         aria-label="Open profile menu"
         aria-expanded={open}
-        className="rf-avatar-btn relative flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-all duration-200"
+        className="rf-avatar-btn rf-liquid-press relative flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-all duration-200"
         style={{
-          background: dark ? "rgba(255,255,255,0.1)" : "#0a1628",
-          border: dark ? "1.5px solid rgba(255,255,255,0.2)" : "1.5px solid #0a1628",
-          boxShadow: open ? "0 0 0 3px rgba(5,150,105,0.18)" : "none",
+          background: dark ? "rgba(255,255,255,0.16)" : "#272727",
+          backdropFilter: dark ? "blur(6px)" : "none",
+          WebkitBackdropFilter: dark ? "blur(6px)" : "none",
+          border: dark ? "1.5px solid rgba(255,255,255,0.3)" : "1.5px solid #272727",
+          boxShadow: open ? "0 0 0 3px rgba(116,81,242,0.18)" : "none",
         }}
       >
-        <span style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 600, color: "#ffffff" }}>
+        <span className="font-body text-[12px] font-semibold text-paper-white">
           {initial}
         </span>
       </button>
 
-      {/* dropdown — always mounted so close can animate too, just
-          transitions opacity/scale/pointer-events based on `open` */}
       <div
-        className="absolute right-0 top-[calc(100%+0.625rem)] w-[13.25rem] origin-top-right rounded-2xl overflow-hidden z-[80] transition-all"
+        className="rf-glass absolute right-0 top-[calc(100%+0.625rem)] w-[13.25rem] origin-top-right rounded-3xl overflow-hidden z-[80] transition-all"
         style={{
-          background: "rgba(10,22,40,0.96)",
-          backdropFilter: "blur(20px) saturate(160%)",
-          WebkitBackdropFilter: "blur(20px) saturate(160%)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+          background: "rgba(255,255,255,0.14)",
           opacity: open ? 1 : 0,
           transform: open ? "scale(1) translateY(0)" : "scale(0.92) translateY(-4px)",
           pointerEvents: open ? "auto" : "none",
@@ -349,30 +385,27 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
             : "cubic-bezier(0.4,0,0.2,1)",
         }}
       >
-        <div className="px-3 py-2.5 border-b border-white/8">
-          <p style={{ fontFamily: UI_FONT, fontSize: "0.6875rem", fontWeight: 500, color: "rgba(255,255,255,0.45)" }} className="truncate">
+        <div className="relative z-10 px-3 py-2.5 border-b border-white/10">
+          <p className="truncate font-body text-[11px] font-medium text-white/45">
             Signed in as
           </p>
-          <p style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 600, color: "#ffffff" }} className="truncate">
+          <p className="truncate font-body text-[12px] font-semibold text-paper-white">
             {email || "—"}
           </p>
         </div>
 
-        <div className="p-1.5 flex flex-col">
+        <div className="relative z-10 p-1.5 flex flex-col">
           {items.map((item, i) => (
             <button
               key={item.key}
               type="button"
               onClick={item.onClick}
-              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-150 text-left ${
+              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-inputs transition-all duration-150 text-left font-body text-[12px] font-medium ${
                 item.danger
                   ? "text-white/55 hover:text-[#f87171] hover:bg-[#f87171]/10"
-                  : "text-white/70 hover:text-white hover:bg-white/8"
+                  : "text-white/70 hover:text-[#c3b2fa] hover:bg-[#7451f2]/12"
               }`}
               style={{
-                fontFamily: UI_FONT,
-                fontSize: "0.75rem",
-                fontWeight: 500,
                 opacity: open ? 1 : 0,
                 transform: open ? "translateY(0)" : "translateY(-3px)",
                 transitionDelay: open ? `${70 + i * 35}ms` : "0ms",
@@ -388,36 +421,23 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
   );
 }
 
-/* ── Login link — shown only when signed OUT.
-   Subtle text link (not a button) so it doesn't compete visually with
-   "Start Building", but gives returning premium users on a new device
-   a way back into their account instead of typing /auth manually. */
+/* ── Login link ── */
 function LoginLink({ dark = true }) {
   return (
     <Link
       to="/auth"
-      className={`transition-colors duration-200 whitespace-nowrap px-1 ${
-        dark ? "text-white/55 hover:text-white" : "text-graphite hover:text-ink"
+      className={`font-body text-[12px] transition-colors duration-200 whitespace-nowrap px-1 ${
+        dark ? "text-white/55 hover:text-[#b9a4f8]" : "text-slate hover:text-[#7451f2]"
       }`}
-      style={{ fontFamily: UI_FONT, fontSize: "0.75rem", letterSpacing: "-0.009em" }}
+      style={{ letterSpacing: "-0.009em" }}
     >
       Log in
     </Link>
   );
 }
 
-/* ── Glass Nav Link ──
-   Plain <a> with manual click handler so hash links (e.g. "/#how-it-works")
-   reliably scroll to the target section even though it's an SPA route —
-   React Router's <Link> does NOT auto-scroll to hash targets on its own.
-   Scroll itself now goes through magicScrollToHash (custom eased curve +
-   landing glow pulse) instead of the native smooth scroll.
-
-   The frosted-glass hover fill (translucent gradient + blur) is the
-   glassmorphism aesthetic Devansh chose — kept intentionally. This is
-   distinct from the banned decorative button gradients: it's a structural
-   glass-panel effect providing depth, not a branded fill color. */
-function GlassLink({ href, children, onClick }) {
+/* ── Glass Nav Link ── */
+function GlassLink({ href, children, onClick, isActive }) {
   const isRoute = href.startsWith("/");
   const navigate = useNavigate();
   const location = useLocation();
@@ -425,21 +445,18 @@ function GlassLink({ href, children, onClick }) {
   const inner = (
     <>
       <span
-        className="absolute inset-0 rounded-buttons opacity-0 group-hover:opacity-100 transition-all duration-200"
-        style={{
-          background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1)",
-        }}
+        className={`rf-navlink-glow absolute inset-0 rounded-buttons transition-all duration-200 ${
+          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
       />
       <span className="relative z-10">{children}</span>
     </>
   );
 
-  const className = "relative px-3.5 py-1.5 text-white/55 hover:text-white transition-colors duration-200 rounded-buttons group";
-  const style = { fontFamily: UI_FONT, fontSize: "0.75rem", letterSpacing: "-0.009em" };
+  const className = `relative px-3.5 py-1.5 transition-colors duration-200 rounded-buttons group font-body text-[12px] ${
+    isActive ? "text-[#c3b2fa]" : "text-white/55 hover:text-[#c3b2fa]"
+  }`;
+  const style = { letterSpacing: "-0.009em" };
 
   const handleHashClick = (e) => {
     e.preventDefault();
@@ -449,7 +466,6 @@ function GlassLink({ href, children, onClick }) {
     const scrollToHash = () => magicScrollToHash(hash, 90);
 
     if (location.pathname !== targetPath) {
-      // navigate to landing first, then scroll once it's rendered
       navigate(targetPath);
       setTimeout(scrollToHash, 100);
     } else {
@@ -472,26 +488,26 @@ function GlassLink({ href, children, onClick }) {
   );
 }
 
-/* ── CTA Button (mobile menu) ──
-   Solid emerald fill, no gradient, no shine-sweep — the decorative
-   gradient + shimmer this used to have read as a dated "SaaS button"
-   trend and is explicitly banned by the Steep rules (Section 1.1).
-   Motion comes from a clean lift + icon-transform on hover instead,
-   reusing the same overshoot easing as the rest of the "alive" system. */
+/* ── CTA Button (mobile menu) ── */
 function CtaButton({ to, children }) {
   return (
     <Link
       to={to}
-      className="rf-cta-btn relative inline-flex items-center gap-2 px-4 py-2 rounded-buttons"
+      className="rf-cta-btn rf-liquid-press relative inline-flex items-center gap-2 px-4 py-2 rounded-buttons overflow-hidden"
       style={{
-        background: "#059669",
-        transition: "transform 0.25s cubic-bezier(.34,1.56,.64,1), background 0.2s ease",
+        background: "#7451f2",
+        boxShadow: "var(--shadow-cta)",
+        transition: "transform 0.25s cubic-bezier(.34,1.56,.64,1), background 0.2s ease, box-shadow 0.2s ease",
       }}
     >
-      <span style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 500, color: "#ffffff", letterSpacing: "-0.009em" }}>
+      <span
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%)" }}
+      />
+      <span className="relative z-10 font-body text-[12px] font-medium text-paper-white" style={{ letterSpacing: "-0.009em" }}>
         {children}
       </span>
-      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="rf-cta-arrow">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="rf-cta-arrow relative z-10">
         <path d="M2 7H12M12 7L7.5 2.5M12 7L7.5 11.5" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </Link>
@@ -507,6 +523,10 @@ export default function Navbar() {
   const isBuilder = location.pathname === "/builder";
   const isPremium = useAuthStore((s) => s.isPremium());
   const user      = useAuthStore((s) => s.user);
+  const desktopNavRef = useRef(null);
+  const activeHash = useActiveHash(location);
+
+  useGlassPointer(desktopNavRef);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -515,7 +535,14 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Same hash-scroll logic, reused for the mobile dropdown links
+  const isLinkActive = ({ href }) => {
+    if (href === "/pricing") return location.pathname === "/pricing";
+    if (location.pathname !== "/") return false;
+    const hash = href.split("#")[1] || "";
+    if (hash === "") return activeHash === "" && window.scrollY < 200;
+    return activeHash === hash;
+  };
+
   const handleMobileHashClick = (href) => (e) => {
     e.preventDefault();
     setMenuOpen(false);
@@ -532,11 +559,79 @@ export default function Navbar() {
     }
   };
 
-  /* ── Builder Navbar (unchanged, + profile avatar if signed in) ── */
+  // NOTE: relies on the shared <GlassFilters /> mounted once in App.jsx
+  // (id="glass-distortion-nav") — do NOT re-declare a local filter here,
+  // that was the old duplicate/weaker version.
+  const liquidGlassStyles = `
+    .rf-glass {
+      position: relative;
+      isolation: isolate;
+      backdrop-filter: blur(28px) url(#glass-distortion-nav) saturate(190%) brightness(1.12);
+      -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.12);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    .rf-glass::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(120deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.05) 30%, rgba(255,255,255,0.32) 55%, rgba(255,255,255,0.04) 100%);
+      background-size: 220% 220%;
+      animation: rf-glass-drift 9s ease-in-out infinite;
+      mix-blend-mode: screen;
+      opacity: 0.55;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .rf-glass::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow:
+        inset 0 1.5px 0 rgba(255,255,255,0.85),
+        inset 0 -1px 0 rgba(116,81,242,0.14),
+        inset 1.5px 0 0 rgba(255,255,255,0.25),
+        inset -1.5px 0 0 rgba(116,81,242,0.1),
+        0 20px 44px -18px rgba(0,0,0,0.4);
+      pointer-events: none;
+      z-index: 1;
+    }
+    @keyframes rf-glass-drift {
+      0%, 100% { background-position: 0% 0%; }
+      50%      { background-position: 100% 100%; }
+    }
+    .rf-glass-highlight {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.5), rgba(116,81,242,0.12) 35%, transparent 60%);
+    }
+    .rf-glass-hover .rf-glass-highlight {
+      opacity: 1;
+    }
+    .rf-liquid-press {
+      transition: transform 0.18s cubic-bezier(.34,1.56,.64,1);
+    }
+    .rf-liquid-press:active {
+      transform: scale(0.93);
+    }
+    .rf-navlink-glow {
+      background: rgba(116,81,242,0.28);
+      box-shadow: 0 0 0 1px rgba(116,81,242,0.4), 0 4px 20px 2px rgba(116,81,242,0.55);
+    }
+  `;
+
+  /* ── Builder Navbar (full-width sticky bar — no floating radius) ── */
   if (isBuilder) {
     return (
       <>
         <style>{`
+          ${liquidGlassStyles}
           @keyframes fadeSlideIn {
             from { opacity: 0; transform: translateY(3px); }
             to   { opacity: 1; transform: translateY(0);   }
@@ -555,10 +650,10 @@ export default function Navbar() {
             animation: rf-badge-spin 3.5s linear infinite;
           }
           .rf-home-btn:hover {
-            background: #0a1628;
-            border-color: #0a1628;
+            background: #7451f2 !important;
+            border-color: #7451f2;
             color: #ffffff;
-            transform: translateY(-1px);
+            box-shadow: 0 4px 20px 2px rgba(116,81,242,0.55);
           }
           .rf-home-btn:hover .rf-home-icon {
             animation: rf-home-bounce 0.45s cubic-bezier(.34,1.56,.64,1);
@@ -587,22 +682,22 @@ export default function Navbar() {
             animation: rf-avatar-click-bounce 0.45s cubic-bezier(.34,1.56,.64,1);
           }
           @keyframes rf-avatar-ring-pulse {
-            0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.55); }
-            100% { box-shadow: 0 0 0 8px rgba(5,150,105,0); }
+            0%   { box-shadow: 0 0 0 0 rgba(116,81,242,0.55); }
+            100% { box-shadow: 0 0 0 8px rgba(116,81,242,0); }
           }
         `}</style>
 
-        <nav className="w-full border-b border-dove/20 bg-white sticky top-0 z-50 ">
-          <div className="w-full px-6 sm:px-10 h-[3.125rem] flex items-center justify-between">
+        <nav
+          className="rf-glass w-full sticky top-0 z-50"
+          style={{ background: "rgba(255,255,255,0.42)" }}
+        >
+          <div className="relative z-10 w-full px-6 sm:px-10 h-[3.125rem] flex items-center justify-between">
 
             <Link to="/" className="flex items-center gap-2">
-              <span
-                className="border border-ink/50 px-2 py-0.5 rounded-full"
-                style={{ fontFamily: UI_FONT, fontSize: "0.5625rem", fontWeight: 600, color: "#0a1628", letterSpacing: "0.05em" }}
-              >
+              <span className="border border-graphite-ink/50 px-2 py-0.5 rounded-full font-body text-[9px] font-semibold text-graphite-ink" style={{ letterSpacing: "0.05em" }}>
                 ATS
               </span>
-              <span style={{ fontFamily: DISPLAY_FONT, fontSize: "0.9375rem", color: "#0a1628", letterSpacing: "-0.2px" }}>
+              <span className="font-heading text-[15px] text-graphite-ink" style={{ letterSpacing: "-0.2px" }}>
                 ResumeFree
               </span>
             </Link>
@@ -630,50 +725,26 @@ export default function Navbar() {
     );
   }
 
-  /* ── Standard Navbar (Landing, Pricing, every other page) ──
-     Fixed to viewport. Wide rectangular glass bar with soft rounded
-     corners (not a pill) — covers the full top width. Outer wrapper
-     has pointer-events:none so it never blocks clicks on the page
-     below it; only the actual <nav> bar re-enables pointer-events.
-
-     ── P0 FIX (UI/UX audit — ghost text bleed-through) ──
-     Previously this bar sat at a flat rgba(10,22,40,0.72) regardless of
-     scroll position. At 72% opacity, backdrop-blur alone wasn't enough
-     to fully occlude page content scrolling underneath — bright/light
-     sections showed through as visible "ghosting" behind the nav's own
-     text and links, breaking Gestalt Figure/Ground separation and
-     reducing effective contrast below WCAG 2.2 AA in places. Fix: the
-     background now steps up to a near-opaque 0.95 once the page is
-     scrolled (matching the already-solid-feeling ProfileAvatar dropdown
-     at 0.96), with a slightly higher 0.85 baseline even at the top of
-     the page. White nav text against this near-solid ink background
-     sits well above AA/AAA contrast at every scroll position. The
-     transition itself is already handled by .rf-glassnav's existing
-     `background 0.3s ease`, so this is a value-only change.
-
-     If signed in, a profile avatar (initials circle) sits before the
-     "Start Building" button and opens an animated dropdown menu. If
-     signed out, a subtle "Log in" text link takes its place — this is
-     how a returning premium user on a new/different device gets back
-     into their account, since there's otherwise no way to reach /auth. */
+  /* ── Standard Navbar (Landing, Pricing, every other page) ── */
   return (
     <>
       <style>{`
+        ${liquidGlassStyles}
         .rf-glassnav {
           transition: box-shadow 0.3s ease, background 0.3s ease;
         }
-        /* Magic landing glow — pulses on whatever section a nav click scrolls to */
         .rf-section-pulse {
           animation: rf-section-pulse-kf 0.9s cubic-bezier(0.4,0,0.2,1);
         }
         @keyframes rf-section-pulse-kf {
-          0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
-          25%  { box-shadow: 0 0 0 0 rgba(5,150,105,0.22); }
-          100% { box-shadow: 0 0 0 60px rgba(5,150,105,0); }
+          0%   { box-shadow: 0 0 0 0 rgba(116,81,242,0); }
+          25%  { box-shadow: 0 0 0 0 rgba(116,81,242,0.22); }
+          100% { box-shadow: 0 0 0 60px rgba(116,81,242,0); }
         }
         .rf-avatar-btn:hover {
           transform: translateY(-1px) scale(1.05);
-          background: rgba(255,255,255,0.18) !important;
+          background: rgba(116,81,242,0.3) !important;
+          box-shadow: 0 4px 20px 2px rgba(116,81,242,0.5);
         }
         @keyframes rf-avatar-click-bounce {
           0%   { transform: scale(1)    rotate(0deg); }
@@ -685,12 +756,12 @@ export default function Navbar() {
           animation: rf-avatar-click-bounce 0.45s cubic-bezier(.34,1.56,.64,1);
         }
         @keyframes rf-avatar-ring-pulse {
-          0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.55); }
-          100% { box-shadow: 0 0 0 8px rgba(5,150,105,0); }
+          0%   { box-shadow: 0 0 0 0 rgba(116,81,242,0.55); }
+          100% { box-shadow: 0 0 0 8px rgba(116,81,242,0); }
         }
         .rf-cta-btn:hover {
-          background: #047857 !important;
-          transform: translateY(-1px) scale(1.03);
+          background: #8a6ef5 !important;
+          box-shadow: 0 6px 26px 2px rgba(116,81,242,0.6) !important;
         }
         .rf-cta-btn:hover .rf-cta-arrow {
           animation: rf-cta-arrow-shift 0.45s cubic-bezier(.34,1.56,.64,1);
@@ -700,8 +771,15 @@ export default function Navbar() {
           50%  { transform: translateX(3px); }
           100% { transform: translateX(0); }
         }
+        .rf-start-building {
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
         .rf-start-building:hover {
-          background: #0a1628 !important;
+          background: #7451f2 !important;
+          border-color: #7451f2 !important;
+          box-shadow: 0 8px 30px 2px rgba(116,81,242,0.6);
         }
       `}</style>
 
@@ -710,42 +788,38 @@ export default function Navbar() {
         style={{ zIndex: 1000, pointerEvents: "none" }}
       >
         <nav
-          className="rf-glassnav mx-auto w-full rounded-3xl"
+          ref={desktopNavRef}
+          className="rf-glass rf-glassnav mx-auto w-full rounded-3xl"
           style={{
             maxWidth: "90rem",
-            /* P0 fix: opacity now scroll-aware — near-opaque once scrolled,
-               and higher even at rest, so page content never bleeds through
-               the nav's own text (see comment block above). */
             background: scrolled
-              ? "rgba(10,22,40,0.95)"
-              : "rgba(10,22,40,0.85)",
-            backdropFilter: "blur(20px) saturate(160%)",
-            WebkitBackdropFilter: "blur(20px) saturate(160%)",
-            border: "1px solid rgba(255,255,255,0.12)",
+              ? "linear-gradient(rgba(20,20,26,0.38), rgba(20,20,26,0.38)), rgba(255,255,255,0.06)"
+              : "linear-gradient(rgba(20,20,26,0.26), rgba(20,20,26,0.26)), rgba(255,255,255,0.06)",
             boxShadow: scrolled
-              ? "0 12px 32px -8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)"
-              : "0 8px 24px -10px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08)",
+              ? "0 16px 40px -10px rgba(0,0,0,0.45)"
+              : "0 10px 28px -12px rgba(0,0,0,0.3)",
             pointerEvents: "auto",
           }}
         >
+          <span className="rf-glass-highlight" aria-hidden="true" />
+
           {/* Desktop */}
-          <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center w-full pl-6 pr-2.5 h-[3.5rem]">
+          <div className="relative z-10 hidden md:grid grid-cols-[1fr_auto_1fr] items-center w-full pl-6 pr-2.5 h-[3.5rem]">
 
             <Link to="/" className="flex items-center gap-2">
-              <span
-                className="border border-white/25 px-2 py-0.5 rounded-full"
-                style={{ fontFamily: UI_FONT, fontSize: "0.5625rem", fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: "0.05em" }}
-              >
+              <span className="border border-white/25 px-2 py-0.5 rounded-full font-body text-[9px] font-semibold text-white/80" style={{ letterSpacing: "0.05em" }}>
                 ATS
               </span>
-              <span style={{ fontFamily: DISPLAY_FONT, fontSize: "1rem", color: "#ffffff", letterSpacing: "-0.23px", lineHeight: 1 }}>
+              <span className="font-heading text-[16px] text-paper-white" style={{ letterSpacing: "-0.23px", lineHeight: 1 }}>
                 ResumeFree
               </span>
             </Link>
 
             <div className="flex items-center gap-1">
-              {NAV_LINKS.map(({ label, href }) => (
-                <GlassLink key={label} href={href}>{label}</GlassLink>
+              {NAV_LINKS.map((link) => (
+                <GlassLink key={link.label} href={link.href} isActive={isLinkActive(link)}>
+                  {link.label}
+                </GlassLink>
               ))}
             </div>
 
@@ -762,20 +836,23 @@ export default function Navbar() {
               )}
               <Link
                 to="/builder"
-                className="rf-start-building group relative inline-flex items-center gap-2 px-4 py-1.5 bg-white rounded-buttons overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-                style={{ border: "1.5px solid rgba(10,22,40,0.15)" }}
+                className="rf-start-building rf-liquid-press group relative inline-flex items-center gap-2 px-4 py-1.5 rounded-buttons overflow-hidden"
+                style={{
+                  background: "rgba(255,255,255,0.92)",
+                  border: "1.5px solid rgba(39,39,39,0.15)",
+                }}
               >
                 <span className="relative flex items-center justify-center w-4 h-4">
-                  <span className="absolute w-1.5 h-1.5 rounded-full bg-ink transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-0 group-hover:scale-0" />
+                  <span className="absolute w-1.5 h-1.5 rounded-full bg-graphite-ink group-hover:bg-paper-white transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:opacity-0 group-hover:scale-0" />
                   <span className="absolute opacity-0 scale-50 group-hover:opacity-100 group-hover:scale-100 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]">
-                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="text-white">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" className="text-paper-white">
                       <path d="M2 7H12M12 7L7.5 2.5M12 7L7.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </span>
                 </span>
                 <span
-                  className="text-ink group-hover:text-white transition-colors duration-500"
-                  style={{ fontFamily: UI_FONT, fontSize: "0.75rem", fontWeight: 500, letterSpacing: "-0.009em" }}
+                  className="text-graphite-ink group-hover:text-paper-white transition-colors duration-500 font-body text-[12px] font-medium"
+                  style={{ letterSpacing: "-0.009em" }}
                 >
                   Start Building
                 </span>
@@ -784,15 +861,12 @@ export default function Navbar() {
           </div>
 
           {/* Mobile */}
-          <div className="md:hidden flex items-center justify-between pl-4 pr-2.5 h-[3.125rem]">
+          <div className="relative z-10 md:hidden flex items-center justify-between pl-4 pr-2.5 h-[3.125rem]">
             <Link to="/" className="flex items-center gap-2">
-              <span
-                className="border border-white/25 px-2 py-0.5 rounded-full"
-                style={{ fontFamily: UI_FONT, fontSize: "0.5625rem", fontWeight: 600, color: "rgba(255,255,255,0.8)", letterSpacing: "0.05em" }}
-              >
+              <span className="border border-white/25 px-2 py-0.5 rounded-full font-body text-[9px] font-semibold text-white/80" style={{ letterSpacing: "0.05em" }}>
                 ATS
               </span>
-              <span style={{ fontFamily: DISPLAY_FONT, fontSize: "0.875rem", color: "#ffffff", letterSpacing: "-0.2px" }}>
+              <span className="font-heading text-[14px] text-paper-white" style={{ letterSpacing: "-0.2px" }}>
                 ResumeFree
               </span>
             </Link>
@@ -805,9 +879,6 @@ export default function Navbar() {
                   onUpgradeClick={() => setUpgradeOpen(true)}
                 />
               )}
-              {/* Fitts's Law fix: hamburger hit-area bumped to an exact
-                  44x44px tap target (was ~38x38px via p-2.5 padding
-                  alone). Visual bar size/spacing unchanged. */}
               <button
                 className="flex flex-col items-center justify-center gap-[0.3125rem] w-11 h-11 shrink-0"
                 onClick={() => setMenuOpen(!menuOpen)}
@@ -824,36 +895,39 @@ export default function Navbar() {
         {/* Mobile dropdown */}
         {menuOpen && (
           <div
-            className="md:hidden mx-auto mt-2 overflow-hidden rounded-3xl"
+            className="rf-glass md:hidden mx-auto mt-2 overflow-hidden rounded-3xl"
             style={{
               maxWidth: "90rem",
-              background: "rgba(10,22,40,0.95)",
-              backdropFilter: "blur(20px) saturate(160%)",
-              WebkitBackdropFilter: "blur(20px) saturate(160%)",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+              background: "linear-gradient(rgba(20,20,26,0.4), rgba(20,20,26,0.4)), rgba(255,255,255,0.06)",
               pointerEvents: "auto",
             }}
           >
-            <div className="px-3.5 py-2.5 flex flex-col gap-1">
-              {/* Fitts's Law fix: vertical padding bumped from py-2.5 to
-                  py-3.5 on every mobile menu link so each row's tap
-                  target lands at ~44px tall instead of ~36px. */}
-              {NAV_LINKS.map(({ label, href }) => (
-                <a key={label}
-                  href={href}
-                  className="px-3.5 py-3.5 text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all"
-                  style={{ fontFamily: UI_FONT, fontSize: "0.8125rem", letterSpacing: "-0.009em" }}
-                  onClick={handleMobileHashClick(href)}
-                >
-                  {label}
-                </a>
-              ))}
+            <div className="relative z-10 px-3.5 py-2.5 flex flex-col gap-1">
+              {NAV_LINKS.map((link) => {
+                const active = isLinkActive(link);
+                return (
+                  <a key={link.label}
+                    href={link.href}
+                    className={`px-3.5 py-3.5 rounded-inputs transition-all font-body text-[14px] ${
+                      active
+                        ? "text-[#c3b2fa] bg-[#7451f2]/16"
+                        : "text-white/60 hover:text-[#c3b2fa] hover:bg-[#7451f2]/12"
+                    }`}
+                    style={{
+                      letterSpacing: "-0.009em",
+                      boxShadow: active ? "0 4px 20px 2px rgba(116,81,242,0.4)" : "none",
+                    }}
+                    onClick={handleMobileHashClick(link.href)}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
               {user ? (
                 <Link
                   to="/dashboard"
-                  className="px-3.5 py-3.5 text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all"
-                  style={{ fontFamily: UI_FONT, fontSize: "0.8125rem", letterSpacing: "-0.009em" }}
+                  className="px-3.5 py-3.5 text-white/60 hover:text-[#c3b2fa] hover:bg-[#7451f2]/12 rounded-inputs transition-all font-body text-[14px]"
+                  style={{ letterSpacing: "-0.009em" }}
                   onClick={() => setMenuOpen(false)}
                 >
                   My Profile
@@ -861,15 +935,15 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/auth"
-                  className="px-3.5 py-3.5 text-white/60 hover:text-white hover:bg-white/5 rounded-inputs transition-all"
-                  style={{ fontFamily: UI_FONT, fontSize: "0.8125rem", letterSpacing: "-0.009em" }}
+                  className="px-3.5 py-3.5 text-white/60 hover:text-[#c3b2fa] hover:bg-[#7451f2]/12 rounded-inputs transition-all font-body text-[14px]"
+                  style={{ letterSpacing: "-0.009em" }}
                   onClick={() => setMenuOpen(false)}
                 >
                   Log in
                 </Link>
               )}
             </div>
-            <div className="px-3.5 pb-3.5 border-t border-white/8 pt-2.5">
+            <div className="relative z-10 px-3.5 pb-3.5 border-t border-white/10 pt-2.5">
               <CtaButton to="/builder">Start Building</CtaButton>
             </div>
           </div>

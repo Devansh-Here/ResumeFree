@@ -58,7 +58,7 @@ export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
         order_id: orderData.orderId,
         name: "ResumeFree",
         description: pass.name,
-        theme: { color: "#059669" },
+        theme: { color: "#7451f2" },
         prefill: {
           email: user.email,
           name: user.user_metadata?.full_name || "",
@@ -111,68 +111,42 @@ export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: "rgba(10,22,40,0.55)", backdropFilter: "blur(4px)" }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-graphite-ink/55 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[420px] bg-white overflow-hidden"
-        style={{
-          borderRadius: "24px",
-          boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.25) 0px 24px 48px -8px",
-        }}
+        className="w-full max-w-[420px] bg-paper-white rounded-cards border border-mist overflow-hidden"
       >
         {/* Header */}
-        <div className="px-7 pt-7 pb-5 border-b border-[#cbd5e1]/50">
-          <p
-            className="text-[11px] font-semibold tracking-widest uppercase mb-1"
-            style={{ color: "#4a6fa5" }}
-          >
+        <div className="px-7 pt-7 pb-5 border-b border-mist">
+          <p className="font-mono text-[11px] font-semibold tracking-widest uppercase text-ash mb-1">
             {pass.featured ? "⭐ Most Popular" : "Confirm your pass"}
           </p>
-          <h2
-            style={{ fontFamily: "'DM Serif Display', serif", fontSize: "26px", color: "#0a1628" }}
-          >
-            {pass.name}
-          </h2>
-          <p className="text-[14px] mt-1" style={{ color: "#4a6fa5" }}>
-            {pass.tagline}
-          </p>
+          <h2 className="font-heading text-[26px] text-graphite-ink">{pass.name}</h2>
+          <p className="font-body text-[14px] mt-1 text-ash">{pass.tagline}</p>
         </div>
 
         {/* Price + duration */}
         <div className="px-7 py-6">
           <div className="flex items-end gap-2 mb-3">
-            <span
-              style={{ fontFamily: "'DM Serif Display', serif", fontSize: "44px", color: "#0a1628" }}
-            >
-              ₹{pass.price}
-            </span>
-            <span className="text-[13px] pb-2" style={{ color: "#4a6fa5" }}>
-              one-time
-            </span>
+            <span className="font-heading text-[44px] text-graphite-ink">₹{pass.price}</span>
+            <span className="font-body text-[13px] pb-2 text-ash">one-time</span>
           </div>
 
-          <span
-            className="inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1 rounded-full"
-            style={{ background: "#ecfdf5", border: "1px solid #d1fae5", color: "#059669" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
+          <span className="inline-flex items-center gap-1.5 font-body text-[12px] font-semibold px-3 py-1 rounded-full bg-success-bg border border-success-border text-success-text">
+            <span className="w-1.5 h-1.5 rounded-full bg-success-text" />
             {pass.durationLabel}
           </span>
 
-           <p className="text-[13px] mt-4 leading-relaxed" style={{ color: "#1e3a5f" }}>
+          <p className="font-body text-[13px] mt-4 leading-relaxed text-slate">
             {pass.isAddon
               ? "🔒 One-time payment via Razorpay. This unlocks the feature instantly — no expiry, no auto-renewal."
               : `🔒 One-time payment via Razorpay. No auto-renewal — your pass simply expires after ${pass.durationDays} days.`}
           </p>
 
           {errorMsg && (
-            <div
-              className="mt-4 px-3 py-2.5 rounded-2xl text-[13px]"
-              style={{ background: "#d1fae5", color: "#0a1628", border: "1px solid #cbd5e1" }}
-            >
+            <div className="mt-4 px-3 py-2.5 rounded-inputs font-body text-[13px] bg-error-bg border border-error-border text-error-text">
               ⚠️ {errorMsg}
             </div>
           )}
@@ -183,8 +157,7 @@ export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
           <button
             onClick={handlePay}
             disabled={paying}
-            className="w-full py-3.5 text-white font-semibold rounded-full transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            style={{ background: "#059669", fontSize: "15px" }}
+            className="w-full py-3.5 bg-graphite-ink text-paper-white font-body font-semibold text-[15px] rounded-buttons shadow-cta transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:bg-slate"
           >
             {paying ? (
               <>
@@ -198,8 +171,7 @@ export default function PassConfirmModal({ passKey, onClose, onSuccess }) {
           <button
             onClick={onClose}
             disabled={paying}
-            className="w-full py-2.5 font-medium text-[14px] transition-colors"
-            style={{ color: "#4a6fa5" }}
+            className="w-full py-2.5 font-body font-medium text-[14px] text-ash transition-colors"
           >
             Cancel
           </button>

@@ -2,12 +2,16 @@
 import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
 import { useAuthStore } from "../../store/authStore";
-
-const inputClass =
-  "w-full bg-white border border-[#cbd5e1] rounded-2xl px-3.5 py-2.5 text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/15 transition-all duration-150";
-
-const labelClass =
-  "block text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5] mb-1.5";
+import {
+  sectionHeadingClass,
+  sectionSubtextClass,
+  entryLabelClass,
+  labelClass,
+  inputClass,
+  cardClass,
+  autoSaveDotClass,
+  autoSaveTextClass,
+} from "./formStyles";
 
 // ── AI Bullet Row ─────────────────────────────────────────────
 function BulletRow({ projId, bulletIdx, value, canUseAi, onAiUse }) {
@@ -63,35 +67,32 @@ function BulletRow({ projId, bulletIdx, value, canUseAi, onAiUse }) {
   return (
     <div className="space-y-1.5">
       <div className="flex gap-2 items-start">
-        <span className="text-[#cbd5e1] mt-2.5 text-[0.75rem] select-none">•</span>
+        <span className="font-body text-mist mt-2.5 text-[14px] select-none">•</span>
         <textarea
           rows={2}
           placeholder="e.g. Built a web app using React and Node.js"
           value={value}
           onChange={(e) => updateProjectBullet(projId, bulletIdx, e.target.value)}
           className={`${inputClass} resize-none flex-1`}
-          style={{ fontFamily: "'Inter', sans-serif" }}
         />
         <div className="flex flex-col gap-1 flex-shrink-0 mt-0.5">
           <button
             onClick={handleImprove}
             disabled={loading || !canUseAi || !value.trim()}
             title={!canUseAi ? "AI limit reached — upgrade to Premium" : "Improve with AI"}
-            className={`text-[0.625rem] font-semibold px-2 py-1 rounded-full border transition-all duration-150 whitespace-nowrap ${
+            className={`font-body text-[11px] font-semibold px-2 py-1 rounded-buttons border transition-all duration-150 whitespace-nowrap ${
               !canUseAi
-                ? "text-amber-500 border-amber-200 bg-amber-50 cursor-not-allowed"
+                ? "text-warning-text border-warning-border bg-warning-bg cursor-not-allowed"
                 : loading
-                ? "text-[#059669]/50 border-[#059669]/20 cursor-wait"
-                : "text-[#059669] border-[#059669]/30 hover:bg-[#059669]/10 disabled:opacity-40"
+                ? "text-iris-violet/50 border-iris-violet/20 cursor-wait"
+                : "text-iris-violet border-deep-iris/40 hover:bg-iris-violet/10 disabled:opacity-40"
             }`}
-            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             {loading ? "···" : canUseAi ? "✨ AI" : "🔒 AI"}
           </button>
           <button
             onClick={() => removeProjectBullet(projId, bulletIdx)}
-            className="text-[0.625rem] text-[#4a6fa5]/50 hover:text-red-400 transition-colors px-2 py-1 rounded-full border border-transparent hover:border-red-200"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="font-body text-[11px] text-fog hover:text-error-text transition-colors px-2 py-1 rounded-buttons border border-transparent hover:border-error-border"
           >
             ✕
           </button>
@@ -99,42 +100,30 @@ function BulletRow({ projId, bulletIdx, value, canUseAi, onAiUse }) {
       </div>
 
       {error && (
-        <p className="ml-3.5 text-[0.75rem] text-red-400" style={{ fontFamily: "'Inter', sans-serif" }}>
-          {error}
-        </p>
+        <p className="ml-3.5 font-body text-[12px] text-error-text">{error}</p>
       )}
 
       {showSuggestion && improved && (
-        <div className="ml-3.5 bg-[#d1fae5] border border-[#059669]/30 rounded-2xl p-2.5 space-y-1.5">
-          <p
-            className="text-[0.6875rem] font-semibold tracking-widest text-[#059669] uppercase"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+        <div className="ml-3.5 bg-success-bg border border-success-border rounded-cards p-2.5 space-y-1.5">
+          <p className="font-mono text-[11px] font-semibold tracking-widest text-success-text uppercase">
             ✨ AI Suggestion
           </p>
-          <p className="text-[0.8125rem] text-[#0a1628]" style={{ fontFamily: "'Inter', sans-serif" }}>
-            {improved}
-          </p>
+          <p className="font-body text-[14px] text-graphite-ink">{improved}</p>
           <div className="flex gap-2">
             <button
               onClick={acceptSuggestion}
-              className="text-[0.75rem] font-semibold text-white bg-[#059669] px-2.5 py-1 rounded-full hover:bg-[#0a1628] transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="font-body text-[12px] font-semibold text-white bg-success-text px-2.5 py-1 rounded-buttons hover:bg-graphite-ink transition-colors"
             >
               Accept
             </button>
             <button
               onClick={rejectSuggestion}
-              className="text-[0.75rem] text-[#4a6fa5] px-2.5 py-1 rounded-full border border-[#cbd5e1] hover:border-[#4a6fa5] transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="font-body text-[12px] text-ash px-2.5 py-1 rounded-buttons border border-mist hover:border-ash transition-colors"
             >
               Reject
             </button>
           </div>
-          <p
-            className="text-[0.625rem] text-[#4a6fa5]/60"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+          <p className="font-body text-[11px] text-fog">
             Only this bullet was sent for improvement — never your personal info.
           </p>
         </div>
@@ -172,23 +161,20 @@ function TechStackInput({ projId, techStack }) {
 
   return (
     <div>
-      <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
-        Tech Stack
-      </label>
+      <label className={labelClass}>Tech Stack</label>
       <div
-        className="min-h-[2.625rem] flex flex-wrap gap-1.5 p-2.5 bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl cursor-text focus-within:border-[#059669] focus-within:ring-2 focus-within:ring-[#059669]/15 transition-all duration-150"
+        className="min-h-[2.625rem] flex flex-wrap gap-1.5 p-2.5 bg-soft-snow border border-mist rounded-inputs cursor-text focus-within:border-iris-violet focus-within:ring-2 focus-within:ring-iris-violet/20 transition-all duration-150"
         onClick={() => document.getElementById(`tech-${projId}`).focus()}
       >
         {techStack.map((tech) => (
           <span
             key={tech}
-            className="flex items-center gap-1 bg-white border border-[#cbd5e1] text-[#0a1628] text-[0.75rem] px-2.5 py-0.5 rounded-full"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="font-body flex items-center gap-1 bg-paper-white border border-mist text-graphite-ink text-[12px] px-2.5 py-0.5 rounded-full"
           >
             {tech}
             <button
               onClick={(e) => { e.stopPropagation(); handleRemove(tech); }}
-              className="text-[#4a6fa5]/50 hover:text-red-400 transition-colors"
+              className="text-fog hover:text-error-text transition-colors"
             >
               ×
             </button>
@@ -201,14 +187,10 @@ function TechStackInput({ projId, techStack }) {
           placeholder={techStack.length === 0 ? "e.g. React.js, Node.js, MongoDB" : ""}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="flex-1 min-w-[8.75rem] bg-transparent text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 outline-none"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          className="font-body flex-1 min-w-[8.75rem] bg-transparent text-[14px] text-graphite-ink placeholder:text-fog outline-none"
         />
       </div>
-      <p
-        className="text-[0.6875rem] text-[#4a6fa5]/60 mt-1.5"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
+      <p className="font-body text-[11px] text-fog mt-1.5">
         Press Enter or comma to add each technology
       </p>
     </div>
@@ -238,28 +220,19 @@ export default function ProjectsForm() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3.5">
         <div>
-          <h2
-            className="text-[1.375rem] text-[#0a1628]"
-            style={{ fontFamily: "'DM Serif Display', serif" }}
-          >
-            Projects
-          </h2>
-          <p
-            className="text-[0.75rem] text-[#4a6fa5] mt-1"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+          <h2 className={sectionHeadingClass}>Projects</h2>
+          <p className={sectionSubtextClass}>
             College projects, personal projects, hackathons — all count.
           </p>
         </div>
 
         {/* AI usage badge */}
         <div
-          className={`flex-shrink-0 text-[0.6875rem] font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap ${
+          className={`flex-shrink-0 font-body text-[11px] font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap ${
             isPremium || aiLeft > 0
-              ? "text-[#059669] border-[#059669]/30 bg-[#d1fae5]"
-              : "text-amber-600 border-amber-200 bg-amber-50"
+              ? "text-success-text border-success-border bg-success-bg"
+              : "text-warning-text border-warning-border bg-warning-bg"
           }`}
-          style={{ fontFamily: "'Inter', sans-serif" }}
         >
           {isPremium ? "✨ Unlimited AI" : aiLeft > 0 ? `✨ ${aiLeft} AI left` : "🔒 Upgrade for more AI"}
         </div>
@@ -267,23 +240,14 @@ export default function ProjectsForm() {
 
       {/* Empty state */}
       {entries.length === 0 && (
-        <div className="border border-dashed border-[#cbd5e1] rounded-3xl p-6 text-center">
-          <p
-            className="text-[0.8125rem] text-[#4a6fa5] mb-1"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
-            No projects added yet.
-          </p>
-          <p
-            className="text-[0.75rem] text-[#4a6fa5]/60 mb-3"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+        <div className="border border-dashed border-mist rounded-cards p-6 text-center">
+          <p className="font-body text-[14px] text-ash mb-1">No projects added yet.</p>
+          <p className="font-body text-[12px] text-fog mb-3">
             Even a college assignment project counts — add it.
           </p>
           <button
             onClick={addProject}
-            className="text-[0.8125rem] font-semibold text-[#059669] hover:underline"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="font-body text-[14px] font-semibold text-iris-violet hover:underline"
           >
             + Add Project
           </button>
@@ -292,22 +256,12 @@ export default function ProjectsForm() {
 
       {/* Project entries */}
       {entries.map((proj, idx) => (
-        <div
-          key={proj.id}
-          className="bg-white border border-[#cbd5e1] rounded-3xl p-4 space-y-3.5"
-          style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 4px 12px -2px" }}
-        >
+        <div key={proj.id} className={`${cardClass} space-y-3.5`}>
           <div className="flex items-center justify-between">
-            <span
-              className="text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5]"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
-              Project {idx + 1}
-            </span>
+            <span className={entryLabelClass}>Project {idx + 1}</span>
             <button
               onClick={() => removeProject(proj.id)}
-              className="text-[0.75rem] text-[#4a6fa5]/60 hover:text-red-400 transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="font-body text-[12px] text-fog hover:text-error-text transition-colors"
             >
               Remove
             </button>
@@ -315,16 +269,13 @@ export default function ProjectsForm() {
 
           {/* Project Name */}
           <div>
-            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
-              Project Name
-            </label>
+            <label className={labelClass}>Project Name</label>
             <input
               type="text"
               placeholder="e.g. Inventory Management System"
               value={proj.name}
               onChange={(e) => updateProject(proj.id, "name", e.target.value)}
               className={inputClass}
-              style={{ fontFamily: "'Inter', sans-serif" }}
             />
           </div>
 
@@ -333,7 +284,7 @@ export default function ProjectsForm() {
 
           {/* Bullets */}
           <div>
-            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
+            <label className={labelClass}>
               What you built — use ✨ AI to improve each bullet
             </label>
             <div className="space-y-2.5">
@@ -350,8 +301,7 @@ export default function ProjectsForm() {
             </div>
             <button
               onClick={() => addProjectBullet(proj.id)}
-              className="mt-2.5 text-[0.75rem] text-[#4a6fa5]/60 hover:text-[#059669] transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="mt-2.5 font-body text-[12px] text-fog hover:text-iris-violet transition-colors"
             >
               + Add bullet point
             </button>
@@ -362,21 +312,15 @@ export default function ProjectsForm() {
       {entries.length > 0 && (
         <button
           onClick={addProject}
-          className="w-full border border-dashed border-[#cbd5e1] rounded-3xl py-2.5 text-[0.8125rem] text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          className="w-full border border-dashed border-mist rounded-cards py-2.5 font-body text-[14px] text-ash hover:border-iris-violet hover:text-iris-violet transition-all duration-150"
         >
           + Add Another Project
         </button>
       )}
 
       <div className="flex items-center gap-2 pt-0.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
-        <p
-          className="text-[0.6875rem] text-[#4a6fa5]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          Auto-saved to your browser — no account needed
-        </p>
+        <span className={autoSaveDotClass} />
+        <p className={autoSaveTextClass}>Auto-saved to your browser — no account needed</p>
       </div>
     </div>
   );

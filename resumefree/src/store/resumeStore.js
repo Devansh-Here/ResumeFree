@@ -34,15 +34,23 @@ const DEFAULT_RESUME = {
   projects: [
     // { id, name, description, techStack: [], bullets: [""] }
   ],
-  // ── Theme (premium feature — see CustomizeContent.jsx / ColorThemePicker.jsx) ──
-  // NOTE: linkColor and photoBorder.color are nullable — null means
-  // "inherit from accentColor" so the whole theme still feels coordinated
-  // by default, without forcing every user to pick 3 separate colors.
+  // ── Theme (premium feature — see CustomizationPanel.jsx) ──
+  // Nullable fields (linkColor, backgroundColor, headingColor) mean
+  // "inherit / use template default" — NOT a forced override. Concrete
+  // fields (accentColor, textColor, fontFamily, bodyFontFamily,
+  // headingStyle, density, dividerStyle) always hold a real value; Reset
+  // sends them back to these DEFAULT_RESUME values via resetThemeField().
   theme: {
-    accentColor: "#059669",
+    accentColor: "#7451f2", // Obsidian Violet v2 default (was emerald #059669)
     linkColor: null, // null = same as accentColor
-    textColor: "#0a1628",
-    fontFamily: "inter", // key into FONT_OPTIONS, see utils/fontOptions.js
+    backgroundColor: null, // null = template's own default background
+    textColor: "#272727", // graphite-ink v2 default (was navy #0a1628)
+    headingColor: null, // null = same as textColor
+    fontFamily: "georgia", // key into FONT_OPTIONS — HEADING font
+    bodyFontFamily: "arial", // key into FONT_OPTIONS — BODY text font
+    headingStyle: "normal", // 'normal' | 'uppercase' — section title casing
+    density: "balanced", // 'compact' | 'balanced' | 'spacious' — spacing/line-height scale
+    dividerStyle: "line", // 'line' | 'dots' | 'none' — section separator style
     photoBorder: {
       style: "circle", // 'circle' | 'square' | 'none'
       color: null, // null = same as accentColor
@@ -102,12 +110,27 @@ export const useResumeStore = create(
           },
         })),
 
-      // ── Theme (premium — CustomizeContent.jsx) ──────────
+      // ── Theme (premium — CustomizationPanel.jsx) ────────
       updateTheme: (partial) =>
         set((state) => ({
           resume: {
             ...state.resume,
             theme: { ...state.resume.theme, ...partial },
+          },
+        })),
+
+      // Resets ONE theme field back to its DEFAULT_RESUME value — knows
+      // which fields are nullable (linkColor, backgroundColor,
+      // headingColor → null) vs. which always hold a concrete value, so
+      // callers (CustomizationPanel) never have to guess/hardcode defaults.
+      resetThemeField: (field) =>
+        set((state) => ({
+          resume: {
+            ...state.resume,
+            theme: {
+              ...state.resume.theme,
+              [field]: DEFAULT_RESUME.theme[field],
+            },
           },
         })),
 
@@ -332,15 +355,18 @@ export const useResumeStore = create(
     }),
     {
       name: "resumefree-data", // localStorage key
-      version: 1, // bump this whenever DEFAULT_RESUME's shape changes again
+      version: 3, // bumped: theme expanded — headingColor, bodyFontFamily,
+      // headingStyle, density, dividerStyle added
 
       // ── Safe migration for existing users ──────────────────
-      // Older localStorage data (saved before `theme.linkColor`,
-      // `theme.textColor`, `theme.fontFamily`, `theme.photoBorder` existed)
-      // won't have those fields. This deep-merges persisted data ONTO the
-      // current defaults so old fields are preserved, and any NEW fields
-      // we add later always get a safe default without wiping the user's
-      // actual resume content.
+      // This deep-merges persisted data ONTO the current defaults, field
+      // by field, so old resume content is always preserved and any NEW
+      // theme field we add (this session: headingColor, bodyFontFamily,
+      // headingStyle, density, dividerStyle) automatically falls back to
+      // its DEFAULT_RESUME value for users whose persisted data predates
+      // it — no explicit per-field migration code needed thanks to the
+      // spread order below (`...currentState.resume.theme` FIRST, then
+      // `...persistedTheme` on top).
       merge: (persistedState, currentState) => {
         const persisted = persistedState || {};
         const persistedResume = persisted.resume || {};

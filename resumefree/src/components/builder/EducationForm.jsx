@@ -1,11 +1,6 @@
 // src/components/builder/EducationForm.jsx
 import { useResumeStore } from "../../store/resumeStore";
-
-const inputClass =
-  "w-full bg-white border border-[#cbd5e1] rounded-2xl px-3.5 py-2.5 text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/15 transition-all duration-150";
-
-const labelClass =
-  "block text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5] mb-1.5";
+import { sectionHeadingClass, sectionSubtextClass, labelClass, inputClass, cardClass, autoSaveDotClass, autoSaveTextClass } from "./formStyles";
 
 const EDU_TYPES = [
   { value: "10th",    label: "10th" },
@@ -32,33 +27,21 @@ export default function EducationForm() {
 
       {/* Header */}
       <div>
-        <h2
-          className="text-[1.375rem] text-[#0a1628]"
-          style={{ fontFamily: "'DM Serif Display', serif" }}
-        >
-          Education
-        </h2>
-        <p
-          className="text-[0.75rem] text-[#4a6fa5] mt-1"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
+        <h2 className={sectionHeadingClass}>Education</h2>
+        <p className={sectionSubtextClass}>
           Add your most recent degree first. You can add multiple entries.
         </p>
       </div>
 
       {/* Empty state */}
       {entries.length === 0 && (
-        <div className="border border-dashed border-[#cbd5e1] rounded-3xl p-6 text-center">
-          <p
-            className="text-[0.8125rem] text-[#4a6fa5] mb-2.5"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+        <div className="border border-dashed border-mist rounded-cards p-6 text-center">
+          <p className="font-body text-[12px] text-ash mb-2.5">
             No education added yet.
           </p>
           <button
             onClick={addEducation}
-            className="text-[0.8125rem] font-semibold text-[#059669] hover:underline"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="font-body text-[12px] font-semibold text-iris-violet hover:underline"
           >
             + Add Education
           </button>
@@ -67,23 +50,15 @@ export default function EducationForm() {
 
       {/* Education entries */}
       {entries.map((edu, idx) => (
-        <div
-          key={edu.id}
-          className="bg-white border border-[#cbd5e1] rounded-3xl p-4 space-y-3.5"
-          style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 4px 12px -2px" }}
-        >
+        <div key={edu.id} className={`${cardClass} space-y-4`}>
           {/* Entry header */}
           <div className="flex items-center justify-between">
-            <span
-              className="text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5]"
-              style={{ fontFamily: "'Inter', sans-serif" }}
-            >
+            <span className="font-mono text-[11px] font-semibold tracking-widest uppercase text-ash">
               Education {idx + 1}
             </span>
             <button
               onClick={() => removeEducation(edu.id)}
-              className="text-[0.75rem] text-[#4a6fa5]/60 hover:text-red-400 transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="font-body text-[12px] text-fog hover:text-[#dc2626] transition-colors"
             >
               Remove
             </button>
@@ -91,20 +66,17 @@ export default function EducationForm() {
 
           {/* Education Type — pill selector */}
           <div>
-            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
-              Type
-            </label>
-            <div className="flex flex-wrap gap-1.5">
+            <label className={labelClass}>Type</label>
+            <div className="flex flex-wrap gap-2">
               {EDU_TYPES.map(({ value, label }) => (
                 <button
                   key={value}
                   onClick={() => updateEducation(edu.id, "type", value)}
-                  className={`text-[0.75rem] px-2.5 py-1 rounded-full border transition-all duration-150 whitespace-nowrap ${
+                  className={`font-body text-[12px] px-3 py-1 rounded-tags border transition-all duration-150 whitespace-nowrap ${
                     edu.type === value
-                      ? "bg-[#0a1628] text-white border-[#0a1628]"
-                      : "bg-white text-[#4a6fa5] border-[#cbd5e1] hover:border-[#4a6fa5] hover:text-[#0a1628]"
+                      ? "bg-graphite-ink text-white border-graphite-ink"
+                      : "bg-paper-white text-ash border-mist hover:border-slate hover:text-graphite-ink"
                   }`}
-                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
                   {label}
                 </button>
@@ -114,22 +86,19 @@ export default function EducationForm() {
 
           {/* Degree / Course name */}
           <div>
-            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
-              Degree / Course Name
-            </label>
+            <label className={labelClass}>Degree / Course Name</label>
             <input
               type="text"
               placeholder="e.g. B.Tech in Computer Science Engineering"
               value={edu.degree}
               onChange={(e) => updateEducation(edu.id, "degree", e.target.value)}
               className={inputClass}
-              style={{ fontFamily: "'Inter', sans-serif" }}
             />
           </div>
 
           {/* College / School */}
           <div>
-            <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
+            <label className={labelClass}>
               {edu.type === "10th" || edu.type === "12th" ? "School Name" : "College / University"}
             </label>
             <input
@@ -142,14 +111,13 @@ export default function EducationForm() {
               value={edu.college}
               onChange={(e) => updateEducation(edu.id, "college", e.target.value)}
               className={inputClass}
-              style={{ fontFamily: "'Inter', sans-serif" }}
             />
           </div>
 
           {/* CGPA + Year — side by side */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
+              <label className={labelClass}>
                 {edu.type === "10th" || edu.type === "12th" ? "Percentage / Grade" : "CGPA / %"}
               </label>
               <input
@@ -158,20 +126,16 @@ export default function EducationForm() {
                 value={edu.cgpa}
                 onChange={(e) => updateEducation(edu.id, "cgpa", e.target.value)}
                 className={inputClass}
-                style={{ fontFamily: "'Inter', sans-serif" }}
               />
             </div>
             <div>
-              <label className={labelClass} style={{ fontFamily: "'Inter', sans-serif" }}>
-                Passing Year
-              </label>
+              <label className={labelClass}>Passing Year</label>
               <input
                 type="text"
                 placeholder="2025"
                 value={edu.year}
                 onChange={(e) => updateEducation(edu.id, "year", e.target.value)}
                 className={inputClass}
-                style={{ fontFamily: "'Inter', sans-serif" }}
               />
             </div>
           </div>
@@ -182,8 +146,7 @@ export default function EducationForm() {
       {entries.length > 0 && (
         <button
           onClick={addEducation}
-          className="w-full border border-dashed border-[#cbd5e1] rounded-3xl py-2.5 text-[0.8125rem] text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          className="font-body w-full border border-dashed border-mist rounded-cards py-2 text-[12px] text-ash hover:border-iris-violet hover:text-iris-violet transition-all duration-150"
         >
           + Add Another Education
         </button>
@@ -191,11 +154,8 @@ export default function EducationForm() {
 
       {/* Auto-save notice */}
       <div className="flex items-center gap-2 pt-0.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
-        <p
-          className="text-[0.6875rem] text-[#4a6fa5]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
+        <span className={autoSaveDotClass} />
+        <p className={autoSaveTextClass}>
           Auto-saved to your browser — no account needed
         </p>
       </div>

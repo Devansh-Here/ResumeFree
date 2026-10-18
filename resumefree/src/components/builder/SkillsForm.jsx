@@ -1,6 +1,15 @@
 // src/components/builder/SkillsForm.jsx
 import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
+import { Lightbulb } from "lucide-react";
+import {
+  sectionHeadingClass,
+  sectionSubtextClass,
+  labelClass,
+  cardClass,
+  autoSaveDotClass,
+  autoSaveTextClass,
+} from "./formStyles";
 
 const SUGGESTIONS = {
   technical: [
@@ -56,27 +65,20 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
   };
 
   return (
-    <div
-      className="bg-white border border-[#cbd5e1] rounded-3xl p-4 space-y-2.5"
-      style={{ boxShadow: "rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.06) 0px 4px 12px -2px" }}
-    >
-      <label
-        className="block text-[0.6875rem] font-semibold tracking-widest uppercase text-[#4a6fa5]"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
+    <div className={`${cardClass} space-y-2.5`}>
+      <label className={labelClass}>
         {label}
       </label>
 
       {/* Tags + Input box */}
       <div
-        className="min-h-[2.625rem] flex flex-wrap gap-1.5 p-2.5 bg-[#f8fafc] border border-[#cbd5e1] rounded-2xl cursor-text focus-within:border-[#059669] focus-within:ring-2 focus-within:ring-[#059669]/15 transition-all duration-150"
+        className="min-h-[2.625rem] flex flex-wrap gap-1.5 p-2.5 bg-soft-snow border border-mist rounded-inputs cursor-text focus-within:border-iris-violet focus-within:ring-2 focus-within:ring-iris-violet/20 transition-all duration-150"
         onClick={() => document.getElementById(`input-${category}`).focus()}
       >
         {skills.map((skill) => (
           <span
             key={skill}
-            className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] text-[#0a1628] text-[0.75rem] px-2.5 py-0.5 rounded-full"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="font-body flex items-center gap-1.5 bg-paper-white border border-mist text-graphite-ink text-[0.75rem] px-2.5 py-0.5 rounded-tags"
           >
             {skill}
             <button
@@ -84,7 +86,7 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
                 e.stopPropagation();
                 onRemove(category, skills.filter((s) => s !== skill));
               }}
-              className="text-[#4a6fa5]/50 hover:text-red-400 transition-colors leading-none"
+              className="text-fog hover:text-error-text transition-colors leading-none"
             >
               ×
             </button>
@@ -103,27 +105,22 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
           onKeyDown={handleKeyDown}
           onFocus={() => setShowDropdown(true)}
           onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-          className="flex-1 min-w-[7.5rem] bg-transparent text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 outline-none"
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          className="font-body flex-1 min-w-[7.5rem] bg-transparent text-[14px] text-graphite-ink placeholder:text-fog outline-none"
         />
       </div>
 
-      <p
-        className="text-[0.6875rem] text-[#4a6fa5]/60"
-        style={{ fontFamily: "'Inter', sans-serif" }}
-      >
+      <p className="font-body text-[11px] text-fog">
         Type and press Enter or comma to add · Backspace to remove last
       </p>
 
       {/* Dropdown — when typing */}
       {showDropdown && input.length > 0 && filtered.length > 0 && (
-        <div className="border border-[#cbd5e1] rounded-2xl overflow-hidden bg-white shadow-sm">
+        <div className="border border-mist rounded-inputs overflow-hidden bg-paper-white">
           {filtered.slice(0, 6).map((s) => (
             <button
               key={s}
               onMouseDown={() => handleAdd(s)}
-              className="w-full text-left px-3.5 py-2 text-[0.8125rem] text-[#4a6fa5] hover:bg-[#f8fafc] hover:text-[#0a1628] transition-colors"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="font-body w-full text-left px-3.5 py-2 text-[0.8125rem] text-ash hover:bg-soft-snow hover:text-graphite-ink transition-colors"
             >
               {s}
             </button>
@@ -134,18 +131,14 @@ function SkillCategory({ category, skills, onAdd, onRemove }) {
       {/* Quick-add pills */}
       {notAdded.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          <span
-            className="text-[0.6875rem] text-[#4a6fa5]/60 self-center mr-1"
-            style={{ fontFamily: "'Inter', sans-serif" }}
-          >
+          <span className="font-body text-[11px] text-fog self-center mr-1">
             Quick add:
           </span>
           {notAdded.slice(0, 8).map((s) => (
             <button
               key={s}
               onClick={() => handleAdd(s)}
-              className="text-[0.75rem] px-2.5 py-0.5 rounded-full border border-[#cbd5e1] text-[#4a6fa5] hover:border-[#059669] hover:text-[#059669] transition-all duration-150"
-              style={{ fontFamily: "'Inter', sans-serif" }}
+              className="font-body text-[0.75rem] px-2.5 py-0.5 rounded-tags border border-mist text-ash hover:border-iris-violet hover:text-iris-violet transition-all duration-150"
             >
               + {s}
             </button>
@@ -168,30 +161,26 @@ export default function SkillsForm() {
 
       {/* Header */}
       <div>
-        <h2
-          className="text-[1.375rem] text-[#0a1628]"
-          style={{ fontFamily: "'DM Serif Display', serif" }}
-        >
-          Skills
-        </h2>
-        <p
-          className="text-[0.75rem] text-[#4a6fa5] mt-1"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
+        <h2 className={sectionHeadingClass}>Skills</h2>
+        <p className={sectionSubtextClass}>
           Add skills relevant to the jobs you're applying for. ATS scans these first.
         </p>
       </div>
 
-      {/* ATS tip */}
-      <div className="bg-[#d1fae5] border border-[#059669]/20 rounded-2xl p-3 flex items-center gap-2.5">
-        <span className="text-[#059669] flex-shrink-0">✦</span>
-        <p
-          className="text-[0.75rem] text-[#1e3a5f] leading-relaxed"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
-          <span className="font-semibold text-[#059669]">ATS tip:</span> Add skills exactly as they appear in the job description. "React.js" and "ReactJS" are different to an ATS.
-        </p>
-      </div>
+      {/* ATS tip — semantic success tokens (not brand violet), with a left
+      accent bar + SVG icon (not emoji — emoji renders inconsistently
+      across OS/browsers and looks unprofessional in a production app) for
+      stronger visual weight. */}
+      <div className="relative bg-success-bg border-2 border-success-border rounded-inputs pl-5 pr-4 py-3.5 flex items-center gap-3 overflow-hidden shadow-sm">
+  <span className="absolute left-0 top-0 bottom-0 w-1.5 bg-success-text" aria-hidden="true" />
+  <svg className="text-success-text flex-shrink-0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 18h6" /><path d="M10 22h4" />
+    <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.6.6 1.24 1.42 1.41 2.5" />
+  </svg>
+  <p className="font-body text-[0.8125rem] text-slate leading-relaxed">
+    <span className="font-semibold text-success-text">ATS tip:</span> Add skills exactly as they appear in the job description. "React.js" and "ReactJS" are different to an ATS.
+  </p>
+</div>
 
       <SkillCategory category="technical" skills={skills.technical} onAdd={handleAdd} onRemove={handleRemove} />
       <SkillCategory category="tools"     skills={skills.tools}     onAdd={handleAdd} onRemove={handleRemove} />
@@ -199,11 +188,8 @@ export default function SkillsForm() {
 
       {/* Auto-save notice */}
       <div className="flex items-center gap-2 pt-0.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" />
-        <p
-          className="text-[0.6875rem] text-[#4a6fa5]"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-        >
+        <span className={autoSaveDotClass} />
+        <p className={autoSaveTextClass}>
           Auto-saved to your browser — no account needed
         </p>
       </div>

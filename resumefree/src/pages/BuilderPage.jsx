@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useResumeStore } from "../store/resumeStore";
 import { supabase } from "../utils/supabaseClient";
@@ -21,6 +21,11 @@ const SECTIONS = [
   { id: "projects",   label: "Projects"   },
 ];
 
+const MOBILE_TABS = [
+  { id: "form",    label: "Edit"    },
+  { id: "preview", label: "Preview" },
+];
+
 const FORM_MAP = {
   personal:   <PersonalInfoForm />,
   education:  <EducationForm />,
@@ -38,6 +43,28 @@ export default function BuilderPage() {
   const { saveResume, saving }      = useResumeCloud();
   const navigate                    = useNavigate();
   const currentIdx = SECTIONS.findIndex((s) => s.id === activeSection);
+
+  // ── Sliding underline: desktop section tabs ──
+  const tabRefs = useRef({});
+  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const el = tabRefs.current[activeSection];
+    if (el) {
+      setUnderlineStyle({ left: el.offsetLeft, width: el.offsetWidth });
+    }
+  }, [activeSection]);
+
+  // ── Sliding underline: mobile Edit/Preview switcher ──
+  const mobileTabRefs = useRef({});
+  const [mobileUnderlineStyle, setMobileUnderlineStyle] = useState({ left: 0, width: 0 });
+
+  useLayoutEffect(() => {
+    const el = mobileTabRefs.current[mobileTab];
+    if (el) {
+      setMobileUnderlineStyle({ left: el.offsetLeft, width: el.offsetWidth });
+    }
+  }, [mobileTab]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -87,24 +114,34 @@ export default function BuilderPage() {
   };
 
   return (
-    <div className="h-screen bg-[#e8edf2] flex flex-col overflow-hidden">
+    <div className="h-screen bg-soft-snow flex flex-col overflow-hidden">
       <Navbar />
 
-      {/* ── Mobile tab switcher ── */}
-      <div className="lg:hidden flex border-b border-[#cbd5e1] bg-[#fdfdfe] sticky top-14 z-40">
-        {["form", "preview"].map((tab) => (
+      {/* ── Mobile tab switcher — now with sliding underline ── */}
+      <div className="lg:hidden flex border-b border-mist bg-paper-white sticky top-14 z-40 relative">
+        {MOBILE_TABS.map(({ id, label }) => (
           <button
-            key={tab}
-            onClick={() => setMobileTab(tab)}
-            className={`flex-1 py-2 text-[0.6875rem] font-semibold uppercase tracking-widest transition-colors ${
-              mobileTab === tab
-                ? "text-[#059669] border-b-2 border-[#059669]"
-                : "text-[#4a6fa5]/60 hover:text-[#1e3a5f]"
+            key={id}
+            ref={(el) => (mobileTabRefs.current[id] = el)}
+            onClick={() => setMobileTab(id)}
+            className={`flex-1 py-2 font-mono text-[11px] font-semibold uppercase tracking-widest transition-colors ${
+              mobileTab === id
+                ? "text-iris-violet"
+                : "text-fog hover:text-ash"
             }`}
           >
-            {tab === "form" ? "Edit" : "Preview"}
+            {label}
           </button>
         ))}
+
+        <span
+          className="absolute bottom-0 h-[2px] bg-iris-violet transition-all duration-300"
+          style={{
+            left: mobileUnderlineStyle.left,
+            width: mobileUnderlineStyle.width,
+            transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -115,42 +152,52 @@ export default function BuilderPage() {
         </div>
 
         {/* ── Floating builder card ── */}
-        <div className="flex flex-1 overflow-hidden m-3 rounded-3xl border border-[#cbd5e1]/60
-                         shadow-[0_4px_16px_-4px_rgba(10,22,40,0.10),0_1px_3px_rgba(10,22,40,0.06)]
-                         bg-white relative z-10">
+        <div className="flex flex-1 overflow-hidden m-3 rounded-[4px] border border-mist
+                         bg-paper-white relative z-10">
 
           {/* ── LEFT: Form Panel ── */}
-          <div className={`w-full lg:w-[52%] flex flex-col bg-[#f8fafc] border-r border-[#cbd5e1] rounded-l-3xl overflow-hidden ${
+          <div className={`w-full lg:w-[52%] flex flex-col bg-paper-white border-r border-mist rounded-l-[4px] overflow-hidden ${
             mobileTab === "preview" ? "hidden lg:flex" : "flex"
           }`}>
 
-            <div className="h-[2.8125rem] flex overflow-x-auto border-b border-[#cbd5e1] bg-[#fdfdfe] [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <div className="h-[2.8125rem] flex overflow-x-auto border-b border-mist bg-soft-snow relative [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
               {SECTIONS.map(({ id, label }) => (
                 <button
                   key={id}
+                  ref={(el) => (tabRefs.current[id] = el)}
                   onClick={() => setActiveSection(id)}
-                  className={`flex-shrink-0 px-4 h-full text-[0.6875rem] font-semibold tracking-wider uppercase
-                               transition-all whitespace-nowrap border-b-2 -mb-px ${
+                  className={`flex-shrink-0 px-4 h-full font-mono text-[11px] font-semibold tracking-wider uppercase
+                               transition-colors whitespace-nowrap ${
                     activeSection === id
-                      ? "text-[#0a1628] border-[#059669]"
-                      : "text-[#4a6fa5]/60 border-transparent hover:text-[#1e3a5f] hover:border-[#cbd5e1]"
+                      ? "text-graphite-ink"
+                      : "text-fog hover:text-ash"
                   }`}
                 >
                   {label}
                 </button>
               ))}
+
+              {/* Sliding underline — travels between tabs on click */}
+              <span
+                className="absolute bottom-0 h-[2px] bg-iris-violet transition-all duration-300"
+                style={{
+                  left: underlineStyle.left,
+                  width: underlineStyle.width,
+                  transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+              />
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {FORM_MAP[activeSection]}
             </div>
 
-            <div className="border-t border-[#cbd5e1] bg-[#fdfdfe] px-4 sm:px-6 py-2.5
+            <div className="border-t border-mist bg-soft-snow px-4 sm:px-6 py-2.5
                              flex items-center justify-between">
               <button
                 onClick={goPrev}
                 disabled={currentIdx === 0}
-                className="text-[0.8125rem] text-[#4a6fa5] hover:text-[#0a1628]
+                className="font-body text-[14px] text-ash hover:text-graphite-ink
                            disabled:opacity-25 disabled:cursor-not-allowed transition-colors font-medium"
               >
                 ← Prev
@@ -162,10 +209,10 @@ export default function BuilderPage() {
                     key={id}
                     className={`rounded-full transition-all duration-200 ${
                       id === activeSection
-                        ? "w-4 h-1 bg-[#059669]"
+                        ? "w-4 h-1 bg-iris-violet"
                         : i < currentIdx
-                        ? "w-1 h-1 bg-[#059669]/40"
-                        : "w-1 h-1 bg-[#cbd5e1]"
+                        ? "w-1 h-1 bg-iris-violet/40"
+                        : "w-1 h-1 bg-mist"
                     }`}
                   />
                 ))}
@@ -174,7 +221,7 @@ export default function BuilderPage() {
               <button
                 onClick={goNext}
                 disabled={currentIdx === SECTIONS.length - 1}
-                className="text-[0.8125rem] font-semibold text-[#059669] hover:text-[#047857]
+                className="font-body text-[14px] font-semibold text-iris-violet hover:text-deep-iris
                            disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
               >
                 Next →
@@ -182,14 +229,30 @@ export default function BuilderPage() {
             </div>
           </div>
 
-          {/* ── RIGHT: Preview Panel ── */}
-          <div className={`w-full lg:w-[48%] flex flex-col bg-[#ecfdf5] rounded-r-3xl overflow-hidden ${
+          {/* ── RIGHT: Preview Panel — subtle drifting violet gradient background ── */}
+          <div className={`w-full lg:w-[48%] flex flex-col rounded-r-[4px] overflow-hidden relative bg-paper-white ${
             mobileTab === "form" ? "hidden lg:flex" : "flex"
           }`}>
 
+            {/* Decorative animated gradient layer — sits behind everything in this panel.
+                Opacity bumped up (0.10→0.30 / 0.08→0.24) and blur reduced (48px→36px)
+                so the violet motion is actually visible, not just theoretically present. */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div
+                className="rf-gradient-drift absolute"
+                style={{
+                  inset: "-20%",
+                  background:
+                    "radial-gradient(circle at 28% 28%, rgba(116,81,242,0.30), transparent 58%), " +
+                    "radial-gradient(circle at 72% 68%, rgba(89,82,161,0.24), transparent 58%)",
+                  filter: "blur(36px)",
+                }}
+              />
+            </div>
+
             <div className="h-[2.8125rem] flex items-center gap-2 px-3.5
-                             border-b border-[#cbd5e1] bg-[#fdfdfe]/90 backdrop-blur-sm">
-              <span className="text-[0.625rem] tracking-widest text-[#4a6fa5]/60 uppercase mr-auto font-semibold">
+                             border-b border-mist bg-paper-white/90 backdrop-blur-sm relative z-10">
+              <span className="font-mono text-[11px] tracking-widest text-fog uppercase mr-auto font-semibold">
                 Live Preview
               </span>
 
@@ -197,11 +260,11 @@ export default function BuilderPage() {
                 onClick={handleSaveCloud}
                 disabled={saving}
                 title={!user ? "Sign in to save" : savedId ? "Update saved resume" : "Save to cloud"}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full font-body text-[11px] font-semibold
                             transition-all disabled:opacity-50 disabled:cursor-not-allowed
                             ${saveSuccess
-                              ? "bg-[#059669] text-white"
-                              : "bg-[#0a1628]/6 hover:bg-[#0a1628]/12 text-[#1e3a5f] hover:text-[#0a1628]"
+                              ? "bg-success-text text-white"
+                              : "bg-graphite-ink/6 hover:bg-graphite-ink/12 text-ash hover:text-graphite-ink"
                             }`}
               >
                 {saving ? (
@@ -225,8 +288,7 @@ export default function BuilderPage() {
               <DownloadButton />
             </div>
 
-            {/* This is the only real change in this file — see note below */}
-            <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 flex justify-center">
+            <div className="flex-1 overflow-y-auto p-3.5 sm:p-5 flex justify-center relative z-10">
               <div
                 className="w-full max-w-[42.5rem]"
                 style={{ zoom: 0.90 }}

@@ -11,6 +11,7 @@ import ProfilePage     from "./pages/ProfilePage";
 import PricingPage     from "./pages/PricingPage";
 import CoverLetterPage from "./pages/CoverLetterPage";
 import ScrollToTop     from "./components/ScrollToTop";
+import GlassFilters    from "./components/ui/GlassFilters";
 import { useAuthStore } from "./store/authStore";
 
 
@@ -23,6 +24,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <GlassFilters />
       <ScrollToTop />
       <Routes>
         <Route path="/"              element={<Landing />} />

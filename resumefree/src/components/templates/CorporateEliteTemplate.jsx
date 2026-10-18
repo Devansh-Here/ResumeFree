@@ -1,5 +1,7 @@
 // src/components/templates/CorporateEliteTemplate.jsx
 
+import { getFontStack } from "../../utils/fontOptions";
+
 // ---- Color helpers (kept local to this file for now — safe, dependency-
 // free RGB blending in plain JS rather than CSS `color-mix()`, since
 // Puppeteer's bundled Chromium version support for `color-mix()` isn't
@@ -25,7 +27,8 @@ function hexToRgb(hex) {
 // Blends `hex` toward `baseHex` by `baseRatio` (0–1). Used to tint the dark
 // sidebar with the user's chosen accent color while always keeping it dark
 // enough for white text to stay readable, regardless of how light/saturated
-// the picked accent color is.
+// the picked accent color is. Also reused below to derive lighter tints of
+// the user's chosen textColor for secondary/tertiary text tones.
 function blendTowardBase(hex, baseHex, baseRatio) {
   const a = hexToRgb(hex);
   const b = hexToRgb(baseHex);
@@ -42,31 +45,60 @@ function accentAlpha(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-function SectionHeading({ title, dark, accentColor }) {
+// ── Density scale (theme.density) — controls spacing/line-height across
+// the whole template. Kept as one lookup table so every density-affected
+// value stays in sync instead of scattering magic numbers through JSX. ──
+const DENSITY_SCALE = {
+  compact: { lineHeight: "1.35", padding: "22px 20px", sectionGap: "10px", itemGap: "8px" },
+  balanced: { lineHeight: "1.5", padding: "30px 28px", sectionGap: "14px", itemGap: "12px" },
+  spacious: { lineHeight: "1.7", padding: "38px 34px", sectionGap: "20px", itemGap: "18px" },
+};
+
+// dividerStyle: 'line' | 'dots' | 'none' — the small marker under each
+// section heading. headingStyle: 'normal' | 'uppercase' — casing of the
+// heading text itself. headingColor only applies in the LIGHT (main
+// content) zone — dark sidebar headings stay white regardless, since
+// that's a separate fixed dark-mode zone (same rule already applied to
+// textColor elsewhere in this file).
+function SectionHeading({ title, dark, accentColor, headingColor, headingStyle, dividerStyle }) {
   return (
     <div className="mt-4 mb-2">
       <div className="flex items-center gap-1.5">
-        {/* NEW — small accent dot marker. Purely decorative (no text sits
-            on it), so it's always safe to color directly with accentColor
-            even if the user picks something very light. Gives section
-            headings more visible "theme" weight beyond just the underline. */}
+        {/* Small accent dot marker. Purely decorative (no text sits on
+            it), so it's always safe to color directly with accentColor
+            even if the user picks something very light. */}
         <span
           className="w-1.5 h-1.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: accentColor }}
         />
         <span
-          className={`text-[10px] font-bold tracking-[0.15em] uppercase ${
-            dark ? "text-white/90" : "text-[#0a1628]"
-          }`}
-          style={{ fontFamily: "'Inter', sans-serif" }}
+          className="text-[10px] font-bold tracking-[0.15em]"
+          style={{
+            color: dark ? "rgba(255,255,255,0.9)" : headingColor,
+            textTransform: headingStyle === "uppercase" ? "uppercase" : "none",
+          }}
         >
           {title}
         </span>
       </div>
-      <div
-        className="h-[2px] w-8 mt-1 ml-3"
-        style={{ backgroundColor: accentColor }}
-      />
+      {dividerStyle === "line" && (
+        <div
+          className="h-[2px] w-8 mt-1 ml-3"
+          style={{ backgroundColor: accentColor }}
+        />
+      )}
+      {dividerStyle === "dots" && (
+        <div className="flex gap-1 mt-1.5 ml-3">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="w-1 h-1 rounded-full"
+              style={{ backgroundColor: accentColor }}
+            />
+          ))}
+        </div>
+      )}
+      {/* dividerStyle === 'none' → nothing rendered */}
     </div>
   );
 }
@@ -78,22 +110,49 @@ function EmptyField({ text }) {
 export default function CorporateEliteTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
 
-  // NEW — accent color + photo, both fall back safely for resumes saved
-  // before Section 5o (theme/photo fields added via resumeStore's merge()).
-  const accentColor = resume.theme?.accentColor || "#059669";
+  // ── Theme fields, all with safe fallbacks matching resumeStore.js's
+  // DEFAULT_RESUME.theme, for resumes saved before these fields existed. ──
+  const accentColor = resume.theme?.accentColor || "#7451f2";
+  const linkColor = resume.theme?.linkColor || accentColor; // null = inherit accent
+  const backgroundColor = resume.theme?.backgroundColor || "#ffffff"; // null = template default (white)
+  const textColor = resume.theme?.textColor || "#272727";
+  const headingColor = resume.theme?.headingColor || textColor; // null = inherit textColor
+  const headingFontKey = resume.theme?.fontFamily || "georgia";
+  const bodyFontKey = resume.theme?.bodyFontFamily || "arial";
+  const headingFontStack = getFontStack(headingFontKey);
+  const bodyFontStack = getFontStack(bodyFontKey);
+  const headingStyle = resume.theme?.headingStyle || "normal";
+  const dividerStyle = resume.theme?.dividerStyle || "line";
+  const density = DENSITY_SCALE[resume.theme?.density] || DENSITY_SCALE.balanced;
+  const photoBorder = resume.theme?.photoBorder || { style: "circle", color: null, width: 2 };
+
   const photoUrl = personal.photo?.processedDataUrl || null;
   const nameInitial = personal.name?.trim()?.[0]?.toUpperCase() || "?";
 
-  // NEW — the sidebar background is no longer hardcoded navy. It's now a
-  // blend of the user's chosen accentColor with the original ink navy,
-  // weighted heavily toward navy (70%) so it always stays dark enough for
-  // white text to read clearly — but the tint is now clearly visible,
-  // making a picked accent color feel like it changes the WHOLE resume's
-  // theme, not just a couple of thin underlines.
+  // The sidebar background is a blend of the user's chosen accentColor
+  // with a fixed dark navy base, weighted heavily toward navy (70%) so it
+  // always stays dark enough for white text to read clearly — this stays
+  // a fixed dark tone regardless of theme.textColor, since the sidebar is
+  // its own dark-mode zone, not part of the light "main content" area.
   const sidebarBg = blendTowardBase(accentColor, "#0a1628", 0.7);
-  // Skill tag chips in the sidebar: accent-tinted instead of plain white
-  // overlay, so they visibly shift with the chosen theme too.
   const chipBg = accentAlpha(accentColor, 0.22);
+
+  // ── textColor-derived tints for the MAIN (light) content area only. ──
+  // theme.textColor governs the primary ink color of the light content
+  // column. Secondary/tertiary text (company names, dates, meta info) are
+  // lighter tints of the SAME color rather than independent hardcoded
+  // hues, so changing textColor coordinates the whole main column
+  // consistently. The sidebar's own white/gray-on-dark palette is
+  // deliberately left untouched — it's a separate dark-themed zone.
+  const textPrimary = textColor;
+  const textSecondary = blendTowardBase(textColor, "#ffffff", 0.35); // e.g. company name, tech stack
+  const textBody = blendTowardBase(textColor, "#ffffff", 0.15); // bullet text
+
+  // ── Photo border, derived from theme.photoBorder ──
+  const borderColor = photoBorder.color || accentColor;
+  const borderWidth = photoBorder.style === "none" ? 0 : photoBorder.width ?? 2;
+  const borderRadius =
+    photoBorder.style === "square" ? "8px" : photoBorder.style === "none" ? "0px" : "9999px";
 
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
@@ -107,34 +166,37 @@ export default function CorporateEliteTemplate({ resume }) {
 
   return (
     <div
-      className="bg-white shadow-md rounded-sm w-full overflow-hidden"
+      className="shadow-md rounded-sm w-full overflow-hidden"
       style={{
-        fontFamily: "'Inter', sans-serif",
+        backgroundColor,
+        fontFamily: bodyFontStack,
         fontSize: "11px",
-        lineHeight: "1.5",
+        lineHeight: density.lineHeight,
         minHeight: "842px",
       }}
     >
-      {/* NEW — thin full-width accent strip at the very top. Purely
-          decorative (no text sits on it), so always safe regardless of how
-          light the chosen accent color is. Gives an immediate, unmissable
-          "yes, the theme actually changed" signal at a glance. */}
+      {/* Thin full-width accent strip at the very top. Purely decorative,
+          so always safe regardless of how light the chosen accent color
+          is. Gives an immediate "yes, the theme actually changed" signal. */}
       <div className="h-[5px] w-full" style={{ backgroundColor: accentColor }} />
 
       <div className="flex" style={{ minHeight: "837px" }}>
-        {/* ── Sidebar ── */}
+        {/* ── Sidebar (fixed dark zone — not affected by theme.textColor) ── */}
         <div
           className="flex-shrink-0"
-          style={{ width: "34%", backgroundColor: sidebarBg, color: "white", padding: "30px 22px" }}
+          style={{ width: "34%", backgroundColor: sidebarBg, color: "white", padding: density.padding }}
         >
-          {/* Photo slot. Shows uploaded+processed photo if present,
-              otherwise a neutral initial-letter placeholder so the layout
-              stays consistent whether or not the user has added a photo. */}
+          {/* Photo slot. Shape/border now driven by theme.photoBorder
+              (style/color/width) instead of a hardcoded circle. Shows
+              uploaded+processed photo if present, otherwise a neutral
+              initial-letter placeholder in the same shape/frame so the
+              layout stays consistent whether or not a photo is added. */}
           <div
-            className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center mb-3 flex-shrink-0"
+            className="w-16 h-16 overflow-hidden flex items-center justify-center mb-3 flex-shrink-0"
             style={{
               backgroundColor: photoUrl ? "transparent" : "rgba(255,255,255,0.08)",
-              border: `2px solid ${accentColor}`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : "none",
+              borderRadius,
             }}
           >
             {photoUrl ? (
@@ -144,23 +206,16 @@ export default function CorporateEliteTemplate({ resume }) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span
-                className="text-[20px] text-white/70"
-                style={{ fontFamily: "'DM Serif Display', serif" }}
-              >
-                {nameInitial}
-              </span>
+              <span className="text-[20px] text-white/70">{nameInitial}</span>
             )}
           </div>
 
           <h1
             className="text-[26px] leading-tight text-white mb-1"
-            style={{ fontFamily: "'DM Serif Display', serif" }}
+            style={{ fontFamily: headingFontStack }}
           >
             {personal.name || <EmptyField text="Your Name" />}
           </h1>
-          {/* Widened from w-8 to w-12 — a bit more visual weight now that
-              the sidebar itself carries the accent tint too. */}
           <div className="h-[2px] w-12 mb-4" style={{ backgroundColor: accentColor }} />
 
           <div className="space-y-1 text-[10px] text-[#cbd5e1]">
@@ -173,7 +228,7 @@ export default function CorporateEliteTemplate({ resume }) {
           </div>
 
           {(personal.linkedin || personal.github || personal.portfolio) && (
-            <div className="space-y-1 mt-2 text-[10px]" style={{ color: "#6ee7b7" }}>
+            <div className="space-y-1 mt-2 text-[10px]" style={{ color: linkColor }}>
               {personal.linkedin && <div>linkedin.com/in/{personal.linkedin}</div>}
               {personal.github && <div>github.com/{personal.github}</div>}
               {personal.portfolio && <div>{personal.portfolio}</div>}
@@ -182,7 +237,14 @@ export default function CorporateEliteTemplate({ resume }) {
 
           {hasSkills && (
             <>
-              <SectionHeading title="Skills" dark accentColor={accentColor} />
+              <SectionHeading
+                title="Skills"
+                dark
+                accentColor={accentColor}
+                headingColor={headingColor}
+                headingStyle={headingStyle}
+                dividerStyle={dividerStyle}
+              />
               <div className="flex flex-wrap gap-1.5">
                 {allSkills.map((s, i) => (
                   <span
@@ -199,7 +261,14 @@ export default function CorporateEliteTemplate({ resume }) {
 
           {hasEducation && (
             <>
-              <SectionHeading title="Education" dark accentColor={accentColor} />
+              <SectionHeading
+                title="Education"
+                dark
+                accentColor={accentColor}
+                headingColor={headingColor}
+                headingStyle={headingStyle}
+                dividerStyle={dividerStyle}
+              />
               <div className="space-y-2.5">
                 {education.map((edu) => (
                   <div key={edu.id}>
@@ -220,12 +289,18 @@ export default function CorporateEliteTemplate({ resume }) {
           )}
         </div>
 
-        {/* ── Main ── */}
-        <div className="flex-1" style={{ padding: "30px 28px", color: "#0a1628" }}>
+        {/* ── Main (light content area — driven by theme.textColor) ── */}
+        <div className="flex-1" style={{ padding: density.padding, color: textPrimary }}>
           {hasExperience && (
             <>
-              <SectionHeading title="Experience" accentColor={accentColor} />
-              <div className="space-y-3">
+              <SectionHeading
+                title="Experience"
+                accentColor={accentColor}
+                headingColor={headingColor}
+                headingStyle={headingStyle}
+                dividerStyle={dividerStyle}
+              />
+              <div className="flex flex-col" style={{ gap: density.itemGap }}>
                 {experience.map((exp) => (
                   <div key={exp.id}>
                     <div className="flex items-start justify-between gap-2">
@@ -234,11 +309,14 @@ export default function CorporateEliteTemplate({ resume }) {
                           {exp.role || <EmptyField text="Role" />}
                         </span>
                         {exp.company && (
-                          <span className="text-[#4a6fa5]"> · {exp.company}</span>
+                          <span style={{ color: textSecondary }}> · {exp.company}</span>
                         )}
                       </div>
                       {exp.duration && (
-                        <span className="text-[#4a6fa5] flex-shrink-0 text-[10px]">
+                        <span
+                          className="flex-shrink-0 text-[10px]"
+                          style={{ color: textSecondary }}
+                        >
                           {exp.duration}
                         </span>
                       )}
@@ -248,7 +326,7 @@ export default function CorporateEliteTemplate({ resume }) {
                         {exp.bullets
                           .filter((b) => b.trim())
                           .map((bullet, i) => (
-                            <li key={i} className="flex gap-1.5 text-[#1e3a5f]">
+                            <li key={i} className="flex gap-1.5" style={{ color: textBody }}>
                               <span
                                 className="flex-shrink-0 mt-0.5"
                                 style={{ color: accentColor }}
@@ -268,8 +346,14 @@ export default function CorporateEliteTemplate({ resume }) {
 
           {hasProjects && (
             <>
-              <SectionHeading title="Projects" accentColor={accentColor} />
-              <div className="space-y-3">
+              <SectionHeading
+                title="Projects"
+                accentColor={accentColor}
+                headingColor={headingColor}
+                headingStyle={headingStyle}
+                dividerStyle={dividerStyle}
+              />
+              <div className="flex flex-col" style={{ gap: density.itemGap }}>
                 {projects.map((proj) => (
                   <div key={proj.id}>
                     <div className="flex items-start justify-between gap-2">
@@ -290,7 +374,7 @@ export default function CorporateEliteTemplate({ resume }) {
                         {proj.bullets
                           .filter((b) => b.trim())
                           .map((bullet, i) => (
-                            <li key={i} className="flex gap-1.5 text-[#1e3a5f]">
+                            <li key={i} className="flex gap-1.5" style={{ color: textBody }}>
                               <span
                                 className="flex-shrink-0 mt-0.5"
                                 style={{ color: accentColor }}

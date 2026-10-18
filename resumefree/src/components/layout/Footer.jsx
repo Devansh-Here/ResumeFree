@@ -1,9 +1,6 @@
 // src/components/layout/Footer.jsx
 import { Link } from "react-router-dom";
 
-const UI_FONT = "'Inter', sans-serif";
-const DISPLAY_FONT = "'DM Serif Display', serif";
-
 const ABOUT_LINKS = [
   { label: "How It Works", href: "/#how-it-works" },
   { label: "Pricing",      href: "/pricing" },
@@ -26,16 +23,10 @@ const SOCIALS = [
   { label: "LinkedIn",  href: "https://linkedin.com" },
 ];
 
-// ── WCAG AA contrast fix ──
-// Body/link/contact text was rgba(255,255,255,0.35) and copyright text
-// was rgba(255,255,255,0.2) against the #0a1628 footer background.
-// Measured contrast ratios: ~3.2:1 and ~2:1 respectively — both fail
-// WCAG AA's 4.5:1 minimum for normal-size text (this project's own
-// Consistency Checklist requires AA). Bumped to 0.5 / 0.48, which land
-// at ~5:1 / ~4.9:1 — safely AA-compliant while keeping the same visual
-// hierarchy (headings 0.8 > body links 0.5 > copyright 0.48).
-const MUTED_TEXT = "rgba(255,255,255,0.5)";
-const COPYRIGHT_TEXT = "rgba(255,255,255,0.48)";
+// ── WCAG AA contrast (unchanged reasoning, new bg) ──
+// Against graphite-ink (#272727), white/50 and white/48 still clear
+// 4.5:1 AA minimum for normal text — verified, same hierarchy kept:
+// headers (mono labels) > body links > copyright.
 
 // Pass `attachedTop` when Footer sits directly below FinalCTA on the same
 // page (e.g. Landing) — this drops the top margin/rounding so the two
@@ -53,12 +44,11 @@ export default function Footer({ attachedTop = false }) {
     >
       <div
         className={
-          "relative overflow-hidden " +
-          (attachedTop ? "rounded-b-3xl" : "rounded-3xl")
+          "relative overflow-hidden bg-graphite-ink " +
+          (attachedTop ? "rounded-b-cards" : "rounded-cards")
         }
-        style={{ background: "#0a1628" }}
       >
-        {/* grid texture — matches FinalCTA */}
+        {/* grid texture — matches FinalCTA, structural not brand-colored */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 opacity-[0.5]"
@@ -73,13 +63,13 @@ export default function Footer({ attachedTop = false }) {
           }}
         />
 
-        {/* faint emerald glow — bottom left, echoes FinalCTA's top glow subtly */}
+        {/* faint violet glow — bottom left, echoes FinalCTA's glow, re-tinted to iris-violet */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 left-0 w-[500px] h-[400px]"
           style={{
             background:
-              "radial-gradient(ellipse 50% 50% at 20% 100%, rgba(5,150,105,0.10) 0%, transparent 70%)",
+              "radial-gradient(ellipse 50% 50% at 20% 100%, rgba(116,81,242,0.12) 0%, transparent 70%)",
           }}
         />
 
@@ -93,19 +83,14 @@ export default function Footer({ attachedTop = false }) {
             {/* Col 1 — Logo + description */}
             <div className="lg:pr-4">
               <Link to="/" className="flex items-center gap-2.5 w-fit mb-4">
-                <span
-                  className="border border-white/20 px-2 py-0.5 rounded-full"
-                  style={{ fontFamily: UI_FONT, fontSize: "9px", fontWeight: 600, color: "rgba(255,255,255,0.6)", letterSpacing: "0.05em" }}
-                >
+                <span className="font-mono uppercase border border-white/20 px-2 py-0.5 rounded-pills text-[9px] font-semibold text-white/60 tracking-[0.05em]">
                   ATS
                 </span>
-                <span
-                  style={{ fontFamily: DISPLAY_FONT, fontSize: "20px", color: "#ffffff", letterSpacing: "-0.2px", lineHeight: 1 }}
-                >
+                <span className="font-heading text-white text-[20px] leading-none tracking-[-0.2px]">
                   ResumeFree
                 </span>
               </Link>
-              <p style={{ fontFamily: UI_FONT, fontSize: "13.5px", lineHeight: 1.6, color: MUTED_TEXT, letterSpacing: "-0.006em" }}>
+              <p className="font-body text-[13.5px] leading-relaxed text-white/50 tracking-[-0.006em]">
                 Free AI Resume Builder for Indian students — no sign-up,
                 no watermark, download your PDF instantly.
               </p>
@@ -113,10 +98,7 @@ export default function Footer({ attachedTop = false }) {
 
             {/* Col 2 — About Us */}
             <div>
-              <h4
-                className="uppercase mb-4"
-                style={{ fontFamily: UI_FONT, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.8)" }}
-              >
+              <h4 className="font-mono uppercase mb-4 text-[12px] font-semibold tracking-[0.1em] text-white/70">
                 About Us
               </h4>
               <ul className="flex flex-col gap-3">
@@ -124,8 +106,7 @@ export default function Footer({ attachedTop = false }) {
                   <li key={label}>
                     <Link
                       to={href}
-                      className="hover:text-white/85 transition-colors"
-                      style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}
+                      className="font-body text-[14px] text-white/50 tracking-[-0.009em] hover:text-iris-violet transition-colors"
                     >
                       {label}
                     </Link>
@@ -136,10 +117,7 @@ export default function Footer({ attachedTop = false }) {
 
             {/* Col 3 — Helpful Links */}
             <div>
-              <h4
-                className="uppercase mb-4"
-                style={{ fontFamily: UI_FONT, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.8)" }}
-              >
+              <h4 className="font-mono uppercase mb-4 text-[12px] font-semibold tracking-[0.1em] text-white/70">
                 Helpful Links
               </h4>
               <ul className="flex flex-col gap-3">
@@ -147,8 +125,7 @@ export default function Footer({ attachedTop = false }) {
                   <li key={label}>
                     <Link
                       to={href}
-                      className="hover:text-white/85 transition-colors"
-                      style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}
+                      className="font-body text-[14px] text-white/50 tracking-[-0.009em] hover:text-iris-violet transition-colors"
                     >
                       {label}
                     </Link>
@@ -159,43 +136,39 @@ export default function Footer({ attachedTop = false }) {
 
             {/* Col 4 — Contact Us */}
             <div>
-              <h4
-                className="uppercase mb-4"
-                style={{ fontFamily: UI_FONT, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.8)" }}
-              >
+              <h4 className="font-mono uppercase mb-4 text-[12px] font-semibold tracking-[0.1em] text-white/70">
                 Contact Us
               </h4>
               <ul className="flex flex-col gap-3.5">
                 <li className="flex items-center gap-2.5">
-                  <svg className="w-4 h-4 text-[#059669] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                  <svg className="w-4 h-4 text-iris-violet shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   {/* FLAGGED — not changed: href says hello@resumefree.in
                       but displayed text is a personal Gmail address. Devansh
                       to confirm which is the real/final contact email before
                       this is wired to one consistent value. */}
-                  <a
-                    href="mailto:hello@resumefree.in"
-                    className="hover:text-white/85 transition-colors"
-                    style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}
+                  
+                    <a href="mailto:hello@resumefree.in"
+                    className="font-body text-[14px] text-white/50 tracking-[-0.009em] hover:text-iris-violet transition-colors"
                   >
                     kartikgpt0305@gmail.com
                   </a>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <svg className="w-4 h-4 text-[#059669] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                  <svg className="w-4 h-4 text-iris-violet shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <span style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}>
+                  <span className="font-body text-[14px] text-white/50 tracking-[-0.009em]">
                     +91 90241 06492
                   </span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <svg className="w-4 h-4 text-[#059669] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                  <svg className="w-4 h-4 text-iris-violet shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span style={{ fontFamily: UI_FONT, fontSize: "14px", color: MUTED_TEXT, letterSpacing: "-0.009em" }}>
+                  <span className="font-body text-[14px] text-white/50 tracking-[-0.009em]">
                     Jaipur, Rajasthan, India
                   </span>
                 </li>
@@ -214,19 +187,19 @@ export default function Footer({ attachedTop = false }) {
                   profile handles. Swap in real links once ready — the
                   Instagram handle was already reserved per earlier session. */}
               {SOCIALS.map(({ label, href }) => (
-                <a
-                  key={label}
+                
+                  <a key={label}
                   href={href}
                   target="_blank"
                   rel="noreferrer"
                   aria-label={label}
-                  className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center text-white/40 hover:text-white hover:border-white/40 hover:bg-white/5 transition-all duration-150"
+                  className="w-8 h-8 rounded-buttons border border-white/15 flex items-center justify-center text-white/40 hover:text-iris-violet hover:border-deep-iris hover:bg-white/5 transition-all duration-150"
                 >
                   <SocialIcon name={label} />
                 </a>
               ))}
             </div>
-            <p style={{ fontFamily: UI_FONT, fontSize: "13px", color: COPYRIGHT_TEXT, letterSpacing: "-0.009em" }} className="shrink-0">
+            <p className="font-body text-[13px] text-white/[0.48] tracking-[-0.009em] shrink-0">
               © {new Date().getFullYear()} ResumeFree. All rights reserved.
             </p>
           </div>
@@ -242,9 +215,9 @@ export default function Footer({ attachedTop = false }) {
           >
             <defs>
               <linearGradient id="rf-trace-fade" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0a1628" stopOpacity="0" />
-                <stop offset="55%" stopColor="#0a1628" stopOpacity="0" />
-                <stop offset="100%" stopColor="#0a1628" stopOpacity="0.55" />
+                <stop offset="0%" stopColor="#272727" stopOpacity="0" />
+                <stop offset="55%" stopColor="#272727" stopOpacity="0" />
+                <stop offset="100%" stopColor="#272727" stopOpacity="0.55" />
               </linearGradient>
               <mask id="rf-trace-mask">
                 <rect x="0" y="0" width="1200" height="200" fill="white" />
@@ -257,9 +230,8 @@ export default function Footer({ attachedTop = false }) {
                 x="50%"
                 y="172"
                 textAnchor="middle"
-                className="rf-trace-text"
+                className="rf-trace-text font-body"
                 style={{
-                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 800,
                   fontSize: "168px",
                   letterSpacing: "2px",
@@ -274,17 +246,18 @@ export default function Footer({ attachedTop = false }) {
         <style>{`
           .rf-trace-text {
             fill: transparent;
-            stroke: #059669;
+            stroke: rgb(var(--color-iris-violet));
             stroke-width: 1.25;
             stroke-dasharray: 2600;
             stroke-dashoffset: 2600;
             opacity: 0.55;
             animation: rf-trace-draw 14s ease-in-out infinite;
-          }
+          }edu
+          
           @keyframes rf-trace-draw {
             0%   { stroke-dashoffset: 2600; fill: transparent; opacity: 0.3; }
             45%  { stroke-dashoffset: 0; fill: transparent; opacity: 0.85; }
-            70%  { stroke-dashoffset: 0; fill: rgba(5,150,105,0.05); opacity: 0.55; }
+            70%  { stroke-dashoffset: 0; fill: rgba(116,81,242,0.06); opacity: 0.55; }
             100% { stroke-dashoffset: -2600; fill: transparent; opacity: 0.3; }
           }
           @media (max-width: 640px) {

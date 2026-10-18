@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { runATSCheck, getScoreLabel, CATEGORY_LABELS } from '../utils/atsCheck'
@@ -19,6 +19,15 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
   const [tips, setTips] = useState(null)
   const [tipsLoading, setTipsLoading] = useState(false)
   const [tipsError, setTipsError] = useState(null)
+  const [animateIn, setAnimateIn] = useState(false)
+
+  // NEW — count-up score animation. `displayScore` is what's actually
+  // rendered (both in the ring and the big "XX/100" text); `result.score`
+  // is only used as the animation target. Counts 0 → score every time a
+  // fresh result lands (first scan AND every "Reset and re-scan"), synced
+  // to the same 800ms window + easing feel as the ring's stroke-dasharray
+  // transition so both read as one motion, not two separate animations.
+  const [displayScore, setDisplayScore] = useState(0)
 
   const templateAtsRating = getATSRating(selectedTemplateId)
   const isModerateLayout = templateAtsRating === 'moderate'
@@ -26,6 +35,8 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
   useEffect(() => {
     if (!open) return
     setLoading(true)
+    setAnimateIn(false)
+    setDisplayScore(0)
     const t = setTimeout(() => {
       setResult(runATSCheck(resumeData))
       setLoading(false)
@@ -34,13 +45,63 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  useEffect(() => {
+    if (!loading && result) {
+      const raf = requestAnimationFrame(() => setAnimateIn(true))
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [loading, result])
+
+  // Count 0 → result.score whenever a fresh result starts animating in.
+  // Uses requestAnimationFrame (not setInterval) for a smooth, tab-throttle-
+  // safe count, with an easeOutCubic curve so it starts fast and settles
+  // gently into the final number — same "decelerate into place" feel as
+  // the ring fill. Respects prefers-reduced-motion by jumping straight to
+  // the final score instead of counting.
+  useEffect(() => {
+    if (!animateIn || !result) return
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (prefersReducedMotion) {
+      setDisplayScore(result.score)
+      return
+    }
+
+    const target = result.score
+    const duration = 800 // ms — matches .rf-bar-fill / ring transition length
+    const startTime = performance.now()
+    let rafId
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3)
+    }
+
+    function tick(now) {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      setDisplayScore(Math.round(easeOutCubic(progress) * target))
+      if (progress < 1) {
+        rafId = requestAnimationFrame(tick)
+      }
+    }
+
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [animateIn, result])
+
   if (!open) return null
 
   function handleReset() {
     setLoading(true)
+    setAnimateIn(false)
     setShowAll(false)
     setTips(null)
     setTipsError(null)
+    setDisplayScore(0)
     setTimeout(() => {
       setResult(runATSCheck(resumeData))
       setLoading(false)
@@ -86,8 +147,9 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
   const si = result ? getScoreLabel(result.score) : null
   const missingSlice = result ? (showAll ? result.missing : result.missing.slice(0, 8)) : []
 
-  const scoreColor = result && result.score >= 70 ? '#059669' : result && result.score >= 40 ? '#d97706' : '#dc2626'
-  const scoreBg    = result && result.score >= 70 ? '#d1fae5' : result && result.score >= 40 ? '#fef3c7' : '#fee2e2'
+  const scoreColor = result && result.score >= 70 ? '#059669' : result && result.score >= 40 ? '#b45309' : '#dc2626'
+  const scoreBg    = result && result.score >= 70 ? '#ecfdf5' : result && result.score >= 40 ? '#fffbeb' : '#fef2f2'
+  const scoreBorder= result && result.score >= 70 ? '#a7f3d0' : result && result.score >= 40 ? '#fde68a' : '#fca5a5'
   const scoreText  = result && result.score >= 70 ? '#065f46' : result && result.score >= 40 ? '#92400e' : '#991b1b'
 
   return createPortal(
@@ -97,41 +159,58 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <style>{`
-        @keyframes rf-modal-in {
-          from { opacity: 0; transform: scale(0.96) translateY(6px); }
+        @keyframes rf-pill-pop {
+          from { opacity: 0; transform: scale(0.85) translateY(3px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
+        .rf-pill-pop { animation: rf-pill-pop 0.28s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+        @keyframes rf-badge-in {
+          from { opacity: 0; transform: translateX(-4px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .rf-role-badge { animation: rf-badge-in 0.3s ease-out 0.15s both; }
+
+        .rf-bar-fill { transition: width 0.7s cubic-bezier(0.22,0.61,0.36,1); }
+        .rf-ring-fill circle:last-child { transition: stroke-dasharray 0.8s cubic-bezier(0.22,0.61,0.36,1); }
+
+        .rf-hover-lift { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+        .rf-hover-lift:hover { transform: translateY(-1px); }
       `}</style>
 
       <div
-        className="w-full max-w-4xl max-h-[90vh] bg-white rounded-3xl overflow-hidden flex flex-col"
+        className="rf-modal-in w-full max-w-4xl max-h-[90vh] bg-paper-white rounded-cards overflow-hidden flex flex-col"
         style={{
-          border: '1px solid #e2e8f0',
+          border: '1px solid #e0e0e0',
           boxShadow: 'rgba(15,23,42,0.04) 0px 0px 0px 1px, rgba(0,0,0,0.18) 0px 24px 48px -12px',
-          animation: 'rf-modal-in 0.22s cubic-bezier(0.34,1.56,0.64,1)',
         }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-7 py-5 shrink-0" style={{ borderBottom: '1px solid #f1f5f9' }}>
-          <div>
-            <h2 className="text-2xl text-[#0a1628] leading-none mb-1" style={{ fontFamily: "'DM Serif Display', serif" }}>
+        <div className="flex items-start justify-between gap-4 px-7 py-6 shrink-0" style={{ borderBottom: '1px solid #f1f5f9' }}>
+          <div className="flex flex-col gap-2.5">
+            <h2 className="text-2xl text-graphite-ink font-heading leading-tight">
               ATS Score
             </h2>
-            <p className="text-[13px] text-[#4a6fa5]" style={{ fontFamily: "'Inter', sans-serif" }}>
-              {loading ? 'Scanning your resume…' : result ? `Role detected: ${result.roleLabel}` : ''}
-            </p>
+            {loading ? (
+              <p className="text-[13px] text-ash font-body">Scanning your resume…</p>
+            ) : result ? (
+              <span
+                className="rf-role-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-buttons text-[11px] font-semibold uppercase tracking-wider font-mono w-fit"
+                style={{ background: '#f0ebff', color: '#7451f2', border: '1px solid rgba(116,81,242,0.25)' }}
+              >
+                Role detected: {result.roleLabel}
+              </span>
+            ) : null}
           </div>
           <button onClick={onClose} type="button"
-            className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-[#f1f5f9] text-[#4a6fa5] hover:text-[#0a1628] text-xl leading-none">
+            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-buttons transition-colors hover:bg-soft-snow text-ash hover:text-graphite-ink text-xl leading-none">
             ×
           </button>
         </div>
 
-        {/* Body */}
         <div className="overflow-y-auto flex-1 px-7 py-6">
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <svg className="animate-spin h-6 w-6 text-[#4a6fa5]" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-6 w-6 text-ash" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
               </svg>
@@ -142,27 +221,26 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {/* ── LEFT COLUMN: Score + ATS-safety tip + Category breakdown ── */}
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: scoreBg, border: `1px solid ${scoreColor}20` }}>
-                    <svg width="64" height="64" viewBox="0 0 40 40" className="shrink-0">
-                      <circle cx="20" cy="20" r="15" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                  <div className="rf-hover-lift flex items-center gap-4 p-4 rounded-cards" style={{ background: scoreBg, border: `1px solid ${scoreBorder}` }}>
+                    <svg width="64" height="64" viewBox="0 0 40 40" className="shrink-0 rf-ring-fill">
+                      <circle cx="20" cy="20" r="15" fill="none" stroke="#e0e0e0" strokeWidth="3" />
                       <circle cx="20" cy="20" r="15" fill="none" stroke={scoreColor} strokeWidth="3"
                         strokeLinecap="round"
-                        strokeDasharray={`${(result.score / 100) * 94.2} 94.2`}
+                        strokeDasharray={animateIn ? `${(result.score / 100) * 94.2} 94.2` : '0 94.2'}
                         transform="rotate(-90 20 20)" />
                       <text x="20" y="20" textAnchor="middle" dominantBaseline="central" fontSize="9" fontWeight="700" fill={scoreColor}>
-                        {result.score}
+                        {displayScore}
                       </text>
                     </svg>
                     <div>
-                      <p className="text-2xl font-bold leading-none mb-1" style={{ color: scoreText, fontFamily: "'DM Serif Display', serif" }}>
-                        {result.score}/100
+                      <p className="text-2xl font-bold leading-none mb-1 font-heading tabular-nums" style={{ color: scoreText }}>
+                        {displayScore}/100
                       </p>
-                      <p className="text-xs font-semibold" style={{ color: scoreColor, fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-xs font-semibold font-body" style={{ color: scoreColor }}>
                         {si.label} · {result.matched.length} keywords matched
                       </p>
-                      <p className="text-[10px] mt-0.5" style={{ color: scoreText + 'aa', fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-[10px] mt-0.5 font-body" style={{ color: scoreText + 'aa' }}>
                         Use JD Match for role-specific accuracy
                       </p>
                     </div>
@@ -170,21 +248,21 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
 
                   {isModerateLayout && (
                     <div
-                      className="rounded-2xl px-4 py-3.5"
-                      style={{ background: '#ecfdf5', border: '1px solid rgba(5,150,105,0.2)' }}
+                      className="rf-hover-lift rounded-cards px-4 py-3.5"
+                      style={{ background: '#fffbeb', border: '1px solid #fde68a' }}
                     >
-                      <p className="text-[11px] font-semibold text-[#0a1628] mb-1 flex items-center gap-1.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-[11px] font-semibold text-graphite-ink mb-1 flex items-center gap-1.5 font-body">
                         ⚠️ Sidebar layout in use
                       </p>
-                      <p className="text-[11px] text-[#1e3a5f] leading-relaxed mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-[11px] text-slate leading-relaxed mb-2 font-body">
                         Your current template has a sidebar/column layout. Some bulk-hiring ATS parsers (common at TCS/Infosys-style recruiters) can read side-by-side content out of order. A single-column template is safer for high-volume applications.
                       </p>
                       {onSwitchTemplate && (
                         <button
                           onClick={handleSwitchTemplateClick}
                           type="button"
-                          className="text-[11px] font-semibold text-[#059669] hover:underline"
-                          style={{ fontFamily: "'Inter', sans-serif" }}
+                          className="text-[11px] font-semibold hover:underline font-body"
+                          style={{ color: '#7451f2' }}
                         >
                           Switch to a single-column template →
                         </button>
@@ -192,21 +270,27 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                     </div>
                   )}
 
-                  <div className="p-4 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-3" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  <div className="p-4 rounded-cards border border-mist bg-soft-snow">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-ash mb-3 font-mono">
                       Category breakdown
                     </p>
                     <div className="space-y-2.5">
-                      {Object.entries(result.categoryBreakdown).map(([cat, { found, total, relevant }]) => (
+                      {Object.entries(result.categoryBreakdown).map(([cat, { found, total, relevant }], i) => (
                         <div key={cat} className={`flex items-center gap-2.5 ${!relevant ? 'opacity-30' : ''}`}>
-                          <span className="text-[11px] text-[#4a6fa5] shrink-0 truncate" style={{ width: 108, fontFamily: "'Inter', sans-serif" }}>
+                          <span className="text-[11px] text-ash shrink-0 truncate font-body" style={{ width: 108 }}>
                             {CATEGORY_LABELS[cat]}{!relevant && <span className="ml-1 text-[9px]">(n/a)</span>}
                           </span>
-                          <div className="flex-1 h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden">
-                            <div className="h-full rounded-full transition-all"
-                              style={{ width: total > 0 ? `${Math.round((found / total) * 100)}%` : '0%', background: relevant ? '#059669' : '#cbd5e1' }} />
+                          <div className="flex-1 h-1.5 bg-mist rounded-buttons overflow-hidden">
+                            <div
+                              className="rf-bar-fill h-full rounded-buttons"
+                              style={{
+                                width: animateIn && total > 0 ? `${Math.round((found / total) * 100)}%` : '0%',
+                                background: relevant ? '#059669' : '#a69ea7',
+                                transitionDelay: `${i * 60}ms`,
+                              }}
+                            />
                           </div>
-                          <span className="text-[11px] text-[#4a6fa5]/60 shrink-0 tabular-nums" style={{ width: 28, textAlign: 'right', fontFamily: "'Inter', sans-serif" }}>
+                          <span className="text-[11px] text-ash/60 shrink-0 tabular-nums font-body" style={{ width: 28, textAlign: 'right' }}>
                             {found}/{total}
                           </span>
                         </div>
@@ -215,15 +299,14 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                   </div>
                 </div>
 
-                {/* ── RIGHT COLUMN: Found / Missing keywords + Advanced Tips ── */}
                 <div className="space-y-4">
                   {result.matched.length > 0 && (
-                    <div className="p-4 rounded-2xl border border-[#e2e8f0]">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-2.5" style={{ fontFamily: "'Inter', sans-serif" }}>Found ✓</p>
+                    <div className="p-4 rounded-cards border border-mist">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-ash mb-2.5 font-mono">Found ✓</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {result.matched.map(({ word }) => (
-                          <span key={word} className="px-2.5 py-0.5 text-[11px] rounded-full"
-                            style={{ background: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0', fontFamily: "'Inter', sans-serif" }}>
+                        {result.matched.map(({ word }, i) => (
+                          <span key={word} className="rf-pill-pop px-2.5 py-0.5 text-[11px] rounded-buttons font-body"
+                            style={{ background: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0', animationDelay: `${i * 30}ms` }}>
                             {word}
                           </span>
                         ))}
@@ -232,19 +315,19 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                   )}
 
                   {result.missing.length > 0 && (
-                    <div className="p-4 rounded-2xl border border-[#e2e8f0]">
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-2.5" style={{ fontFamily: "'Inter', sans-serif" }}>Missing — add to Skills</p>
+                    <div className="p-4 rounded-cards border border-mist">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-ash mb-2.5 font-mono">Missing — add to Skills</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {missingSlice.map(({ word }) => (
-                          <span key={word} className="px-2.5 py-0.5 text-[11px] rounded-full"
-                            style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fca5a5', fontFamily: "'Inter', sans-serif" }}>
+                        {missingSlice.map(({ word }, i) => (
+                          <span key={word} className="rf-pill-pop px-2.5 py-0.5 text-[11px] rounded-buttons font-body"
+                            style={{ background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', animationDelay: `${i * 30}ms` }}>
                             {word}
                           </span>
                         ))}
                       </div>
                       {result.missing.length > 8 && (
                         <button onClick={() => setShowAll(p => !p)} type="button"
-                          className="mt-2.5 text-[11px] text-[#4a6fa5] hover:text-[#0a1628] transition-colors" style={{ fontFamily: "'Inter', sans-serif" }}>
+                          className="mt-2.5 text-[11px] text-ash hover:text-graphite-ink transition-colors font-body">
                           {showAll ? 'Show less ↑' : `+${result.missing.length - 8} more ↓`}
                         </button>
                       )}
@@ -252,21 +335,23 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                   )}
 
                   {result.missing.length > 0 && !hasAdvancedAccess && (
-                    <div className="rounded-2xl px-4 py-3.5" style={{ background: '#d1fae5', border: '1px solid #a7f3d0' }}>
-                      <p className="text-sm font-semibold text-[#0a1628] mb-1" style={{ fontFamily: "'DM Serif Display', serif" }}>
+                    <div className="rf-hover-lift rounded-cards px-4 py-3.5" style={{ background: '#f0ebff', border: '1px solid rgba(116,81,242,0.25)' }}>
+                      <p className="text-sm font-semibold text-graphite-ink mb-1 font-heading">
                         Unlock Advanced ATS Tips
                       </p>
-                      <p className="text-[11px] text-[#1e3a5f] leading-relaxed mb-2.5" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-[11px] text-slate leading-relaxed mb-2.5 font-body">
                         Get a prioritized, step-by-step plan to push this resume toward 90+ — built from your actual missing keywords.
                       </p>
                       <div className="flex items-center gap-3 flex-wrap">
                         <button onClick={() => setUpgradeOpen(true)} type="button"
-                          className="px-4 py-1.5 text-[11px] font-semibold rounded-full text-white transition-colors hover:bg-[#1e3a5f]"
-                          style={{ background: '#0a1628', fontFamily: "'Inter', sans-serif" }}>
+                          className="px-4 py-1.5 text-[11px] font-semibold rounded-buttons text-white transition-colors font-body"
+                          style={{ background: '#272727' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#000000'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = '#272727'}>
                           Upgrade — ₹199/month
                         </button>
                         <button onClick={handleBuyATSAddon} type="button"
-                          className="text-[11px] font-semibold text-[#059669] hover:underline" style={{ fontFamily: "'Inter', sans-serif" }}>
+                          className="text-[11px] font-semibold hover:underline font-body" style={{ color: '#5952a1' }}>
                           or buy Advanced ATS add-on ₹99
                         </button>
                       </div>
@@ -278,8 +363,8 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                       type="button"
                       onClick={handleGetTips}
                       disabled={tipsLoading}
-                      className="w-full py-2.5 rounded-full text-sm font-semibold text-white transition-colors disabled:opacity-50"
-                      style={{ background: tipsLoading ? '#4a6fa5' : '#0a1628', fontFamily: "'Inter', sans-serif" }}
+                      className="w-full py-2.5 rounded-buttons text-sm font-semibold text-white transition-colors disabled:opacity-50 font-body"
+                      style={{ background: tipsLoading ? '#a69ea7' : '#7451f2' }}
                     >
                       {tipsLoading ? (
                         <span className="flex items-center justify-center gap-2">
@@ -294,22 +379,22 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                   )}
 
                   {tipsError && (
-                    <p className="text-xs text-red-500" style={{ fontFamily: "'Inter', sans-serif" }}>{tipsError}</p>
+                    <p className="text-xs text-[#dc2626] font-body">{tipsError}</p>
                   )}
 
                   {tips && tips.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-widest text-[#4a6fa5] mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-ash mb-2 font-mono">
                         Your action plan to 90+
                       </p>
                       <div className="space-y-2">
                         {tips.map((t, i) => (
-                          <div key={i} className="flex items-start gap-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-3">
-                            <span className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                          <div key={i} className="rf-pill-pop flex items-start gap-2.5 bg-soft-snow border border-mist rounded-cards p-3" style={{ animationDelay: `${i * 50}ms` }}>
+                            <span className="shrink-0 w-5 h-5 rounded-buttons flex items-center justify-center text-[10px] font-bold text-white"
                               style={{ background: '#059669' }}>
                               {i + 1}
                             </span>
-                            <p className="text-[13px] text-[#0a1628] leading-relaxed" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            <p className="text-[13px] text-graphite-ink leading-relaxed font-body">
                               {t.action}
                             </p>
                           </div>
@@ -319,9 +404,9 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                   )}
 
                   {result.missing.length === 0 && (
-                    <div className="text-center py-6 rounded-2xl border border-[#e2e8f0]">
+                    <div className="text-center py-6 rounded-cards border border-mist">
                       <p className="text-2xl mb-1">🎉</p>
-                      <p className="text-[11px] text-[#4a6fa5]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      <p className="text-[11px] text-ash font-body">
                         No missing keywords for your detected role — nothing to fix right now.
                       </p>
                     </div>
@@ -329,10 +414,8 @@ export default function ATSContent({ open, onClose, onSwitchTemplate }) {
                 </div>
               </div>
 
-              {/* Reset — full width, below both columns */}
               <button onClick={handleReset} type="button"
-                className="w-full mt-6 py-2.5 text-[11px] text-[#4a6fa5] hover:text-[#0a1628] border border-[#cbd5e1] hover:border-[#4a6fa5] rounded-2xl transition-all"
-                style={{ fontFamily: "'Inter', sans-serif" }}>
+                className="w-full mt-6 py-2.5 text-[11px] text-ash hover:text-graphite-ink border border-mist hover:border-ash rounded-cards transition-all font-body">
                 ↻ Reset and re-scan
               </button>
             </>

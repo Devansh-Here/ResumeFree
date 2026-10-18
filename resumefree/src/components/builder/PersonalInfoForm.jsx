@@ -3,15 +3,16 @@ import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
 import { useAuthStore } from "../../store/authStore";
 import PhotoEditorPanel from "../premium/PhotoEditorPanel";
-import ColorThemePicker from "../premium/ColorThemePicker";
 import PhotoFeatureShowcaseModal from "../premium/PhotoFeatureShowcaseModal";
 import { templateSupportsPhoto } from "../templates/templateRegistry";
-
-const inputClass =
-  "w-full bg-white border border-[#cbd5e1] rounded-2xl px-3.5 py-2.5 text-[0.8125rem] text-[#0a1628] placeholder:text-[#4a6fa5]/50 focus:outline-none focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 transition-all duration-150";
-
-const labelClass =
-  "block text-[0.75rem] font-semibold tracking-widest uppercase text-[#4a6fa5] mb-1.5";
+import {
+  sectionHeadingClass,
+  sectionSubtextClass,
+  labelClass,
+  inputClass,
+  autoSaveDotClass,
+  autoSaveTextClass,
+} from "./formStyles";
 
 function Field({ label, id, optional, children }) {
   return (
@@ -19,9 +20,7 @@ function Field({ label, id, optional, children }) {
       <label htmlFor={id} className={labelClass}>
         {label}{" "}
         {optional && (
-          // Was text-[#4a6fa5]/50 — measured contrast ~2.04:1 against white,
-          // fails WCAG AA (needs 4.5:1). Solid graphite passes at ~5.12:1.
-          <span className="text-[#4a6fa5] normal-case tracking-normal font-normal">
+          <span className="font-body text-fog normal-case tracking-normal font-normal">
             (optional)
           </span>
         )}
@@ -34,13 +33,11 @@ function Field({ label, id, optional, children }) {
 function SectionDivider({ label }) {
   return (
     <div className="flex items-center gap-2.5 py-0.5">
-      <div className="flex-1 h-px bg-[#cbd5e1]" />
-      {/* Was text-[#4a6fa5]/60 — measured contrast ~2.41:1, fails WCAG AA.
-          Solid graphite passes at ~5.12:1. */}
-      <span className="text-[0.75rem] font-semibold tracking-widest text-[#4a6fa5] uppercase">
+      <div className="flex-1 h-px bg-mist" />
+      <span className="font-mono text-[11px] font-semibold tracking-widest text-ash uppercase">
         {label}
       </span>
-      <div className="flex-1 h-px bg-[#cbd5e1]" />
+      <div className="flex-1 h-px bg-mist" />
     </div>
   );
 }
@@ -52,13 +49,13 @@ function PhotoFeatureDiscoveryHint() {
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="w-full flex items-center gap-3 text-left bg-[#ecfdf5] border border-[#059669]/20 rounded-2xl px-4 py-3 hover:border-[#059669]/40 transition-colors duration-150
-                   focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]/40 focus-visible:ring-offset-2"
+        className="w-full flex items-center gap-3 text-left bg-iris-violet/[0.06] border border-iris-violet/25 rounded-cards px-4 py-3 hover:bg-iris-violet/[0.09] hover:border-iris-violet/40 transition-colors duration-150
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-iris-violet/40 focus-visible:ring-offset-2"
       >
         {/* Decorative — adjacent text already conveys the meaning */}
         <span className="text-lg shrink-0" aria-hidden="true">📷</span>
-        <span className="text-[0.75rem] text-[#1e3a5f] leading-snug">
-          <span className="font-semibold text-[#0a1628]">Want a photo on your resume?</span>{" "}
+        <span className="font-body text-[12px] text-slate leading-snug">
+          <span className="font-semibold text-graphite-ink">Want a photo on your resume?</span>{" "}
           Some premium templates support it — tap to see how it works.
         </span>
       </button>
@@ -83,13 +80,8 @@ export default function PersonalInfoForm() {
 
       {/* Header */}
       <div>
-        <h2
-          className="text-[1.75rem] font-bold text-[#0a1628] leading-tight"
-          style={{ fontFamily: "'DM Serif Display', serif" }}
-        >
-          Personal Info
-        </h2>
-        <p className="text-[0.8125rem] text-[#1e3a5f]/60 mt-1">
+        <h2 className={sectionHeadingClass}>Personal Info</h2>
+        <p className={sectionSubtextClass}>
           This appears at the top of your resume. Keep it professional.
         </p>
       </div>
@@ -118,7 +110,7 @@ export default function PersonalInfoForm() {
       </Field>
 
       {/* Email + Phone */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Email" id="email">
           <input
             id="email"
@@ -163,9 +155,7 @@ export default function PersonalInfoForm() {
       {/* LinkedIn */}
       <Field label="LinkedIn" id="linkedin" optional>
         <div className="relative">
-          {/* Was text-[#4a6fa5]/60 — measured contrast ~2.41:1, fails WCAG AA.
-              Solid graphite passes at ~5.12:1. */}
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[0.75rem] text-[#4a6fa5] select-none pointer-events-none">
+          <span className="font-body absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-fog select-none pointer-events-none">
             linkedin.com/in/
           </span>
           <input
@@ -183,7 +173,7 @@ export default function PersonalInfoForm() {
       {/* GitHub */}
       <Field label="GitHub" id="github" optional>
         <div className="relative">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[0.75rem] text-[#4a6fa5] select-none pointer-events-none">
+          <span className="font-body absolute left-4 top-1/2 -translate-y-1/2 text-[12px] text-fog select-none pointer-events-none">
             github.com/
           </span>
           <input
@@ -211,22 +201,16 @@ export default function PersonalInfoForm() {
         />
       </Field>
 
-      {/* Divider */}
-      <SectionDivider label="Resume Style" />
-
-      {/* Accent Color (premium) */}
-      <ColorThemePicker />
-
-      {/* Auto-save notice */}
+      {/* Auto-save notice — dot intentionally stays the semantic
+          success-text green (#059669), NOT brand violet, per the
+          design system's "success is always this green" rule (§3.2). */}
       <div className="flex items-center gap-2 pt-0.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#059669] flex-shrink-0" aria-hidden="true" />
-        {/* Was text-[#4a6fa5]/70 — measured contrast ~2.87:1, fails WCAG AA.
-            Solid graphite passes at ~5.12:1. */}
-        <p className="text-[0.75rem] text-[#4a6fa5]">
+        <span className={autoSaveDotClass} aria-hidden="true" />
+        <p className={autoSaveTextClass}>
           Auto-saved to your browser — no account needed
         </p>
       </div>
 
     </div>
   );
-} 
+}
