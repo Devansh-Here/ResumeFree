@@ -70,7 +70,7 @@ app.post("/api/improve-bullet", async (req, res) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         max_tokens: 150,
         temperature: 0.7,
         messages: [
@@ -330,7 +330,7 @@ Return ONLY a raw JSON object (no markdown, no explanation):
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         max_tokens: 1000,
         temperature: 0.2,
         messages: [
@@ -412,7 +412,7 @@ Return ONLY a raw JSON object (no markdown, no explanation):
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         max_tokens: 400,
         temperature: 0.3,
         messages: [
@@ -499,7 +499,7 @@ ${jobDescription}`;
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.6,
         max_tokens: 600,
