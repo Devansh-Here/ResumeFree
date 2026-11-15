@@ -1,0 +1,93 @@
+# PROJECT_STATUS.md — Rezumo (formerly ResumeFree)
+
+> Single source of truth for "where are we". Codex: read this after AGENTS.md. Update the checkboxes at the end of every task. Items marked **(verify)** come from older notes, so confirm against the actual code (`dir /s /b`, `findstr`) before trusting them.
+
+Live: https://resumefree-flame.vercel.app · Repo: github.com/Devansh-Here/ResumeFree (code in `resumefree/`)
+Project started: 2026-06-11. Scope is FROZEN: finish, redesign, fix critical. No new features.
+
+---
+
+## 1. Already built and working (do not rebuild)
+- Resume builder: 5 form sections (Personal, Education, Experience, Skills, Projects) with auto-save (Zustand + localStorage).
+- AI bullet improvement (Groq): 3 free uses, unlimited for premium.
+- ATS Checker: basic for all, advanced tips gated. Centered 2-column modal with template-aware ATS-safety warning.
+- ATS-safety system: `atsRating` (`safe` / `moderate`) per template + badge and legend in the Template Switcher.
+- JD Matcher (gated, uses `SlideOverPanel`).
+- Cover Letter Generator (client-side `pdf-lib` PDF, cloud-saved).
+- PDF download: server-side Puppeteer (`/api/generate-pdf`), pixel-identical to preview.
+- 10 templates (5 free, 5 premium) + Template Switcher modal (renders real template components at `zoom: 0.4`).
+- Auth: Supabase magic link, Google OAuth, email/password. Dashboard, cloud save, Privacy/Terms pages.
+- Payments: Razorpay (TEST mode), pass-based (Sprint ₹79/7d, Placement ₹199/30d, Season ₹399/90d) + add-ons (Cover Letter ₹99, JD Tailoring ₹49, Advanced ATS ₹99). Server-verified, single pricing source `utils/passes.js`.
+- Photo personalization (client-side background removal) on photo-capable templates.
+- Resume Customization System: `fontOptions.js`, expanded `resume.theme` (persist v3, `resetThemeField`), 3-tab `CustomizationPanel.jsx` opened through `CustomizationContent.jsx` in a `SlideOverPanel` (deliberately not a centered modal, so the live preview stays visible).
+- Supabase auth redirect config fixed (live Site URL + localhost redirects).
+- Manus branch (`manus/resume-checker-routing`) was deleted without integrating. Only `main` exists.
+
+## 2. In progress (finish these first)
+### 2a. 9-field theme wiring across templates
+Fields: `accentColor`, `backgroundColor`, `textColor`, `headingColor`, `linkColor`, `fontFamily`, `bodyFontFamily`, `headingStyle`, `density`, `dividerStyle`.
+- [x] Corporate Elite (reference implementation)
+- [x] Startup Bold
+- [x] Creative Edge
+- [x] Grid Professional
+- [x] Technical Pro
+- [ ] Classic (start here)
+- [ ] Modern
+- [ ] Minimal
+- [ ] Compact
+- [ ] Executive
+
+Per template: color helpers, `DENSITY_SCALE`, themed `SectionHeading` with `dividerStyle`, safe fallbacks matching `DEFAULT_RESUME.theme`. After each: `node scripts/build-api.mjs`, then `findstr "template-id" api\generate-pdf.js`, then Devansh screenshot-tests.
+After all 10: one visual pass switching templates with several theme configs, to confirm no inconsistent defaults.
+
+### 2b. Public resume checker (all files CONFIRMED present)
+- `src/pages/ResumeCheckerPage.jsx`
+- `src/components/resumeChecker/CheckerResultsPanel.jsx`
+- `src/components/resumeChecker/ResumeUploadZone.jsx`
+- `src/components/resumeChecker/RoleSelector.jsx`
+
+Lets users upload an existing resume for an ATS scan. Not wired into routing yet. Keep all of it, then wire it with server-side validation, file-type/size limits, and rate limiting. Redesign it to v2 tokens as part of Phase 4.
+
+---
+
+## 3. Critical / security (do right after 2a)
+- [ ] **Server-side premium check on `/api/jd-match`** (currently gated only on the client). Top priority.
+- [ ] Audit every `/api/*` route and `server.js` against the security checklist in AGENTS.md (input validation, rate limits, CORS, error messages, headers in `vercel.json`).
+- [ ] Review Supabase RLS policies on `profiles`, `payments`, `resumes`, `cover_letters`.
+- [ ] Confirm Razorpay verification is idempotent and `payments.amount` stays server-authoritative.
+- [ ] Optional cleanup (needs Devansh's go-ahead): old `payments` rows with mixed rupee/paise amounts (`UPDATE payments SET amount = amount / 100 WHERE amount > 1000;`).
+
+## 4. Redesign to Obsidian Violet v2 + UI/UX standard
+Authoritative checklist: `docs/ResumeFree_DesignSystem_v2.md` Section 6. Last known state **(verify against code)**:
+- [x] Foundation (`index.html` fonts, `global.css` RGB-channel variables, `tailwind.config.js`)
+- [x] Phase 1: Navbar, Footer, ScrollToTop
+- [x] Phase 2: Sidebar, PersonalInfoForm, EducationForm (shared `formStyles.js`)
+- [ ] Phase 2: ExperienceForm, SkillsForm, ProjectsForm, ResumePreview (the handoff says done; confirm)
+- [x] Phase 3 done: TemplateSwitcherContent, ATSContent, JDMatcher, PhotoEditorPanel, CustomizationContent
+- [ ] Phase 3 remaining: PhotoFeatureShowcaseModal, UpgradeModal, PassConfirmModal
+- [ ] Phase 4 (all pending): Landing + `landing/` subcomponents (`PricingSection.jsx` needs a full rewrite), PricingPage, ProfilePage, AuthPage/AuthCallback, CoverLetterPage (remove duplicated inline keyframes), Privacy/Terms
+- Landing page gets the most design effort. Layout inspiration (structure only, never copy imagery or copy): hero, trusted-by strip, tabbed feature panels, numbered how-it-works, bordered integrations grid, plain testimonials, CTA fused to a footer with a giant outlined wordmark.
+- Resume templates are NOT redesigned. They stay driven by `resume.theme`.
+- Mascot Rezzy: original to Rezumo, expression matches context. Asset creation is a separate task.
+- Motion/UX pass across the redesigned screens: subtle, purposeful, `prefers-reduced-motion` respected.
+
+## 5. Launch blockers
+- [ ] Rename ResumeFree → Rezumo (scope to be decided: user-facing text first vs full codebase). Domain (e.g. `rezumo.in`) not yet purchased. Best done at the tail of Phase 4.
+- [ ] Razorpay live mode (needs KYC, external step).
+- [ ] Logo from designer friend, integrate when ready.
+- [ ] Final QA on mobile (low-end Android), accessibility pass, `npm audit`.
+
+## 6. Backlog: do NOT build now
+GitHub/LinkedIn autofill, additional premium templates beyond the current 10, extra cloud-saving features, any new feature idea.
+
+## 7. Housekeeping
+- `ATSCheckPanel.jsx` is an orphan (real ATS UI is `ATSContent.jsx`). Do not edit; deletion is Devansh's call.
+- Node v24 causes an intermittent libuv crash under `vercel dev`; Node v20 LTS recommended (not done). Vercel CLI upgrade skipped for now.
+- Project lives inside OneDrive (`C:\Users\neeta\OneDrive\Desktop\ResumeFree`). If git or npm behave oddly, moving it to a non-synced folder is an option.
+
+## 8. How each task runs
+1. Devansh names the task. Codex reads the relevant files first and states a short plan.
+2. Devansh approves the plan.
+3. Codex implements, touching only files in scope, and lists what changed.
+4. Devansh tests (screenshots for UI), then commits on `codex-work`.
+5. Update the checkboxes in this file.
