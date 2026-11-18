@@ -27994,19 +27994,100 @@ module.exports = __toCommonJS(generate_pdf_entry_exports);
 var import_react = __toESM(require_react(), 1);
 var import_server = __toESM(require_server_node(), 1);
 
+// src/utils/fontOptions.js
+var FONT_OPTIONS = {
+  // ── Serif ──────────────────────────────────────────────
+  georgia: {
+    label: "Georgia",
+    group: "Serif",
+    stack: "Georgia, 'Times New Roman', serif"
+  },
+  cambria: {
+    label: "Cambria",
+    group: "Serif",
+    stack: "Cambria, Georgia, serif"
+  },
+  garamond: {
+    label: "Garamond",
+    group: "Serif",
+    stack: "Garamond, 'Times New Roman', serif"
+  },
+  times: {
+    label: "Times New Roman",
+    group: "Serif",
+    stack: "'Times New Roman', Times, serif"
+  },
+  // ── Sans-Serif ─────────────────────────────────────────
+  arial: {
+    label: "Arial",
+    group: "Sans-Serif",
+    stack: "Arial, Helvetica, sans-serif"
+  },
+  helvetica: {
+    label: "Helvetica",
+    group: "Sans-Serif",
+    stack: "Helvetica, Arial, sans-serif"
+  },
+  calibri: {
+    label: "Calibri",
+    group: "Sans-Serif",
+    stack: "Calibri, Candara, sans-serif"
+  },
+  verdana: {
+    label: "Verdana",
+    group: "Sans-Serif",
+    stack: "Verdana, Geneva, sans-serif"
+  }
+  // NOTE: the store's DEFAULT_RESUME currently has fontFamily: "inter" as
+  // its default key, but "inter" isn't in this list (Inter is a Google Font,
+  // not system-safe/print-safe for resume body text the way it's fine for
+  // ResumeFree's own UI chrome). Flagging this — resumeStore.js's default
+  // should change to a valid key here, e.g. "georgia" or "arial", when we
+  // update the store next.
+};
+function getFontStack(key) {
+  return FONT_OPTIONS[key]?.stack || FONT_OPTIONS.georgia.stack;
+}
+
 // src/components/templates/ClassicTemplate.jsx
 var import_jsx_runtime = __toESM(require_jsx_runtime(), 1);
-function SectionHeading({ title }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2 mt-4 mb-2", children: [
+function hexToRgb(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
+}
+function rgbToHex({ r, g, b }) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+function blendTowardBase(hex, baseHex, ratio) {
+  const color = hexToRgb(hex);
+  const base = hexToRgb(baseHex);
+  return rgbToHex(Object.fromEntries(
+    ["r", "g", "b"].map((channel) => [channel, Math.round(color[channel] * (1 - ratio) + base[channel] * ratio)])
+  ));
+}
+function accentAlpha(hex, alpha) {
+  const { r, g, b } = hexToRgb(hex);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+var DENSITY_SCALE = {
+  compact: { lineHeight: "1.35", padding: "24px 28px", sectionGap: "12px", itemGap: "8px", educationGap: "6px", skillGap: "2px", bulletGap: "1px" },
+  balanced: { lineHeight: "1.5", padding: "32px 36px", sectionGap: "16px", itemGap: "12px", educationGap: "10px", skillGap: "4px", bulletGap: "2px" },
+  spacious: { lineHeight: "1.7", padding: "40px 44px", sectionGap: "22px", itemGap: "18px", educationGap: "16px", skillGap: "6px", bulletGap: "4px" }
+};
+function SectionHeading({ title, accentColor, headingColor, headingFontStack, headingStyle, dividerStyle, density }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-center gap-2 mb-2", style: { marginTop: density.sectionGap }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
       "span",
       {
-        className: "text-[10px] font-bold tracking-[0.15em] uppercase text-[#0a1628]",
-        style: { fontFamily: "'Inter', sans-serif" },
+        className: "text-[10px] font-bold tracking-[0.15em]",
+        style: { fontFamily: headingFontStack, color: headingColor, textTransform: headingStyle === "uppercase" ? "uppercase" : "none" },
         children: title
       }
     ),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex-1 h-px bg-[#0a1628]" })
+    dividerStyle === "line" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { "aria-hidden": "true", className: "flex-1 h-px", style: { backgroundColor: accentColor } }),
+    dividerStyle === "dots" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { "aria-hidden": "true", className: "flex gap-1", children: [0, 1, 2].map((dot) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "w-1 h-1 rounded-full", style: { backgroundColor: accentColor } }, dot)) })
   ] });
 }
 function EmptyField({ text }) {
@@ -28014,6 +28095,21 @@ function EmptyField({ text }) {
 }
 function ClassicTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
+  const theme = resume.theme || {};
+  const accentColor = theme.accentColor || "#7451f2";
+  const backgroundColor = theme.backgroundColor || "#ffffff";
+  const textColor = theme.textColor || "#0a1628";
+  const headingColor = theme.headingColor || textColor;
+  const linkColor = theme.linkColor || accentColor;
+  const headingFontStack = getFontStack(theme.fontFamily || "arial");
+  const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
+  const headingStyle = theme.headingStyle || "uppercase";
+  const dividerStyle = theme.dividerStyle || "line";
+  const density = DENSITY_SCALE[theme.density] || DENSITY_SCALE.balanced;
+  const textBody = theme.textColor ? blendTowardBase(textColor, backgroundColor, 0.15) : "#1e3a5f";
+  const textSecondary = theme.textColor ? blendTowardBase(textColor, backgroundColor, 0.35) : accentAlpha("#1e3a5f", 0.7);
+  const textTech = theme.textColor ? textSecondary : "#4a6fa5";
+  const sectionTheme = { accentColor, headingColor, headingFontStack, headingStyle, dividerStyle, density };
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -28021,13 +28117,14 @@ function ClassicTemplate({ resume }) {
   return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
     "div",
     {
-      className: "bg-white shadow-md rounded-sm w-full",
+      className: "shadow-md rounded-sm w-full",
       style: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: bodyFontStack,
+        backgroundColor,
         fontSize: "11px",
-        lineHeight: "1.5",
-        color: "#0a1628",
-        padding: "32px 36px",
+        lineHeight: density.lineHeight,
+        color: textColor,
+        padding: density.padding,
         minHeight: "842px"
       },
       children: [
@@ -28035,12 +28132,12 @@ function ClassicTemplate({ resume }) {
           /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
             "h1",
             {
-              className: "font-bold text-[22px] tracking-tight text-[#0a1628]",
-              style: { fontFamily: "'Inter', sans-serif" },
+              className: "font-bold text-[22px] tracking-tight",
+              style: { fontFamily: headingFontStack, color: headingColor },
               children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyField, { text: "Your Name" })
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-[#1e3a5f]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-1 text-[10px]", style: { color: textBody }, children: [
             personal.email && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: personal.email }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
               "\xB7 ",
@@ -28052,7 +28149,7 @@ function ClassicTemplate({ resume }) {
             ] }),
             !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyField, { text: "email \xB7 phone \xB7 city" })
           ] }),
-          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 mt-0.5 text-[10px] text-[#059669]", children: [
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 mt-0.5 text-[10px]", style: { color: linkColor }, children: [
             personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
               "linkedin.com/in/",
               personal.linkedin
@@ -28065,16 +28162,16 @@ function ClassicTemplate({ resume }) {
           ] })
         ] }),
         hasEducation && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Education" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "space-y-2.5", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Education", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold text-[11px]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyField, { text: "Degree" }) }),
-              edu.college && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-[#1e3a5f]/70", children: [
+              edu.college && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { color: textSecondary }, children: [
                 " \xB7 ",
                 edu.college
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-right flex-shrink-0 text-[#1e3a5f]/70", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "text-right flex-shrink-0", style: { color: textSecondary }, children: [
               edu.year && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: edu.year }),
               edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "ml-2", children: [
                 "\xB7 ",
@@ -28084,51 +28181,51 @@ function ClassicTemplate({ resume }) {
           ] }) }, edu.id)) })
         ] }),
         hasExperience && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Experience" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Experience", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold text-[11px]", children: exp.role || /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyField, { text: "Role" }) }),
-                exp.company && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "text-[#1e3a5f]/70", children: [
+                exp.company && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { style: { color: textSecondary }, children: [
                   " \xB7 ",
                   exp.company
                 ] })
               ] }),
-              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#1e3a5f]/70 flex-shrink-0 text-[10px]", children: exp.duration })
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "flex-shrink-0 text-[10px]", style: { color: textSecondary }, children: exp.duration })
             ] }),
-            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { className: "mt-1 pl-3 flex flex-col", style: { gap: density.bulletGap }, children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { className: "flex gap-1.5", style: { color: textBody }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "flex-shrink-0 mt-0.5", children: "\u2022" }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: bullet })
             ] }, i)) })
           ] }, exp.id)) })
         ] }),
         hasProjects && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Projects" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "space-y-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Projects", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold text-[11px]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime.jsx)(EmptyField, { text: "Project Name" }) }),
-              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: proj.techStack.join(", ") })
+              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[10px] flex-shrink-0", style: { color: textTech }, children: proj.techStack.join(", ") })
             ] }),
-            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
+            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("ul", { className: "mt-1 pl-3 flex flex-col", style: { gap: density.bulletGap }, children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("li", { className: "flex gap-1.5", style: { color: textBody }, children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "flex-shrink-0 mt-0.5", children: "\u2022" }),
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: bullet })
             ] }, i)) })
           ] }, proj.id)) })
         ] }),
         hasSkills && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Skills" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "space-y-1", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SectionHeading, { title: "Skills", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex flex-col", style: { gap: density.skillGap }, children: [
             skills.technical.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex gap-1.5", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold flex-shrink-0", children: "Technical:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#1e3a5f]", children: skills.technical.join(", ") })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: textBody }, children: skills.technical.join(", ") })
             ] }),
             skills.tools.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex gap-1.5", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold flex-shrink-0", children: "Tools:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#1e3a5f]", children: skills.tools.join(", ") })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: textBody }, children: skills.tools.join(", ") })
             ] }),
             skills.languages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "flex gap-1.5", children: [
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "font-semibold flex-shrink-0", children: "Languages:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { className: "text-[#1e3a5f]", children: skills.languages.join(", ") })
+              /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { color: textBody }, children: skills.languages.join(", ") })
             ] })
           ] })
         ] }),
@@ -28136,7 +28233,7 @@ function ClassicTemplate({ resume }) {
           "p",
           {
             className: "text-[#cbd5e1] text-sm",
-            style: { fontFamily: "'Inter', sans-serif" },
+            style: { fontFamily: bodyFontStack },
             children: [
               "Start filling the form \u2014",
               /* @__PURE__ */ (0, import_jsx_runtime.jsx)("br", {}),
@@ -28151,14 +28248,40 @@ function ClassicTemplate({ resume }) {
 
 // src/components/templates/ModernTemplate.jsx
 var import_jsx_runtime2 = __toESM(require_jsx_runtime(), 1);
-function SectionHeading2({ title }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex items-center gap-2 mt-4 mb-2", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "w-[3px] h-3 bg-[#059669] rounded-full flex-shrink-0" }),
+function hexToRgb2(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
+}
+function rgbToHex2({ r, g, b }) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+function blendTowardBase2(hex, baseHex, ratio) {
+  const color = hexToRgb2(hex);
+  const base = hexToRgb2(baseHex);
+  return rgbToHex2(Object.fromEntries(
+    ["r", "g", "b"].map((channel) => [channel, Math.round(color[channel] * (1 - ratio) + base[channel] * ratio)])
+  ));
+}
+function accentAlpha2(hex, alpha) {
+  const { r, g, b } = hexToRgb2(hex);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+var DENSITY_SCALE2 = {
+  compact: { lineHeight: "1.35", padding: "24px 28px", sectionGap: "12px", itemGap: "8px", educationGap: "6px", skillGap: "4px", bulletGap: "1px" },
+  balanced: { lineHeight: "1.5", padding: "32px 36px", sectionGap: "16px", itemGap: "12px", educationGap: "10px", skillGap: "6px", bulletGap: "2px" },
+  spacious: { lineHeight: "1.7", padding: "40px 44px", sectionGap: "22px", itemGap: "18px", educationGap: "16px", skillGap: "8px", bulletGap: "4px" }
+};
+function SectionHeading2({ title, accentColor, headingColor, headingFontStack, headingStyle, dividerStyle, density }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex items-center gap-2 mb-2", style: { marginTop: density.sectionGap }, children: [
+    dividerStyle === "line" && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { "aria-hidden": "true", className: "w-[3px] h-3 rounded-full flex-shrink-0", style: { backgroundColor: accentColor } }),
+    dividerStyle === "dots" && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { "aria-hidden": "true", className: "flex flex-col gap-0.5 flex-shrink-0", children: [0, 1, 2].map((dot) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "w-[3px] h-[3px] rounded-full", style: { backgroundColor: accentColor } }, dot)) }),
     /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
       "span",
       {
-        className: "text-[10px] font-bold tracking-[0.15em] uppercase text-[#0a1628]",
-        style: { fontFamily: "'Inter', sans-serif" },
+        className: "text-[10px] font-bold tracking-[0.15em]",
+        style: { fontFamily: headingFontStack, color: headingColor, textTransform: headingStyle === "uppercase" ? "uppercase" : "none" },
         children: title
       }
     )
@@ -28169,6 +28292,23 @@ function EmptyField2({ text }) {
 }
 function ModernTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
+  const theme = resume.theme || {};
+  const accentColor = theme.accentColor || "#059669";
+  const backgroundColor = theme.backgroundColor || "#ffffff";
+  const textColor = theme.textColor || "#0a1628";
+  const headingColor = theme.headingColor || textColor;
+  const linkColor = theme.linkColor || accentColor;
+  const headingFontStack = getFontStack(theme.fontFamily || "arial");
+  const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
+  const headingStyle = theme.headingStyle || "uppercase";
+  const dividerStyle = theme.dividerStyle || "line";
+  const density = DENSITY_SCALE2[theme.density] || DENSITY_SCALE2.balanced;
+  const textBody = theme.textColor ? blendTowardBase2(textColor, backgroundColor, 0.15) : "#1e3a5f";
+  const textSecondary = theme.textColor ? blendTowardBase2(textColor, backgroundColor, 0.35) : "#4a6fa5";
+  const textCollege = theme.textColor ? textSecondary : accentAlpha2("#1e3a5f", 0.7);
+  const chipBg = theme.accentColor || theme.backgroundColor ? blendTowardBase2(accentColor, backgroundColor, 0.92) : "#ecfdf5";
+  const chipText = theme.textColor ? textColor : accentColor;
+  const sectionTheme = { accentColor, headingColor, headingFontStack, headingStyle, dividerStyle, density };
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -28176,26 +28316,27 @@ function ModernTemplate({ resume }) {
   return /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(
     "div",
     {
-      className: "bg-white shadow-md rounded-sm w-full",
+      className: "shadow-md rounded-sm w-full",
       style: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: bodyFontStack,
+        backgroundColor,
         fontSize: "11px",
-        lineHeight: "1.5",
-        color: "#0a1628",
-        padding: "32px 36px",
+        lineHeight: density.lineHeight,
+        color: textColor,
+        padding: density.padding,
         minHeight: "842px"
       },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "mb-4 pb-3 border-b-2 border-[#059669]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "mb-4 pb-3 border-b-2", style: { borderColor: accentColor }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
             "h1",
             {
-              className: "font-bold text-[24px] tracking-tight text-[#0a1628]",
-              style: { fontFamily: "'Inter', sans-serif" },
+              className: "font-bold text-[24px] tracking-tight",
+              style: { fontFamily: headingFontStack, color: headingColor },
               children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(EmptyField2, { text: "Your Name" })
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-[10px] text-[#1e3a5f]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex flex-wrap gap-x-3 gap-y-0.5 mt-1.5 text-[10px]", style: { color: textBody }, children: [
             personal.email && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: personal.email }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { children: [
               "\xB7 ",
@@ -28207,7 +28348,7 @@ function ModernTemplate({ resume }) {
             ] }),
             !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(EmptyField2, { text: "email \xB7 phone \xB7 city" })
           ] }),
-          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px] font-medium text-[#059669]", children: [
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px] font-medium", style: { color: linkColor }, children: [
             personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { children: [
               "linkedin.com/in/",
               personal.linkedin
@@ -28220,49 +28361,49 @@ function ModernTemplate({ resume }) {
           ] })
         ] }),
         hasExperience && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Experience" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Experience", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "font-semibold text-[11.5px]", children: exp.role || /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(EmptyField2, { text: "Role" }) }),
-                exp.company && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#059669] font-medium", children: [
+                exp.company && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "font-medium", style: { color: accentColor }, children: [
                   " ",
                   "@ ",
                   exp.company
                 ] })
               ] }),
-              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[#4a6fa5] flex-shrink-0 text-[10px]", children: exp.duration })
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "flex-shrink-0 text-[10px]", style: { color: textSecondary }, children: exp.duration })
             ] }),
-            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "flex-shrink-0 mt-0.5 text-[#059669]", children: "\u25B8" }),
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "mt-1 pl-3 flex flex-col", style: { gap: density.bulletGap }, children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "flex gap-1.5", style: { color: textBody }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "flex-shrink-0 mt-0.5", style: { color: accentColor }, children: "\u25B8" }),
               /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: bullet })
             ] }, i)) })
           ] }, exp.id)) })
         ] }),
         hasProjects && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Projects" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "space-y-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Projects", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "font-semibold text-[11.5px]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(EmptyField2, { text: "Project Name" }) }),
-              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: proj.techStack.join(", ") })
+              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "text-[10px] flex-shrink-0", style: { color: textSecondary }, children: proj.techStack.join(", ") })
             ] }),
-            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "flex-shrink-0 mt-0.5 text-[#059669]", children: "\u25B8" }),
+            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("ul", { className: "mt-1 pl-3 flex flex-col", style: { gap: density.bulletGap }, children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("li", { className: "flex gap-1.5", style: { color: textBody }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "flex-shrink-0 mt-0.5", style: { color: accentColor }, children: "\u25B8" }),
               /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: bullet })
             ] }, i)) })
           ] }, proj.id)) })
         ] }),
         hasEducation && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Education" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "space-y-2.5", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Education", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { children: [
               /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { className: "font-semibold text-[11.5px]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(EmptyField2, { text: "Degree" }) }),
-              edu.college && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "text-[#1e3a5f]/70", children: [
+              edu.college && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { style: { color: textCollege }, children: [
                 " \xB7 ",
                 edu.college
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "text-right flex-shrink-0 text-[#4a6fa5]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("div", { className: "text-right flex-shrink-0", style: { color: textSecondary }, children: [
               edu.year && /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("span", { children: edu.year }),
               edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)("span", { className: "ml-2", children: [
                 "\xB7 ",
@@ -28272,12 +28413,13 @@ function ModernTemplate({ resume }) {
           ] }) }, edu.id)) })
         ] }),
         hasSkills && /* @__PURE__ */ (0, import_jsx_runtime2.jsxs)(import_jsx_runtime2.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Skills" }),
-          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-wrap gap-1.5", children: [...skills.technical, ...skills.tools, ...skills.languages].map(
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(SectionHeading2, { title: "Skills", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("div", { className: "flex flex-wrap", style: { gap: density.skillGap }, children: [...skills.technical, ...skills.tools, ...skills.languages].map(
             (skill, i) => /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(
               "span",
               {
-                className: "px-2 py-0.5 bg-[#ecfdf5] text-[#059669] rounded-full text-[10px] font-medium",
+                className: "px-2 py-0.5 rounded-full text-[10px] font-medium",
+                style: { backgroundColor: chipBg, color: chipText },
                 children: skill
               },
               i
@@ -28288,7 +28430,7 @@ function ModernTemplate({ resume }) {
           "p",
           {
             className: "text-[#cbd5e1] text-sm",
-            style: { fontFamily: "'Inter', sans-serif" },
+            style: { fontFamily: bodyFontStack },
             children: [
               "Start filling the form \u2014",
               /* @__PURE__ */ (0, import_jsx_runtime2.jsx)("br", {}),
@@ -28761,64 +28903,9 @@ function ExecutiveTemplate({ resume }) {
   );
 }
 
-// src/utils/fontOptions.js
-var FONT_OPTIONS = {
-  // ── Serif ──────────────────────────────────────────────
-  georgia: {
-    label: "Georgia",
-    group: "Serif",
-    stack: "Georgia, 'Times New Roman', serif"
-  },
-  cambria: {
-    label: "Cambria",
-    group: "Serif",
-    stack: "Cambria, Georgia, serif"
-  },
-  garamond: {
-    label: "Garamond",
-    group: "Serif",
-    stack: "Garamond, 'Times New Roman', serif"
-  },
-  times: {
-    label: "Times New Roman",
-    group: "Serif",
-    stack: "'Times New Roman', Times, serif"
-  },
-  // ── Sans-Serif ─────────────────────────────────────────
-  arial: {
-    label: "Arial",
-    group: "Sans-Serif",
-    stack: "Arial, Helvetica, sans-serif"
-  },
-  helvetica: {
-    label: "Helvetica",
-    group: "Sans-Serif",
-    stack: "Helvetica, Arial, sans-serif"
-  },
-  calibri: {
-    label: "Calibri",
-    group: "Sans-Serif",
-    stack: "Calibri, Candara, sans-serif"
-  },
-  verdana: {
-    label: "Verdana",
-    group: "Sans-Serif",
-    stack: "Verdana, Geneva, sans-serif"
-  }
-  // NOTE: the store's DEFAULT_RESUME currently has fontFamily: "inter" as
-  // its default key, but "inter" isn't in this list (Inter is a Google Font,
-  // not system-safe/print-safe for resume body text the way it's fine for
-  // ResumeFree's own UI chrome). Flagging this — resumeStore.js's default
-  // should change to a valid key here, e.g. "georgia" or "arial", when we
-  // update the store next.
-};
-function getFontStack(key) {
-  return FONT_OPTIONS[key]?.stack || FONT_OPTIONS.georgia.stack;
-}
-
 // src/components/templates/CorporateEliteTemplate.jsx
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb(hex) {
+function hexToRgb3(hex) {
   const clean = hex.replace("#", "");
   const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
   const num = parseInt(full, 16);
@@ -28828,19 +28915,19 @@ function hexToRgb(hex) {
     b: num & 255
   };
 }
-function blendTowardBase(hex, baseHex, baseRatio) {
-  const a = hexToRgb(hex);
-  const b = hexToRgb(baseHex);
+function blendTowardBase3(hex, baseHex, baseRatio) {
+  const a = hexToRgb3(hex);
+  const b = hexToRgb3(baseHex);
   const r = Math.round(a.r * (1 - baseRatio) + b.r * baseRatio);
   const g = Math.round(a.g * (1 - baseRatio) + b.g * baseRatio);
   const bl = Math.round(a.b * (1 - baseRatio) + b.b * baseRatio);
   return `rgb(${r}, ${g}, ${bl})`;
 }
-function accentAlpha(hex, alpha) {
-  const { r, g, b } = hexToRgb(hex);
+function accentAlpha3(hex, alpha) {
+  const { r, g, b } = hexToRgb3(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE = {
+var DENSITY_SCALE3 = {
   compact: { lineHeight: "1.35", padding: "22px 20px", sectionGap: "10px", itemGap: "8px" },
   balanced: { lineHeight: "1.5", padding: "30px 28px", sectionGap: "14px", itemGap: "12px" },
   spacious: { lineHeight: "1.7", padding: "38px 34px", sectionGap: "20px", itemGap: "18px" }
@@ -28900,15 +28987,15 @@ function CorporateEliteTemplate({ resume }) {
   const bodyFontStack = getFontStack(bodyFontKey);
   const headingStyle = resume.theme?.headingStyle || "normal";
   const dividerStyle = resume.theme?.dividerStyle || "line";
-  const density = DENSITY_SCALE[resume.theme?.density] || DENSITY_SCALE.balanced;
+  const density = DENSITY_SCALE3[resume.theme?.density] || DENSITY_SCALE3.balanced;
   const photoBorder = resume.theme?.photoBorder || { style: "circle", color: null, width: 2 };
   const photoUrl = personal.photo?.processedDataUrl || null;
   const nameInitial = personal.name?.trim()?.[0]?.toUpperCase() || "?";
-  const sidebarBg = blendTowardBase(accentColor, "#0a1628", 0.7);
-  const chipBg = accentAlpha(accentColor, 0.22);
+  const sidebarBg = blendTowardBase3(accentColor, "#0a1628", 0.7);
+  const chipBg = accentAlpha3(accentColor, 0.22);
   const textPrimary = textColor;
-  const textSecondary = blendTowardBase(textColor, "#ffffff", 0.35);
-  const textBody = blendTowardBase(textColor, "#ffffff", 0.15);
+  const textSecondary = blendTowardBase3(textColor, "#ffffff", 0.35);
+  const textBody = blendTowardBase3(textColor, "#ffffff", 0.15);
   const borderColor = photoBorder.color || accentColor;
   const borderWidth = photoBorder.style === "none" ? 0 : photoBorder.width ?? 2;
   const borderRadius = photoBorder.style === "square" ? "8px" : photoBorder.style === "none" ? "0px" : "9999px";
@@ -29124,31 +29211,31 @@ function CorporateEliteTemplate({ resume }) {
 
 // src/components/templates/StartupBoldTemplate.jsx
 var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb2(hex) {
+function hexToRgb4(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 };
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const num = parseInt(h, 16);
   return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
 }
-function rgbToHex({ r, g, b }) {
+function rgbToHex3({ r, g, b }) {
   const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
-function blendTowardBase2(hex, baseHex, amount) {
-  const c1 = hexToRgb2(hex);
-  const c2 = hexToRgb2(baseHex);
-  return rgbToHex({
+function blendTowardBase4(hex, baseHex, amount) {
+  const c1 = hexToRgb4(hex);
+  const c2 = hexToRgb4(baseHex);
+  return rgbToHex3({
     r: c1.r + (c2.r - c1.r) * amount,
     g: c1.g + (c2.g - c1.g) * amount,
     b: c1.b + (c2.b - c1.b) * amount
   });
 }
-function accentAlpha2(hex, alpha) {
-  const { r, g, b } = hexToRgb2(hex);
+function accentAlpha4(hex, alpha) {
+  const { r, g, b } = hexToRgb4(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE2 = {
+var DENSITY_SCALE4 = {
   compact: {
     lineHeight: "1.35",
     contentPadding: "18px 30px",
@@ -29184,12 +29271,12 @@ function SectionHeading7({ title, accentColor, headingColor, headingFontStack, u
         }
       )
     ] }),
-    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "h-px mt-1.5 ml-4", style: { backgroundColor: accentAlpha2(accentColor, 0.25) } }),
+    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "h-px mt-1.5 ml-4", style: { backgroundColor: accentAlpha4(accentColor, 0.25) } }),
     divider === "dots" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex gap-1 mt-1.5 ml-4", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
       "span",
       {
         className: "w-1 h-1 rounded-full",
-        style: { backgroundColor: accentAlpha2(accentColor, 0.4) }
+        style: { backgroundColor: accentAlpha4(accentColor, 0.4) }
       },
       i
     )) })
@@ -29207,12 +29294,12 @@ function StartupBoldTemplate({ resume }) {
   const headingFontStack = getFontStack(theme.fontFamily || "georgia");
   const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
   const uppercaseHeadings = theme.headingStyle === "uppercase";
-  const density = DENSITY_SCALE2[theme.density] || DENSITY_SCALE2.balanced;
+  const density = DENSITY_SCALE4[theme.density] || DENSITY_SCALE4.balanced;
   const dividerStyle = theme.dividerStyle || "line";
   const linkColorOnHeader = theme.linkColor || "rgba(255,255,255,0.92)";
-  const textSecondary = blendTowardBase2(textColor, "#ffffff", 0.4);
-  const textBody = blendTowardBase2(textColor, "#ffffff", 0.15);
-  const contactTint = blendTowardBase2(accentColor, "#ffffff", 0.75);
+  const textSecondary = blendTowardBase4(textColor, "#ffffff", 0.4);
+  const textBody = blendTowardBase4(textColor, "#ffffff", 0.15);
+  const contactTint = blendTowardBase4(accentColor, "#ffffff", 0.75);
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -29286,13 +29373,13 @@ function StartupBoldTemplate({ resume }) {
             ),
             /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex flex-wrap gap-1.5", children: [
               skills.technical.map(
-                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha2(accentColor, 0.14), blendTowardBase2(accentColor, "#000000", 0.35)) }, `t-${i}`)
+                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha4(accentColor, 0.14), blendTowardBase4(accentColor, "#000000", 0.35)) }, `t-${i}`)
               ),
               skills.tools.map(
-                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha2(accentColor, 0.07), blendTowardBase2(accentColor, "#000000", 0.2)) }, `to-${i}`)
+                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha4(accentColor, 0.07), blendTowardBase4(accentColor, "#000000", 0.2)) }, `to-${i}`)
               ),
               skills.languages.map(
-                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, blendTowardBase2(textColor, "#ffffff", 0.94), textSecondary) }, `l-${i}`)
+                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, blendTowardBase4(textColor, "#ffffff", 0.94), textSecondary) }, `l-${i}`)
               )
             ] })
           ] }),
@@ -29322,7 +29409,7 @@ function StartupBoldTemplate({ resume }) {
                   "span",
                   {
                     className: "flex-shrink-0 text-[9.5px] px-2 py-0.5 rounded-full",
-                    style: { backgroundColor: blendTowardBase2(textColor, "#ffffff", 0.95), color: textSecondary },
+                    style: { backgroundColor: blendTowardBase4(textColor, "#ffffff", 0.95), color: textSecondary },
                     children: exp.duration
                   }
                 )
@@ -29351,8 +29438,8 @@ function StartupBoldTemplate({ resume }) {
               {
                 className: "rounded-xl p-3",
                 style: {
-                  border: `1px solid ${blendTowardBase2(textColor, "#ffffff", 0.8)}`,
-                  backgroundColor: blendTowardBase2(textColor, "#ffffff", 0.97)
+                  border: `1px solid ${blendTowardBase4(textColor, "#ffffff", 0.8)}`,
+                  backgroundColor: blendTowardBase4(textColor, "#ffffff", 0.97)
                 },
                 children: [
                   /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex items-start justify-between gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "font-semibold text-[11px]", style: { color: headingColor }, children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Project Name" }) }) }),
@@ -29361,8 +29448,8 @@ function StartupBoldTemplate({ resume }) {
                     {
                       className: "text-[9px] px-1.5 py-0.5 rounded",
                       style: {
-                        backgroundColor: accentAlpha2(accentColor, 0.08),
-                        color: blendTowardBase2(accentColor, "#000000", 0.2)
+                        backgroundColor: accentAlpha4(accentColor, 0.08),
+                        color: blendTowardBase4(accentColor, "#000000", 0.2)
                       },
                       children: t
                     },
@@ -29421,31 +29508,31 @@ function StartupBoldTemplate({ resume }) {
 
 // src/components/templates/CreativeEdgeTemplate.jsx
 var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb3(hex) {
+function hexToRgb5(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 };
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const num = parseInt(h, 16);
   return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
 }
-function rgbToHex2({ r, g, b }) {
+function rgbToHex4({ r, g, b }) {
   const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
-function blendTowardBase3(hex, baseHex, amount) {
-  const c1 = hexToRgb3(hex);
-  const c2 = hexToRgb3(baseHex);
-  return rgbToHex2({
+function blendTowardBase5(hex, baseHex, amount) {
+  const c1 = hexToRgb5(hex);
+  const c2 = hexToRgb5(baseHex);
+  return rgbToHex4({
     r: c1.r + (c2.r - c1.r) * amount,
     g: c1.g + (c2.g - c1.g) * amount,
     b: c1.b + (c2.b - c1.b) * amount
   });
 }
-function accentAlpha3(hex, alpha) {
-  const { r, g, b } = hexToRgb3(hex);
+function accentAlpha5(hex, alpha) {
+  const { r, g, b } = hexToRgb5(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE3 = {
+var DENSITY_SCALE5 = {
   compact: {
     lineHeight: "1.35",
     padding: "26px 30px",
@@ -29481,12 +29568,12 @@ function SectionHeading8({ title, accentColor, headingColor, headingFontStack, u
         children: title
       }
     ),
-    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "h-px mt-1.5 w-8", style: { backgroundColor: accentAlpha3(accentColor, 0.35) } }),
+    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "h-px mt-1.5 w-8", style: { backgroundColor: accentAlpha5(accentColor, 0.35) } }),
     divider === "dots" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "flex gap-1 mt-1.5", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       "span",
       {
         className: "w-1 h-1 rounded-full",
-        style: { backgroundColor: accentAlpha3(accentColor, 0.4) }
+        style: { backgroundColor: accentAlpha5(accentColor, 0.4) }
       },
       i
     )) })
@@ -29505,11 +29592,11 @@ function CreativeEdgeTemplate({ resume }) {
   const headingFontStack = getFontStack(theme.fontFamily || "georgia");
   const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
   const uppercaseHeadings = theme.headingStyle === "uppercase";
-  const density = DENSITY_SCALE3[theme.density] || DENSITY_SCALE3.balanced;
+  const density = DENSITY_SCALE5[theme.density] || DENSITY_SCALE5.balanced;
   const dividerStyle = theme.dividerStyle || "line";
-  const textSecondary = blendTowardBase3(textColor, "#ffffff", 0.4);
-  const textBody = blendTowardBase3(textColor, "#ffffff", 0.15);
-  const dividerLine = blendTowardBase3(textColor, "#ffffff", 0.75);
+  const textSecondary = blendTowardBase5(textColor, "#ffffff", 0.4);
+  const textBody = blendTowardBase5(textColor, "#ffffff", 0.15);
+  const dividerLine = blendTowardBase5(textColor, "#ffffff", 0.75);
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -29546,7 +29633,7 @@ function CreativeEdgeTemplate({ resume }) {
                 "div",
                 {
                   className: "text-right text-[10px] flex-shrink-0 pl-4",
-                  style: { borderLeft: `2px solid ${accentAlpha3(accentColor, 0.2)}`, color: textSecondary },
+                  style: { borderLeft: `2px solid ${accentAlpha5(accentColor, 0.2)}`, color: textSecondary },
                   children: [
                     personal.email && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.email }),
                     personal.phone && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.phone }),
@@ -29590,7 +29677,7 @@ function CreativeEdgeTemplate({ resume }) {
               "span",
               {
                 className: "absolute left-[3px] top-3 bottom-[-16px] w-px",
-                style: { backgroundColor: accentAlpha3(accentColor, 0.25) }
+                style: { backgroundColor: accentAlpha5(accentColor, 0.25) }
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
@@ -29625,10 +29712,10 @@ function CreativeEdgeTemplate({ resume }) {
             "div",
             {
               className: "rounded-2xl p-3",
-              style: { backgroundColor: accentAlpha3(accentColor, 0.08) },
+              style: { backgroundColor: accentAlpha5(accentColor, 0.08) },
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "font-semibold text-[11px]", style: { color: headingColor }, children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EmptyField8, { text: "Project Name" }) }),
-                proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "text-[9.5px] mt-0.5", style: { color: blendTowardBase3(accentColor, "#000000", 0.15) }, children: proj.techStack.join(" \xB7 ") }),
+                proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "text-[9.5px] mt-0.5", style: { color: blendTowardBase5(accentColor, "#000000", 0.15) }, children: proj.techStack.join(" \xB7 ") }),
                 proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("ul", { className: "mt-1 space-y-0.5", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("li", { className: "text-[10.5px]", style: { color: textBody }, children: [
                   "\u2014 ",
                   bullet
@@ -29846,31 +29933,31 @@ function TechnicalProTemplate({ resume }) {
 
 // src/components/templates/GridProfessionalTemplate.jsx
 var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb4(hex) {
+function hexToRgb6(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 };
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const num = parseInt(h, 16);
   return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
 }
-function rgbToHex3({ r, g, b }) {
+function rgbToHex5({ r, g, b }) {
   const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
-function blendTowardBase4(hex, baseHex, amount) {
-  const c1 = hexToRgb4(hex);
-  const c2 = hexToRgb4(baseHex);
-  return rgbToHex3({
+function blendTowardBase6(hex, baseHex, amount) {
+  const c1 = hexToRgb6(hex);
+  const c2 = hexToRgb6(baseHex);
+  return rgbToHex5({
     r: c1.r + (c2.r - c1.r) * amount,
     g: c1.g + (c2.g - c1.g) * amount,
     b: c1.b + (c2.b - c1.b) * amount
   });
 }
-function accentAlpha4(hex, alpha) {
-  const { r, g, b } = hexToRgb4(hex);
+function accentAlpha6(hex, alpha) {
+  const { r, g, b } = hexToRgb6(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE4 = {
+var DENSITY_SCALE6 = {
   compact: {
     lineHeight: "1.35",
     padding: "22px 28px",
@@ -29909,12 +29996,12 @@ function SectionHeading10({ title, accentColor, headingColor, headingFontStack, 
         children: title
       }
     ),
-    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "h-px mt-1", style: { backgroundColor: accentAlpha4(accentColor, 0.3) } }),
+    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "h-px mt-1", style: { backgroundColor: accentAlpha6(accentColor, 0.3) } }),
     divider === "dots" && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "flex gap-1 mt-1.5", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
       "span",
       {
         className: "w-1 h-1 rounded-full",
-        style: { backgroundColor: accentAlpha4(accentColor, 0.4) }
+        style: { backgroundColor: accentAlpha6(accentColor, 0.4) }
       },
       i
     )) })
@@ -29933,11 +30020,11 @@ function GridProfessionalTemplate({ resume }) {
   const headingFontStack = getFontStack(theme.fontFamily || "georgia");
   const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
   const uppercaseHeadings = theme.headingStyle !== "normal";
-  const density = DENSITY_SCALE4[theme.density] || DENSITY_SCALE4.balanced;
+  const density = DENSITY_SCALE6[theme.density] || DENSITY_SCALE6.balanced;
   const dividerStyle = theme.dividerStyle || "line";
-  const textSecondary = blendTowardBase4(textColor, "#ffffff", 0.4);
-  const textBody = blendTowardBase4(textColor, "#ffffff", 0.15);
-  const cardBorder = blendTowardBase4(textColor, "#ffffff", 0.78);
+  const textSecondary = blendTowardBase6(textColor, "#ffffff", 0.4);
+  const textBody = blendTowardBase6(textColor, "#ffffff", 0.15);
+  const cardBorder = blendTowardBase6(textColor, "#ffffff", 0.78);
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -30252,6 +30339,10 @@ function buildHtml(bodyHtml) {
 <style>
   html, body { margin: 0; padding: 0; background: #ffffff; }
   @page { margin: 0; size: A4; }
+  @media print {
+    html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    #resume-root > * { box-shadow: none !important; border-radius: 0 !important; }
+  }
 </style>
 </head>
 <body>
@@ -30282,8 +30373,17 @@ async function handler(req, res) {
     const fullHtml = buildHtml(bodyHtml);
     browser = await getBrowser();
     const page = await browser.newPage();
+    await page.emulateMediaType("print");
     await page.setContent(fullHtml, { waitUntil: "networkidle0" });
     await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => {
+      const template = document.querySelector("#resume-root > *");
+      const background = template ? getComputedStyle(template).backgroundColor : "transparent";
+      if (background !== "transparent" && background !== "rgba(0, 0, 0, 0)") {
+        document.documentElement.style.backgroundColor = background;
+        document.body.style.backgroundColor = background;
+      }
+    });
     const pdfBytes = await page.pdf({
       format: "A4",
       printBackground: true,

@@ -374,7 +374,12 @@ function ProfileAvatar({ email, dark = true, isPremium = false, onUpgradeClick }
 
       <div
         className="rf-glass absolute right-0 top-[calc(100%+0.625rem)] w-[13.25rem] origin-top-right rounded-3xl overflow-hidden z-[80] transition-all"
+        aria-hidden={!open}
         style={{
+          // The shared .rf-glass rule sets position: relative. Keep this
+          // dropdown out of flow so its wrapper cannot cover builder actions.
+          position: "absolute",
+          visibility: open ? "visible" : "hidden",
           background: "rgba(255,255,255,0.14)",
           opacity: open ? 1 : 0,
           transform: open ? "scale(1) translateY(0)" : "scale(0.92) translateY(-4px)",

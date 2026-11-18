@@ -43,6 +43,10 @@ function buildHtml(bodyHtml) {
 <style>
   html, body { margin: 0; padding: 0; background: #ffffff; }
   @page { margin: 0; size: A4; }
+  @media print {
+    html, body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    #resume-root > * { box-shadow: none !important; border-radius: 0 !important; }
+  }
 </style>
 </head>
 <body>
@@ -78,8 +82,21 @@ export default async function handler(req, res) {
 
     browser = await getBrowser();
     const page = await browser.newPage();
+    await page.emulateMediaType("print");
     await page.setContent(fullHtml, { waitUntil: "networkidle0" });
     await page.evaluate(() => document.fonts.ready);
+
+    // Paint the entire print canvas, including the unused part of the last
+    // page. Read the resolved template color so template defaults are honored
+    // without interpolating user-controlled CSS into the HTML document.
+    await page.evaluate(() => {
+      const template = document.querySelector("#resume-root > *");
+      const background = template ? getComputedStyle(template).backgroundColor : "transparent";
+      if (background !== "transparent" && background !== "rgba(0, 0, 0, 0)") {
+        document.documentElement.style.backgroundColor = background;
+        document.body.style.backgroundColor = background;
+      }
+    });
 
     const pdfBytes = await page.pdf({
       format: "A4",
