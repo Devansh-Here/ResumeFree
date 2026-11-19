@@ -77,6 +77,7 @@ export const TEMPLATES = [
   },
   {
     id: "corporate-elite",
+    supportsBandColor: true,
     name: "Corporate Elite",
     description: "Dark sidebar layout. Consulting/MBA-focused.",
     isPremium: true,
@@ -86,6 +87,7 @@ export const TEMPLATES = [
   },
   {
     id: "startup-bold",
+    supportsBandColor: true,
     name: "Startup Bold",
     description: "Emerald header band, chip-style skills.",
     isPremium: true,

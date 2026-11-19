@@ -28445,21 +28445,86 @@ function ModernTemplate({ resume }) {
 
 // src/components/templates/MinimalTemplate.jsx
 var import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
-function SectionHeading3({ title }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "mt-6 mb-2.5", children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
-    "span",
-    {
-      className: "text-[9px] font-medium tracking-[0.25em] uppercase text-[#4a6fa5]",
-      style: { fontFamily: "'Inter', sans-serif" },
-      children: title
-    }
-  ) });
+function hexToRgb3(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
+}
+function rgbToHex3({ r, g, b }) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+function blendTowardBase3(hex, baseHex, ratio) {
+  const color = hexToRgb3(hex);
+  const base = hexToRgb3(baseHex);
+  return rgbToHex3(Object.fromEntries(
+    ["r", "g", "b"].map((channel) => [channel, Math.round(color[channel] * (1 - ratio) + base[channel] * ratio)])
+  ));
+}
+function accentAlpha3(hex, alpha) {
+  const { r, g, b } = hexToRgb3(hex);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+var DENSITY_SCALE3 = {
+  "compact": {
+    "lineHeight": "1.45",
+    "padding": "30px 34px",
+    "sectionGap": "16px",
+    "itemGap": "10px",
+    "educationGap": "8px",
+    "bulletGap": "2px",
+    "skillGap": "4px",
+    "columnGap": "12px"
+  },
+  "balanced": {
+    "lineHeight": "1.7",
+    "padding": "40px 44px",
+    "sectionGap": "24px",
+    "itemGap": "16px",
+    "educationGap": "12px",
+    "bulletGap": "4px",
+    "skillGap": "6px",
+    "columnGap": "16px"
+  },
+  "spacious": {
+    "lineHeight": "1.85",
+    "padding": "48px 52px",
+    "sectionGap": "30px",
+    "itemGap": "22px",
+    "educationGap": "18px",
+    "bulletGap": "6px",
+    "skillGap": "8px",
+    "columnGap": "20px"
+  }
+};
+function SectionHeading3({ title, accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-center gap-2 mb-2.5", style: { marginTop: density.sectionGap }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[9px] font-medium tracking-[0.25em]", style: { fontFamily: headingFontStack, color: headingColor, textTransform: headingStyle === "uppercase" ? "uppercase" : "none" }, children: title }),
+    dividerStyle === "line" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { "aria-hidden": "true", className: "flex-1 h-px", style: { backgroundColor: dividerColor } }),
+    dividerStyle === "dots" && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { "aria-hidden": "true", className: "flex gap-1", children: [0, 1, 2].map((dot) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "w-1 h-1 rounded-full", style: { backgroundColor: accentColor } }, dot)) })
+  ] });
 }
 function EmptyField3({ text }) {
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
 }
 function MinimalTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
+  const theme = resume.theme || {};
+  const accentColor = theme.accentColor || "#4a6fa5";
+  const backgroundColor = theme.backgroundColor || "#ffffff";
+  const textColor = theme.textColor || "#0a1628";
+  const headingColor = theme.headingColor || textColor;
+  const linkColor = theme.linkColor || accentColor;
+  const headingFontStack = getFontStack(theme.fontFamily || "arial");
+  const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
+  const headingStyle = theme.headingStyle || "uppercase";
+  const dividerStyle = theme.dividerStyle || "none";
+  const density = DENSITY_SCALE3[theme.density] || DENSITY_SCALE3.balanced;
+  const textBody = theme.textColor ? blendTowardBase3(textColor, backgroundColor, 0.15) : "#1e3a5f";
+  const textSecondary = theme.textColor ? blendTowardBase3(textColor, backgroundColor, 0.35) : "#4a6fa5";
+  const textMuted = theme.textColor ? blendTowardBase3(textColor, backgroundColor, 0.5) : "#cbd5e1";
+  const dividerColor = theme.accentColor ? accentAlpha3(accentColor, 0.35) : "#cbd5e1";
+  const sectionTheme = { accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density };
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -28467,32 +28532,33 @@ function MinimalTemplate({ resume }) {
   return /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(
     "div",
     {
-      className: "bg-white shadow-md rounded-sm w-full",
+      className: "shadow-md rounded-sm w-full",
       style: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: bodyFontStack,
+        backgroundColor,
         fontSize: "11px",
-        lineHeight: "1.7",
-        color: "#0a1628",
-        padding: "40px 44px",
+        lineHeight: density.lineHeight,
+        color: textColor,
+        padding: density.padding,
         minHeight: "842px"
       },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "mb-6", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { style: { marginBottom: density.sectionGap }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(
             "h1",
             {
-              className: "font-light text-[26px] tracking-tight text-[#0a1628]",
-              style: { fontFamily: "'Inter', sans-serif" },
+              className: "font-light text-[26px] tracking-tight",
+              style: { fontFamily: headingFontStack, color: headingColor },
               children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(EmptyField3, { text: "Your Name" })
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-[10px] text-[#4a6fa5]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-[10px]", style: { color: textSecondary }, children: [
             personal.email && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: personal.email }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: personal.phone }),
             personal.address && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: personal.address }),
             !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(EmptyField3, { text: "email \xB7 phone \xB7 city" })
           ] }),
-          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px] text-[#4a6fa5]", children: [
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px]", style: { color: linkColor }, children: [
             personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { children: [
               "linkedin.com/in/",
               personal.linkedin
@@ -28505,60 +28571,60 @@ function MinimalTemplate({ resume }) {
           ] })
         ] }),
         hasEducation && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Education" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "space-y-3", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-baseline justify-between gap-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Education", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-baseline justify-between gap-2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "font-medium text-[11px]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(EmptyField3, { text: "Degree" }) }),
-              edu.college && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[#4a6fa5]", children: [
+              edu.college && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { style: { color: textSecondary }, children: [
                 ", ",
                 edu.college
               ] })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "text-right flex-shrink-0 text-[#cbd5e1] text-[10px]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "text-right flex-shrink-0 text-[10px]", style: { color: textMuted }, children: [
               edu.year && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { children: edu.year }),
               edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "ml-2", children: edu.cgpa })
             ] })
           ] }, edu.id)) })
         ] }),
         hasExperience && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Experience" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "space-y-4", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Experience", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-baseline justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "font-medium text-[11px]", children: [
                 exp.role || /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(EmptyField3, { text: "Role" }),
-                exp.company && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "text-[#4a6fa5] font-normal", children: [
+                exp.company && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("span", { className: "font-normal", style: { color: textSecondary }, children: [
                   ", ",
                   exp.company
                 ] })
               ] }),
-              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#cbd5e1] flex-shrink-0 text-[10px]", children: exp.duration })
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "flex-shrink-0 text-[10px]", style: { color: textMuted }, children: exp.duration })
             ] }),
-            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("ul", { className: "mt-1.5 space-y-1 pl-0", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("li", { className: "text-[#1e3a5f] pl-3 border-l border-[#cbd5e1]", children: bullet }, i)) })
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("ul", { className: "mt-1.5 flex flex-col pl-0", style: { gap: density.bulletGap }, children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("li", { className: "pl-3 border-l", style: { color: textBody, borderColor: dividerColor }, children: bullet }, i)) })
           ] }, exp.id)) })
         ] }),
         hasProjects && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Projects" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "space-y-4", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Projects", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex items-baseline justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "font-medium text-[11px]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(EmptyField3, { text: "Project Name" }) }),
-              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#cbd5e1] text-[10px] flex-shrink-0", children: proj.techStack.join(" \xB7 ") })
+              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[10px] flex-shrink-0", style: { color: textMuted }, children: proj.techStack.join(" \xB7 ") })
             ] }),
-            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("ul", { className: "mt-1.5 space-y-1", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("li", { className: "text-[#1e3a5f] pl-3 border-l border-[#cbd5e1]", children: bullet }, i)) })
+            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("ul", { className: "mt-1.5 flex flex-col", style: { gap: density.bulletGap }, children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("li", { className: "pl-3 border-l", style: { color: textBody, borderColor: dividerColor }, children: bullet }, i)) })
           ] }, proj.id)) })
         ] }),
         hasSkills && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Skills" }),
-          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "space-y-1.5 text-[#1e3a5f]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(SectionHeading3, { title: "Skills", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { className: "flex flex-col", style: { color: textBody, gap: density.educationGap }, children: [
             skills.technical.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#4a6fa5]", children: "Technical \u2014 " }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { color: textSecondary }, children: "Technical \u2014 " }),
               skills.technical.join(", ")
             ] }),
             skills.tools.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#4a6fa5]", children: "Tools \u2014 " }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { color: textSecondary }, children: "Tools \u2014 " }),
               skills.tools.join(", ")
             ] }),
             skills.languages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)("div", { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { className: "text-[#4a6fa5]", children: "Languages \u2014 " }),
+              /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("span", { style: { color: textSecondary }, children: "Languages \u2014 " }),
               skills.languages.join(", ")
             ] })
           ] })
@@ -28567,7 +28633,7 @@ function MinimalTemplate({ resume }) {
           "p",
           {
             className: "text-[#cbd5e1] text-sm",
-            style: { fontFamily: "'Inter', sans-serif" },
+            style: { fontFamily: bodyFontStack },
             children: [
               "Start filling the form \u2014",
               /* @__PURE__ */ (0, import_jsx_runtime3.jsx)("br", {}),
@@ -28582,21 +28648,87 @@ function MinimalTemplate({ resume }) {
 
 // src/components/templates/CompactTemplate.jsx
 var import_jsx_runtime4 = __toESM(require_jsx_runtime(), 1);
-function SectionHeading4({ title }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "mt-3 mb-1.5", children: /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
-    "span",
-    {
-      className: "text-[9px] font-bold tracking-[0.12em] uppercase text-[#059669]",
-      style: { fontFamily: "'Inter', sans-serif" },
-      children: title
-    }
-  ) });
+function hexToRgb4(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
+}
+function rgbToHex4({ r, g, b }) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+function blendTowardBase4(hex, baseHex, ratio) {
+  const color = hexToRgb4(hex);
+  const base = hexToRgb4(baseHex);
+  return rgbToHex4(Object.fromEntries(
+    ["r", "g", "b"].map((channel) => [channel, Math.round(color[channel] * (1 - ratio) + base[channel] * ratio)])
+  ));
+}
+function accentAlpha4(hex, alpha) {
+  const { r, g, b } = hexToRgb4(hex);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+var DENSITY_SCALE4 = {
+  "compact": {
+    "lineHeight": "1.2",
+    "padding": "18px 22px",
+    "sectionGap": "8px",
+    "itemGap": "6px",
+    "educationGap": "4px",
+    "bulletGap": "1px",
+    "skillGap": "4px",
+    "columnGap": "12px"
+  },
+  "balanced": {
+    "lineHeight": "1.35",
+    "padding": "24px 28px",
+    "sectionGap": "12px",
+    "itemGap": "8px",
+    "educationGap": "6px",
+    "bulletGap": "2px",
+    "skillGap": "6px",
+    "columnGap": "16px"
+  },
+  "spacious": {
+    "lineHeight": "1.5",
+    "padding": "32px 36px",
+    "sectionGap": "16px",
+    "itemGap": "12px",
+    "educationGap": "10px",
+    "bulletGap": "4px",
+    "skillGap": "8px",
+    "columnGap": "20px"
+  }
+};
+function SectionHeading4({ title, accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-center gap-2 mb-1.5", style: { marginTop: density.sectionGap }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-[9px] font-bold tracking-[0.12em]", style: { fontFamily: headingFontStack, color: headingColor, textTransform: headingStyle === "uppercase" ? "uppercase" : "none" }, children: title }),
+    dividerStyle === "line" && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { "aria-hidden": "true", className: "flex-1 h-px", style: { backgroundColor: dividerColor } }),
+    dividerStyle === "dots" && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { "aria-hidden": "true", className: "flex gap-1", children: [0, 1, 2].map((dot) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "w-1 h-1 rounded-full", style: { backgroundColor: accentColor } }, dot)) })
+  ] });
 }
 function EmptyField4({ text }) {
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
 }
 function CompactTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
+  const theme = resume.theme || {};
+  const accentColor = theme.accentColor || "#059669";
+  const backgroundColor = theme.backgroundColor || "#ffffff";
+  const textColor = theme.textColor || "#0a1628";
+  const headingColor = theme.headingColor || textColor;
+  const linkColor = theme.linkColor || accentColor;
+  const headingFontStack = getFontStack(theme.fontFamily || "arial");
+  const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
+  const headingStyle = theme.headingStyle || "uppercase";
+  const dividerStyle = theme.dividerStyle || "none";
+  const density = DENSITY_SCALE4[theme.density] || DENSITY_SCALE4.balanced;
+  const textBody = theme.textColor ? blendTowardBase4(textColor, backgroundColor, 0.15) : "#1e3a5f";
+  const textSecondary = theme.textColor ? blendTowardBase4(textColor, backgroundColor, 0.35) : "#4a6fa5";
+  const textMuted = theme.textColor ? blendTowardBase4(textColor, backgroundColor, 0.5) : "#cbd5e1";
+  const dividerColor = theme.accentColor ? accentAlpha4(accentColor, 0.35) : "#cbd5e1";
+  const chipBg = theme.accentColor || theme.backgroundColor ? blendTowardBase4(accentColor, backgroundColor, 0.92) : "#ecfdf5";
+  const sectionTheme = { accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density };
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -28604,27 +28736,28 @@ function CompactTemplate({ resume }) {
   return /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(
     "div",
     {
-      className: "bg-white shadow-md rounded-sm w-full",
+      className: "shadow-md rounded-sm w-full",
       style: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: bodyFontStack,
+        backgroundColor,
         fontSize: "10px",
-        lineHeight: "1.35",
-        color: "#0a1628",
-        padding: "24px 28px",
+        lineHeight: density.lineHeight,
+        color: textColor,
+        padding: density.padding,
         minHeight: "842px"
       },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-start justify-between gap-3 pb-2 mb-2 border-b border-[#cbd5e1]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-start justify-between gap-3 pb-2 mb-2 border-b", style: { borderColor: dividerColor }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
               "h1",
               {
-                className: "font-bold text-[18px] tracking-tight text-[#0a1628] leading-none",
-                style: { fontFamily: "'Inter', sans-serif" },
+                className: "font-bold text-[18px] tracking-tight leading-none",
+                style: { fontFamily: headingFontStack, color: headingColor },
                 children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(EmptyField4, { text: "Your Name" })
               }
             ),
-            (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex flex-wrap gap-x-2 mt-1 text-[9px] text-[#059669] font-medium", children: [
+            (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex flex-wrap gap-x-2 mt-1 text-[9px] font-medium", style: { color: linkColor }, children: [
               personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { children: [
                 "linkedin.com/in/",
                 personal.linkedin
@@ -28636,55 +28769,55 @@ function CompactTemplate({ resume }) {
               personal.portfolio && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: personal.portfolio })
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "text-right flex-shrink-0 text-[9px] text-[#1e3a5f] leading-[1.5]", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "text-right flex-shrink-0 text-[9px] leading-[1.5]", style: { color: textBody }, children: [
             personal.email && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: personal.email }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: personal.phone }),
             personal.address && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { children: personal.address }),
             !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(EmptyField4, { text: "email \xB7 phone \xB7 city" })
           ] })
         ] }),
-        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex gap-4", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex", style: { gap: density.columnGap }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex-[2.2] min-w-0", children: [
             hasExperience && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Experience" }),
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "space-y-2", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Experience", ...sectionTheme }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-baseline justify-between gap-2", children: [
                   /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "font-semibold text-[10.5px]", children: [
                     exp.role || /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(EmptyField4, { text: "Role" }),
-                    exp.company && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "text-[#4a6fa5] font-normal", children: [
+                    exp.company && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "font-normal", style: { color: textSecondary }, children: [
                       " \xB7 ",
                       exp.company
                     ] })
                   ] }),
-                  exp.duration && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-[#4a6fa5] flex-shrink-0 text-[9px]", children: exp.duration })
+                  exp.duration && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "flex-shrink-0 text-[9px]", style: { color: textSecondary }, children: exp.duration })
                 ] }),
-                exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("ul", { className: "mt-0.5 space-y-0.5", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("li", { className: "flex gap-1 text-[#1e3a5f]", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "flex-shrink-0 text-[#059669]", children: "\u2013" }),
+                exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("ul", { className: "mt-0.5 flex flex-col", style: { gap: density.bulletGap }, children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("li", { className: "flex gap-1", style: { color: textBody }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "flex-shrink-0", style: { color: accentColor }, children: "\u2013" }),
                   /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: bullet })
                 ] }, i)) })
               ] }, exp.id)) })
             ] }),
             hasProjects && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Projects" }),
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "space-y-2", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Projects", ...sectionTheme }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex items-baseline justify-between gap-2", children: [
                   /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "font-semibold text-[10.5px]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(EmptyField4, { text: "Project Name" }) }),
-                  proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-[#4a6fa5] text-[9px] flex-shrink-0", children: proj.techStack.join(", ") })
+                  proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "text-[9px] flex-shrink-0", style: { color: textSecondary }, children: proj.techStack.join(", ") })
                 ] }),
-                proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("ul", { className: "mt-0.5 space-y-0.5", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("li", { className: "flex gap-1 text-[#1e3a5f]", children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "flex-shrink-0 text-[#059669]", children: "\u2013" }),
+                proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("ul", { className: "mt-0.5 flex flex-col", style: { gap: density.bulletGap }, children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("li", { className: "flex gap-1", style: { color: textBody }, children: [
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { className: "flex-shrink-0", style: { color: accentColor }, children: "\u2013" }),
                   /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: bullet })
                 ] }, i)) })
               ] }, proj.id)) })
             ] })
           ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex-1 min-w-0 border-l border-[#cbd5e1] pl-3", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex-1 min-w-0 border-l pl-3", style: { borderColor: dividerColor }, children: [
             hasEducation && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Education" }),
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "space-y-1.5", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Education", ...sectionTheme }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "font-semibold text-[10px]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(EmptyField4, { text: "Degree" }) }),
-                edu.college && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[#4a6fa5] text-[9px]", children: edu.college }),
-                /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "text-[#cbd5e1] text-[9px]", children: [
+                edu.college && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[9px]", style: { color: textSecondary }, children: edu.college }),
+                /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "text-[9px]", style: { color: textMuted }, children: [
                   edu.year && /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("span", { children: edu.year }),
                   edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("span", { className: "ml-1", children: [
                     "\xB7 ",
@@ -28694,33 +28827,35 @@ function CompactTemplate({ resume }) {
               ] }, edu.id)) })
             ] }),
             hasSkills && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)(import_jsx_runtime4.Fragment, { children: [
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Skills" }),
-              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "space-y-1.5", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(SectionHeading4, { title: "Skills", ...sectionTheme }),
+              /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: [
                 skills.technical.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[#4a6fa5] text-[9px] font-medium mb-0.5", children: "Technical" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[9px] font-medium mb-0.5", style: { color: textSecondary }, children: "Technical" }),
                   /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex flex-wrap gap-1", children: skills.technical.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                     "span",
                     {
-                      className: "px-1.5 py-0.5 bg-[#ecfdf5] text-[#059669] rounded text-[8.5px] font-medium",
+                      className: "px-1.5 py-0.5 rounded text-[8.5px] font-medium",
+                      style: { color: accentColor, backgroundColor: chipBg },
                       children: s
                     },
                     i
                   )) })
                 ] }),
                 skills.tools.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[#4a6fa5] text-[9px] font-medium mb-0.5", children: "Tools" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[9px] font-medium mb-0.5", style: { color: textSecondary }, children: "Tools" }),
                   /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "flex flex-wrap gap-1", children: skills.tools.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime4.jsx)(
                     "span",
                     {
-                      className: "px-1.5 py-0.5 bg-[#ecfdf5] text-[#059669] rounded text-[8.5px] font-medium",
+                      className: "px-1.5 py-0.5 rounded text-[8.5px] font-medium",
+                      style: { color: accentColor, backgroundColor: chipBg },
                       children: s
                     },
                     i
                   )) })
                 ] }),
                 skills.languages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime4.jsxs)("div", { children: [
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[#4a6fa5] text-[9px] font-medium mb-0.5", children: "Languages" }),
-                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[#1e3a5f] text-[9px]", children: skills.languages.join(", ") })
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[9px] font-medium mb-0.5", style: { color: textSecondary }, children: "Languages" }),
+                  /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("div", { className: "text-[9px]", style: { color: textBody }, children: skills.languages.join(", ") })
                 ] })
               ] })
             ] })
@@ -28730,7 +28865,7 @@ function CompactTemplate({ resume }) {
           "p",
           {
             className: "text-[#cbd5e1] text-sm",
-            style: { fontFamily: "'Inter', sans-serif" },
+            style: { fontFamily: bodyFontStack },
             children: [
               "Start filling the form \u2014",
               /* @__PURE__ */ (0, import_jsx_runtime4.jsx)("br", {}),
@@ -28745,17 +28880,63 @@ function CompactTemplate({ resume }) {
 
 // src/components/templates/ExecutiveTemplate.jsx
 var import_jsx_runtime5 = __toESM(require_jsx_runtime(), 1);
-function SectionHeading5({ title }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "mt-5 mb-2 flex items-center gap-3", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
-      "span",
-      {
-        className: "text-[11px] font-semibold tracking-[0.08em] uppercase text-[#0a1628] whitespace-nowrap",
-        style: { fontFamily: "'Inter', sans-serif" },
-        children: title
-      }
-    ),
-    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex-1 h-px bg-[#cbd5e1]" })
+function hexToRgb5(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
+}
+function rgbToHex5({ r, g, b }) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+function blendTowardBase5(hex, baseHex, ratio) {
+  const color = hexToRgb5(hex);
+  const base = hexToRgb5(baseHex);
+  return rgbToHex5(Object.fromEntries(
+    ["r", "g", "b"].map((channel) => [channel, Math.round(color[channel] * (1 - ratio) + base[channel] * ratio)])
+  ));
+}
+function accentAlpha5(hex, alpha) {
+  const { r, g, b } = hexToRgb5(hex);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+var DENSITY_SCALE5 = {
+  "compact": {
+    "lineHeight": "1.35",
+    "padding": "28px 32px",
+    "sectionGap": "14px",
+    "itemGap": "10px",
+    "educationGap": "8px",
+    "bulletGap": "1px",
+    "skillGap": "4px",
+    "columnGap": "12px"
+  },
+  "balanced": {
+    "lineHeight": "1.55",
+    "padding": "36px 40px",
+    "sectionGap": "20px",
+    "itemGap": "14px",
+    "educationGap": "10px",
+    "bulletGap": "2px",
+    "skillGap": "6px",
+    "columnGap": "16px"
+  },
+  "spacious": {
+    "lineHeight": "1.75",
+    "padding": "44px 48px",
+    "sectionGap": "26px",
+    "itemGap": "20px",
+    "educationGap": "16px",
+    "bulletGap": "4px",
+    "skillGap": "8px",
+    "columnGap": "20px"
+  }
+};
+function SectionHeading5({ title, accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-center gap-2 mb-2", style: { marginTop: density.sectionGap }, children: [
+    /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[11px] font-semibold tracking-[0.08em] whitespace-nowrap", style: { fontFamily: headingFontStack, color: headingColor, textTransform: headingStyle === "uppercase" ? "uppercase" : "none" }, children: title }),
+    dividerStyle === "line" && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { "aria-hidden": "true", className: "flex-1 h-px", style: { backgroundColor: dividerColor } }),
+    dividerStyle === "dots" && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { "aria-hidden": "true", className: "flex gap-1", children: [0, 1, 2].map((dot) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "w-1 h-1 rounded-full", style: { backgroundColor: accentColor } }, dot)) })
   ] });
 }
 function EmptyField5({ text }) {
@@ -28763,6 +28944,21 @@ function EmptyField5({ text }) {
 }
 function ExecutiveTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
+  const theme = resume.theme || {};
+  const accentColor = theme.accentColor || "#4a6fa5";
+  const backgroundColor = theme.backgroundColor || "#ffffff";
+  const textColor = theme.textColor || "#0a1628";
+  const headingColor = theme.headingColor || textColor;
+  const linkColor = theme.linkColor || accentColor;
+  const headingFontStack = getFontStack(theme.fontFamily || "georgia");
+  const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
+  const headingStyle = theme.headingStyle || "uppercase";
+  const dividerStyle = theme.dividerStyle || "line";
+  const density = DENSITY_SCALE5[theme.density] || DENSITY_SCALE5.balanced;
+  const textBody = theme.textColor ? blendTowardBase5(textColor, backgroundColor, 0.15) : "#1e3a5f";
+  const textSecondary = theme.textColor ? blendTowardBase5(textColor, backgroundColor, 0.35) : "#4a6fa5";
+  const dividerColor = theme.accentColor ? accentAlpha5(accentColor, 0.35) : "#cbd5e1";
+  const sectionTheme = { accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density };
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -28770,26 +28966,27 @@ function ExecutiveTemplate({ resume }) {
   return /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(
     "div",
     {
-      className: "bg-white shadow-md rounded-sm w-full",
+      className: "shadow-md rounded-sm w-full",
       style: {
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: bodyFontStack,
+        backgroundColor,
         fontSize: "11px",
-        lineHeight: "1.55",
-        color: "#0a1628",
-        padding: "36px 40px",
+        lineHeight: density.lineHeight,
+        color: textColor,
+        padding: density.padding,
         minHeight: "842px"
       },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "text-center mb-4 pb-3", style: { borderBottom: "2px solid #0a1628" }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "text-center mb-4 pb-3", style: { borderBottom: "2px solid " + headingColor }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
             "h1",
             {
-              className: "text-[26px] tracking-tight text-[#0a1628]",
-              style: { fontFamily: "'DM Serif Display', serif" },
+              className: "text-[26px] tracking-tight",
+              style: { fontFamily: headingFontStack, color: headingColor },
               children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EmptyField5, { text: "Your Name" })
             }
           ),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-2 text-[10px] text-[#1e3a5f] tracking-wide", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 gap-y-0.5 mt-2 text-[10px] tracking-wide", style: { color: textBody }, children: [
             personal.email && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: personal.email }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: "|" }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: personal.phone }),
@@ -28797,7 +28994,7 @@ function ExecutiveTemplate({ resume }) {
             personal.address && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: personal.address }),
             !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EmptyField5, { text: "email \xB7 phone \xB7 city" })
           ] }),
-          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 mt-1 text-[10px] text-[#4a6fa5]", children: [
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex flex-wrap justify-center gap-x-3 mt-1 text-[10px]", style: { color: linkColor }, children: [
             personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { children: [
               "linkedin.com/in/",
               personal.linkedin
@@ -28810,79 +29007,79 @@ function ExecutiveTemplate({ resume }) {
           ] })
         ] }),
         hasEducation && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Education" }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "space-y-2.5", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Education", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { children: /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
             /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
                 "span",
                 {
                   className: "font-semibold text-[12px]",
-                  style: { fontFamily: "'DM Serif Display', serif" },
+                  style: { fontFamily: headingFontStack, color: headingColor },
                   children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EmptyField5, { text: "Degree" })
                 }
               ),
-              edu.college && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "text-[#1e3a5f] text-[10.5px]", children: edu.college })
+              edu.college && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "text-[10.5px]", style: { color: textBody }, children: edu.college })
             ] }),
-            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "text-right flex-shrink-0 text-[#4a6fa5] text-[10px]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "text-right flex-shrink-0 text-[10px]", style: { color: textSecondary }, children: [
               edu.year && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { children: edu.year }),
               edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "mt-0.5", children: edu.cgpa })
             ] })
           ] }) }, edu.id)) })
         ] }),
         hasExperience && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Professional Experience" }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "space-y-3.5", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Professional Experience", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
                 /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
                   "span",
                   {
                     className: "font-semibold text-[12px]",
-                    style: { fontFamily: "'DM Serif Display', serif" },
+                    style: { fontFamily: headingFontStack, color: headingColor },
                     children: exp.company || /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EmptyField5, { text: "Company" })
                   }
                 ),
-                exp.role && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "text-[#1e3a5f] text-[10.5px] italic", children: [
+                exp.role && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("span", { className: "text-[10.5px] italic", style: { color: textBody }, children: [
                   " \u2014 ",
                   exp.role
                 ] })
               ] }),
-              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[#4a6fa5] flex-shrink-0 text-[10px]", children: exp.duration })
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "flex-shrink-0 text-[10px]", style: { color: textSecondary }, children: exp.duration })
             ] }),
-            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "mt-1 space-y-0.5 pl-4", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("li", { className: "text-[#1e3a5f]", style: { listStyleType: "disc" }, children: bullet }, i)) })
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "mt-1 flex flex-col pl-4", style: { gap: density.bulletGap }, children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("li", { style: { listStyleType: "disc", color: textBody }, children: bullet }, i)) })
           ] }, exp.id)) })
         ] }),
         hasProjects && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Key Projects" }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "space-y-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Key Projects", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(
                 "span",
                 {
                   className: "font-semibold text-[11.5px]",
-                  style: { fontFamily: "'DM Serif Display', serif" },
+                  style: { fontFamily: headingFontStack, color: headingColor },
                   children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(EmptyField5, { text: "Project Name" })
                 }
               ),
-              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[#4a6fa5] text-[10px] italic flex-shrink-0", children: proj.techStack.join(", ") })
+              proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10px] italic flex-shrink-0", style: { color: textSecondary }, children: proj.techStack.join(", ") })
             ] }),
-            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "mt-1 space-y-0.5 pl-4", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("li", { className: "text-[#1e3a5f]", style: { listStyleType: "disc" }, children: bullet }, i)) })
+            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("ul", { className: "mt-1 flex flex-col pl-4", style: { gap: density.bulletGap }, children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("li", { style: { listStyleType: "disc", color: textBody }, children: bullet }, i)) })
           ] }, proj.id)) })
         ] }),
         hasSkills && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)(import_jsx_runtime5.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Core Competencies" }),
-          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsx)(SectionHeading5, { title: "Core Competencies", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: [
             skills.technical.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "font-semibold flex-shrink-0 text-[10.5px]", children: "Technical:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[#1e3a5f] text-[10.5px]", children: skills.technical.join(" \xB7 ") })
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10.5px]", style: { color: textBody }, children: skills.technical.join(" \xB7 ") })
             ] }),
             skills.tools.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "font-semibold flex-shrink-0 text-[10.5px]", children: "Tools:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[#1e3a5f] text-[10.5px]", children: skills.tools.join(" \xB7 ") })
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10.5px]", style: { color: textBody }, children: skills.tools.join(" \xB7 ") })
             ] }),
             skills.languages.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime5.jsxs)("div", { className: "flex gap-2", children: [
               /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "font-semibold flex-shrink-0 text-[10.5px]", children: "Languages:" }),
-              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[#1e3a5f] text-[10.5px]", children: skills.languages.join(" \xB7 ") })
+              /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("span", { className: "text-[10.5px]", style: { color: textBody }, children: skills.languages.join(" \xB7 ") })
             ] })
           ] })
         ] }),
@@ -28890,7 +29087,7 @@ function ExecutiveTemplate({ resume }) {
           "p",
           {
             className: "text-[#cbd5e1] text-sm",
-            style: { fontFamily: "'Inter', sans-serif" },
+            style: { fontFamily: bodyFontStack },
             children: [
               "Start filling the form \u2014",
               /* @__PURE__ */ (0, import_jsx_runtime5.jsx)("br", {}),
@@ -28903,9 +29100,65 @@ function ExecutiveTemplate({ resume }) {
   );
 }
 
+// src/utils/bandColors.js
+function normalizeBandColor(value) {
+  if (typeof value !== "string" || !/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(value)) return null;
+  const hex = value.slice(1).toLowerCase();
+  return "#" + (hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex);
+}
+function channels(hex) {
+  return [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16));
+}
+function getCorporateSidebarColor(accentColor) {
+  const accent = channels(normalizeBandColor(accentColor) || "#7451f2");
+  const navy = channels("#0a1628");
+  return "#" + accent.map((v, i) => Math.round(v * 0.3 + navy[i] * 0.7).toString(16).padStart(2, "0")).join("");
+}
+function luminance(backgroundColor) {
+  const linear = channels(normalizeBandColor(backgroundColor) || "#000000").map((v) => {
+    const channel = v / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+}
+function getBandTextColor(backgroundColor) {
+  const light = luminance(backgroundColor);
+  return 1.05 / (light + 0.05) >= (light + 0.05) / 0.05 ? "#ffffff" : "#000000";
+}
+function blend(color, target, amount) {
+  const a = channels(color);
+  const b = channels(target);
+  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * amount).toString(16).padStart(2, "0")).join("");
+}
+function contrast(a, b) {
+  const first = luminance(a);
+  const second = luminance(b);
+  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+}
+function getBandPalette(backgroundColor, accentColor) {
+  const background = normalizeBandColor(backgroundColor) || "#ffffff";
+  const accent = normalizeBandColor(accentColor) || "#7451f2";
+  const ink = getBandTextColor(background);
+  const readableAccent = (minimum) => {
+    for (let step = 0; step <= 20; step += 1) {
+      const candidate = blend(accent, ink, step / 20);
+      if (contrast(candidate, background) >= minimum) return candidate;
+    }
+    return ink;
+  };
+  const marker = readableAccent(3);
+  const chipBackground = blend(background, marker, 0.24);
+  return {
+    marker,
+    link: readableAccent(4.5),
+    chipBackground,
+    chipText: getBandTextColor(chipBackground)
+  };
+}
+
 // src/components/templates/CorporateEliteTemplate.jsx
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb3(hex) {
+function hexToRgb6(hex) {
   const clean = hex.replace("#", "");
   const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
   const num = parseInt(full, 16);
@@ -28915,25 +29168,25 @@ function hexToRgb3(hex) {
     b: num & 255
   };
 }
-function blendTowardBase3(hex, baseHex, baseRatio) {
-  const a = hexToRgb3(hex);
-  const b = hexToRgb3(baseHex);
+function blendTowardBase6(hex, baseHex, baseRatio) {
+  const a = hexToRgb6(hex);
+  const b = hexToRgb6(baseHex);
   const r = Math.round(a.r * (1 - baseRatio) + b.r * baseRatio);
   const g = Math.round(a.g * (1 - baseRatio) + b.g * baseRatio);
   const bl = Math.round(a.b * (1 - baseRatio) + b.b * baseRatio);
   return `rgb(${r}, ${g}, ${bl})`;
 }
-function accentAlpha3(hex, alpha) {
-  const { r, g, b } = hexToRgb3(hex);
+function accentAlpha6(hex, alpha) {
+  const { r, g, b } = hexToRgb6(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE3 = {
+var DENSITY_SCALE6 = {
   compact: { lineHeight: "1.35", padding: "22px 20px", sectionGap: "10px", itemGap: "8px" },
   balanced: { lineHeight: "1.5", padding: "30px 28px", sectionGap: "14px", itemGap: "12px" },
   spacious: { lineHeight: "1.7", padding: "38px 34px", sectionGap: "20px", itemGap: "18px" }
 };
-function SectionHeading6({ title, dark, accentColor, headingColor, headingStyle, dividerStyle }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "mt-4 mb-2", children: [
+function SectionHeading6({ title, dark, accentColor, headingColor, headingStyle, dividerStyle, headingFontStack, density, sidebarHeadingColor }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "mb-2", style: { marginTop: density.sectionGap }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex items-center gap-1.5", children: [
       /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
         "span",
@@ -28947,7 +29200,8 @@ function SectionHeading6({ title, dark, accentColor, headingColor, headingStyle,
         {
           className: "text-[10px] font-bold tracking-[0.15em]",
           style: {
-            color: dark ? "rgba(255,255,255,0.9)" : headingColor,
+            color: dark ? sidebarHeadingColor : headingColor,
+            fontFamily: headingFontStack,
             textTransform: headingStyle === "uppercase" ? "uppercase" : "none"
           },
           children: title
@@ -28971,13 +29225,17 @@ function SectionHeading6({ title, dark, accentColor, headingColor, headingStyle,
     )) })
   ] });
 }
-function EmptyField6({ text }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+function EmptyField6({ text, color = "#cbd5e1" }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "italic", style: { color }, children: text });
 }
 function CorporateEliteTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
   const accentColor = resume.theme?.accentColor || "#7451f2";
-  const linkColor = resume.theme?.linkColor || accentColor;
+  const customBandColor = normalizeBandColor(resume.theme?.bandColor);
+  const sidebarText = customBandColor ? getBandTextColor(customBandColor) : "#ffffff";
+  const bandPalette = customBandColor ? getBandPalette(customBandColor, accentColor) : null;
+  const sidebarAccent = bandPalette?.marker || accentColor;
+  const linkColor = resume.theme?.linkColor || bandPalette?.link || accentColor;
   const backgroundColor = resume.theme?.backgroundColor || "#ffffff";
   const textColor = resume.theme?.textColor || "#272727";
   const headingColor = resume.theme?.headingColor || textColor;
@@ -28987,16 +29245,20 @@ function CorporateEliteTemplate({ resume }) {
   const bodyFontStack = getFontStack(bodyFontKey);
   const headingStyle = resume.theme?.headingStyle || "normal";
   const dividerStyle = resume.theme?.dividerStyle || "line";
-  const density = DENSITY_SCALE3[resume.theme?.density] || DENSITY_SCALE3.balanced;
+  const density = DENSITY_SCALE6[resume.theme?.density] || DENSITY_SCALE6.balanced;
   const photoBorder = resume.theme?.photoBorder || { style: "circle", color: null, width: 2 };
   const photoUrl = personal.photo?.processedDataUrl || null;
   const nameInitial = personal.name?.trim()?.[0]?.toUpperCase() || "?";
-  const sidebarBg = blendTowardBase3(accentColor, "#0a1628", 0.7);
-  const chipBg = accentAlpha3(accentColor, 0.22);
+  const sidebarBg = customBandColor || getCorporateSidebarColor(accentColor);
+  const sidebarSecondary = customBandColor ? sidebarText : "#cbd5e1";
+  const sidebarMuted = customBandColor ? sidebarText : "#94a3b8";
+  const sidebarHeadingColor = customBandColor ? sidebarText : "rgba(255,255,255,0.9)";
+  const chipBg = bandPalette?.chipBackground || accentAlpha6(accentColor, 0.22);
+  const chipText = bandPalette?.chipText || "#e2e8f0";
   const textPrimary = textColor;
-  const textSecondary = blendTowardBase3(textColor, "#ffffff", 0.35);
-  const textBody = blendTowardBase3(textColor, "#ffffff", 0.15);
-  const borderColor = photoBorder.color || accentColor;
+  const textSecondary = blendTowardBase6(textColor, "#ffffff", 0.35);
+  const textBody = blendTowardBase6(textColor, "#ffffff", 0.15);
+  const borderColor = photoBorder.color || sidebarAccent;
   const borderWidth = photoBorder.style === "none" ? 0 : photoBorder.width ?? 2;
   const borderRadius = photoBorder.style === "square" ? "8px" : photoBorder.style === "none" ? "0px" : "9999px";
   const hasEducation = education.length > 0;
@@ -29016,20 +29278,20 @@ function CorporateEliteTemplate({ resume }) {
         minHeight: "842px"
       },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "h-[5px] w-full", style: { backgroundColor: accentColor } }),
+        /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "h-[5px] w-full", style: { backgroundColor: customBandColor || accentColor } }),
         /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "flex", style: { minHeight: "837px" }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)(
             "div",
             {
               className: "flex-shrink-0",
-              style: { width: "34%", backgroundColor: sidebarBg, color: "white", padding: density.padding },
+              style: { width: "34%", backgroundColor: sidebarBg, color: sidebarText, padding: density.padding },
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
                   "div",
                   {
                     className: "w-16 h-16 overflow-hidden flex items-center justify-center mb-3 flex-shrink-0",
                     style: {
-                      backgroundColor: photoUrl ? "transparent" : "rgba(255,255,255,0.08)",
+                      backgroundColor: photoUrl ? "transparent" : accentAlpha6(sidebarText, 0.08),
                       border: borderWidth > 0 ? `${borderWidth}px solid ${borderColor}` : "none",
                       borderRadius
                     },
@@ -29040,23 +29302,23 @@ function CorporateEliteTemplate({ resume }) {
                         alt: personal.name || "Profile photo",
                         className: "w-full h-full object-cover"
                       }
-                    ) : /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[20px] text-white/70", children: nameInitial })
+                    ) : /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("span", { className: "text-[20px]", style: { color: sidebarSecondary }, children: nameInitial })
                   }
                 ),
                 /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
                   "h1",
                   {
-                    className: "text-[26px] leading-tight text-white mb-1",
-                    style: { fontFamily: headingFontStack },
-                    children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Your Name" })
+                    className: "text-[26px] leading-tight mb-1",
+                    style: { fontFamily: headingFontStack, color: sidebarText },
+                    children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Your Name", color: sidebarSecondary })
                   }
                 ),
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "h-[2px] w-12 mb-4", style: { backgroundColor: accentColor } }),
-                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "space-y-1 text-[10px] text-[#cbd5e1]", children: [
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "h-[2px] w-12 mb-4", style: { backgroundColor: sidebarAccent } }),
+                /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "space-y-1 text-[10px]", style: { color: sidebarSecondary }, children: [
                   personal.email && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.email }),
                   personal.phone && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.phone }),
                   personal.address && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { children: personal.address }),
-                  !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "email \xB7 phone \xB7 city" })
+                  !personal.email && !personal.phone && !personal.address && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "email \xB7 phone \xB7 city", color: sidebarSecondary })
                 ] }),
                 (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "space-y-1 mt-2 text-[10px]", style: { color: linkColor }, children: [
                   personal.linkedin && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
@@ -29075,17 +29337,20 @@ function CorporateEliteTemplate({ resume }) {
                     {
                       title: "Skills",
                       dark: true,
-                      accentColor,
+                      accentColor: sidebarAccent,
                       headingColor,
                       headingStyle,
-                      dividerStyle
+                      dividerStyle,
+                      headingFontStack,
+                      density,
+                      sidebarHeadingColor
                     }
                   ),
                   /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-wrap gap-1.5", children: allSkills.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(
                     "span",
                     {
                       className: "text-[9px] px-2 py-0.5 rounded-full",
-                      style: { backgroundColor: chipBg, color: "#e2e8f0" },
+                      style: { backgroundColor: chipBg, color: chipText },
                       children: s
                     },
                     i
@@ -29097,16 +29362,19 @@ function CorporateEliteTemplate({ resume }) {
                     {
                       title: "Education",
                       dark: true,
-                      accentColor,
+                      accentColor: sidebarAccent,
                       headingColor,
                       headingStyle,
-                      dividerStyle
+                      dividerStyle,
+                      headingFontStack,
+                      density,
+                      sidebarHeadingColor
                     }
                   ),
                   /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "space-y-2.5", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
-                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "font-semibold text-[10.5px] text-white", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Degree" }) }),
-                    edu.college && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "text-[10px] text-[#cbd5e1]", children: edu.college }),
-                    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "text-[9.5px] text-[#94a3b8] mt-0.5", children: [
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "font-semibold text-[10.5px]", style: { color: sidebarText }, children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime6.jsx)(EmptyField6, { text: "Degree", color: sidebarSecondary }) }),
+                    edu.college && /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "text-[10px]", style: { color: sidebarSecondary }, children: edu.college }),
+                    /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { className: "text-[9.5px] mt-0.5", style: { color: sidebarMuted }, children: [
                       edu.year,
                       edu.cgpa && /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("span", { children: [
                         " \xB7 ",
@@ -29127,7 +29395,10 @@ function CorporateEliteTemplate({ resume }) {
                   accentColor,
                   headingColor,
                   headingStyle,
-                  dividerStyle
+                  dividerStyle,
+                  headingFontStack,
+                  density,
+                  sidebarHeadingColor
                 }
               ),
               /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
@@ -29169,7 +29440,10 @@ function CorporateEliteTemplate({ resume }) {
                   accentColor,
                   headingColor,
                   headingStyle,
-                  dividerStyle
+                  dividerStyle,
+                  headingFontStack,
+                  density,
+                  sidebarHeadingColor
                 }
               ),
               /* @__PURE__ */ (0, import_jsx_runtime6.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime6.jsxs)("div", { children: [
@@ -29211,31 +29485,31 @@ function CorporateEliteTemplate({ resume }) {
 
 // src/components/templates/StartupBoldTemplate.jsx
 var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb4(hex) {
+function hexToRgb7(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 };
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const num = parseInt(h, 16);
   return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
 }
-function rgbToHex3({ r, g, b }) {
+function rgbToHex6({ r, g, b }) {
   const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
-function blendTowardBase4(hex, baseHex, amount) {
-  const c1 = hexToRgb4(hex);
-  const c2 = hexToRgb4(baseHex);
-  return rgbToHex3({
+function blendTowardBase7(hex, baseHex, amount) {
+  const c1 = hexToRgb7(hex);
+  const c2 = hexToRgb7(baseHex);
+  return rgbToHex6({
     r: c1.r + (c2.r - c1.r) * amount,
     g: c1.g + (c2.g - c1.g) * amount,
     b: c1.b + (c2.b - c1.b) * amount
   });
 }
-function accentAlpha4(hex, alpha) {
-  const { r, g, b } = hexToRgb4(hex);
+function accentAlpha7(hex, alpha) {
+  const { r, g, b } = hexToRgb7(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE4 = {
+var DENSITY_SCALE7 = {
   compact: {
     lineHeight: "1.35",
     contentPadding: "18px 30px",
@@ -29271,35 +29545,38 @@ function SectionHeading7({ title, accentColor, headingColor, headingFontStack, u
         }
       )
     ] }),
-    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "h-px mt-1.5 ml-4", style: { backgroundColor: accentAlpha4(accentColor, 0.25) } }),
+    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "h-px mt-1.5 ml-4", style: { backgroundColor: accentAlpha7(accentColor, 0.25) } }),
     divider === "dots" && /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex gap-1 mt-1.5 ml-4", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
       "span",
       {
         className: "w-1 h-1 rounded-full",
-        style: { backgroundColor: accentAlpha4(accentColor, 0.4) }
+        style: { backgroundColor: accentAlpha7(accentColor, 0.4) }
       },
       i
     )) })
   ] });
 }
-function EmptyField7({ text }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
+function EmptyField7({ text, color = "#cbd5e1" }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "italic", style: { color }, children: text });
 }
 function StartupBoldTemplate({ resume }) {
   const { personal, education, experience, skills, projects, theme = {} } = resume;
   const accentColor = theme.accentColor || "#7451f2";
+  const customBandColor = normalizeBandColor(theme.bandColor);
+  const headerBg = customBandColor || accentColor;
+  const headerText = customBandColor ? getBandTextColor(customBandColor) : "#ffffff";
   const backgroundColor = theme.backgroundColor || "#ffffff";
   const textColor = theme.textColor || "#272727";
   const headingColor = theme.headingColor || textColor;
   const headingFontStack = getFontStack(theme.fontFamily || "georgia");
   const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
   const uppercaseHeadings = theme.headingStyle === "uppercase";
-  const density = DENSITY_SCALE4[theme.density] || DENSITY_SCALE4.balanced;
+  const density = DENSITY_SCALE7[theme.density] || DENSITY_SCALE7.balanced;
   const dividerStyle = theme.dividerStyle || "line";
-  const linkColorOnHeader = theme.linkColor || "rgba(255,255,255,0.92)";
-  const textSecondary = blendTowardBase4(textColor, "#ffffff", 0.4);
-  const textBody = blendTowardBase4(textColor, "#ffffff", 0.15);
-  const contactTint = blendTowardBase4(accentColor, "#ffffff", 0.75);
+  const linkColorOnHeader = theme.linkColor || (customBandColor ? headerText : "rgba(255,255,255,0.92)");
+  const textSecondary = blendTowardBase7(textColor, "#ffffff", 0.4);
+  const textBody = blendTowardBase7(textColor, "#ffffff", 0.15);
+  const contactTint = customBandColor ? headerText : blendTowardBase7(accentColor, "#ffffff", 0.75);
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -29324,13 +29601,13 @@ function StartupBoldTemplate({ resume }) {
         minHeight: "842px"
       },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { backgroundColor: accentColor, padding: density.headerPadding }, children: [
+        /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { style: { backgroundColor: headerBg, padding: density.headerPadding }, children: [
           /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(
             "h1",
             {
               className: "text-[24px] font-bold tracking-tight",
-              style: { fontFamily: headingFontStack, color: "#ffffff" },
-              children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Your Name" })
+              style: { fontFamily: headingFontStack, color: headerText },
+              children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Your Name", color: customBandColor ? headerText : "#cbd5e1" })
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px]", style: { color: contactTint }, children: [
@@ -29373,13 +29650,13 @@ function StartupBoldTemplate({ resume }) {
             ),
             /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { className: "flex flex-wrap gap-1.5", children: [
               skills.technical.map(
-                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha4(accentColor, 0.14), blendTowardBase4(accentColor, "#000000", 0.35)) }, `t-${i}`)
+                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha7(accentColor, 0.14), blendTowardBase7(accentColor, "#000000", 0.35)) }, `t-${i}`)
               ),
               skills.tools.map(
-                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha4(accentColor, 0.07), blendTowardBase4(accentColor, "#000000", 0.2)) }, `to-${i}`)
+                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, accentAlpha7(accentColor, 0.07), blendTowardBase7(accentColor, "#000000", 0.2)) }, `to-${i}`)
               ),
               skills.languages.map(
-                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, blendTowardBase4(textColor, "#ffffff", 0.94), textSecondary) }, `l-${i}`)
+                (s, i) => /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { children: chip(s, blendTowardBase7(textColor, "#ffffff", 0.94), textSecondary) }, `l-${i}`)
               )
             ] })
           ] }),
@@ -29409,7 +29686,7 @@ function StartupBoldTemplate({ resume }) {
                   "span",
                   {
                     className: "flex-shrink-0 text-[9.5px] px-2 py-0.5 rounded-full",
-                    style: { backgroundColor: blendTowardBase4(textColor, "#ffffff", 0.95), color: textSecondary },
+                    style: { backgroundColor: blendTowardBase7(textColor, "#ffffff", 0.95), color: textSecondary },
                     children: exp.duration
                   }
                 )
@@ -29438,8 +29715,8 @@ function StartupBoldTemplate({ resume }) {
               {
                 className: "rounded-xl p-3",
                 style: {
-                  border: `1px solid ${blendTowardBase4(textColor, "#ffffff", 0.8)}`,
-                  backgroundColor: blendTowardBase4(textColor, "#ffffff", 0.97)
+                  border: `1px solid ${blendTowardBase7(textColor, "#ffffff", 0.8)}`,
+                  backgroundColor: blendTowardBase7(textColor, "#ffffff", 0.97)
                 },
                 children: [
                   /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("div", { className: "flex items-start justify-between gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime7.jsx)("span", { className: "font-semibold text-[11px]", style: { color: headingColor }, children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime7.jsx)(EmptyField7, { text: "Project Name" }) }) }),
@@ -29448,8 +29725,8 @@ function StartupBoldTemplate({ resume }) {
                     {
                       className: "text-[9px] px-1.5 py-0.5 rounded",
                       style: {
-                        backgroundColor: accentAlpha4(accentColor, 0.08),
-                        color: blendTowardBase4(accentColor, "#000000", 0.2)
+                        backgroundColor: accentAlpha7(accentColor, 0.08),
+                        color: blendTowardBase7(accentColor, "#000000", 0.2)
                       },
                       children: t
                     },
@@ -29508,31 +29785,31 @@ function StartupBoldTemplate({ resume }) {
 
 // src/components/templates/CreativeEdgeTemplate.jsx
 var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb5(hex) {
+function hexToRgb8(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 };
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const num = parseInt(h, 16);
   return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
 }
-function rgbToHex4({ r, g, b }) {
+function rgbToHex7({ r, g, b }) {
   const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
-function blendTowardBase5(hex, baseHex, amount) {
-  const c1 = hexToRgb5(hex);
-  const c2 = hexToRgb5(baseHex);
-  return rgbToHex4({
+function blendTowardBase8(hex, baseHex, amount) {
+  const c1 = hexToRgb8(hex);
+  const c2 = hexToRgb8(baseHex);
+  return rgbToHex7({
     r: c1.r + (c2.r - c1.r) * amount,
     g: c1.g + (c2.g - c1.g) * amount,
     b: c1.b + (c2.b - c1.b) * amount
   });
 }
-function accentAlpha5(hex, alpha) {
-  const { r, g, b } = hexToRgb5(hex);
+function accentAlpha8(hex, alpha) {
+  const { r, g, b } = hexToRgb8(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE5 = {
+var DENSITY_SCALE8 = {
   compact: {
     lineHeight: "1.35",
     padding: "26px 30px",
@@ -29558,8 +29835,8 @@ var DENSITY_SCALE5 = {
     footerGap: "40px"
   }
 };
-function SectionHeading8({ title, accentColor, headingColor, headingFontStack, uppercase, divider }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "mt-4 mb-2.5", children: [
+function SectionHeading8({ title, accentColor, headingFontStack, uppercase, divider, topGap }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "mb-2.5", style: { marginTop: topGap }, children: [
     /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       "span",
       {
@@ -29568,12 +29845,12 @@ function SectionHeading8({ title, accentColor, headingColor, headingFontStack, u
         children: title
       }
     ),
-    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "h-px mt-1.5 w-8", style: { backgroundColor: accentAlpha5(accentColor, 0.35) } }),
+    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "h-px mt-1.5 w-8", style: { backgroundColor: accentAlpha8(accentColor, 0.35) } }),
     divider === "dots" && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "flex gap-1 mt-1.5", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       "span",
       {
         className: "w-1 h-1 rounded-full",
-        style: { backgroundColor: accentAlpha5(accentColor, 0.4) }
+        style: { backgroundColor: accentAlpha8(accentColor, 0.4) }
       },
       i
     )) })
@@ -29592,11 +29869,11 @@ function CreativeEdgeTemplate({ resume }) {
   const headingFontStack = getFontStack(theme.fontFamily || "georgia");
   const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
   const uppercaseHeadings = theme.headingStyle === "uppercase";
-  const density = DENSITY_SCALE5[theme.density] || DENSITY_SCALE5.balanced;
+  const density = DENSITY_SCALE8[theme.density] || DENSITY_SCALE8.balanced;
   const dividerStyle = theme.dividerStyle || "line";
-  const textSecondary = blendTowardBase5(textColor, "#ffffff", 0.4);
-  const textBody = blendTowardBase5(textColor, "#ffffff", 0.15);
-  const dividerLine = blendTowardBase5(textColor, "#ffffff", 0.75);
+  const textSecondary = blendTowardBase8(textColor, "#ffffff", 0.4);
+  const textBody = blendTowardBase8(textColor, "#ffffff", 0.15);
+  const dividerLine = blendTowardBase8(textColor, "#ffffff", 0.75);
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -29633,7 +29910,7 @@ function CreativeEdgeTemplate({ resume }) {
                 "div",
                 {
                   className: "text-right text-[10px] flex-shrink-0 pl-4",
-                  style: { borderLeft: `2px solid ${accentAlpha5(accentColor, 0.2)}`, color: textSecondary },
+                  style: { borderLeft: `2px solid ${accentAlpha8(accentColor, 0.2)}`, color: textSecondary },
                   children: [
                     personal.email && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.email }),
                     personal.phone && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { children: personal.phone }),
@@ -29659,10 +29936,10 @@ function CreativeEdgeTemplate({ resume }) {
             {
               title: "Experience",
               accentColor,
-              headingColor,
               headingFontStack,
               uppercase: uppercaseHeadings,
-              divider: dividerStyle
+              divider: dividerStyle,
+              topGap: density.sectionGap
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: density.timelineGap }, children: experience.map((exp, idx) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "relative pl-5", children: [
@@ -29677,7 +29954,7 @@ function CreativeEdgeTemplate({ resume }) {
               "span",
               {
                 className: "absolute left-[3px] top-3 bottom-[-16px] w-px",
-                style: { backgroundColor: accentAlpha5(accentColor, 0.25) }
+                style: { backgroundColor: accentAlpha8(accentColor, 0.25) }
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
@@ -29702,20 +29979,20 @@ function CreativeEdgeTemplate({ resume }) {
             {
               title: "Projects",
               accentColor,
-              headingColor,
               headingFontStack,
               uppercase: uppercaseHeadings,
-              divider: dividerStyle
+              divider: dividerStyle,
+              topGap: density.sectionGap
             }
           ),
           /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "grid grid-cols-2 gap-3", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)(
             "div",
             {
               className: "rounded-2xl p-3",
-              style: { backgroundColor: accentAlpha5(accentColor, 0.08) },
+              style: { backgroundColor: accentAlpha8(accentColor, 0.08) },
               children: [
                 /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("span", { className: "font-semibold text-[11px]", style: { color: headingColor }, children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EmptyField8, { text: "Project Name" }) }),
-                proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "text-[9.5px] mt-0.5", style: { color: blendTowardBase5(accentColor, "#000000", 0.15) }, children: proj.techStack.join(" \xB7 ") }),
+                proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "text-[9.5px] mt-0.5", style: { color: blendTowardBase8(accentColor, "#000000", 0.15) }, children: proj.techStack.join(" \xB7 ") }),
                 proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("ul", { className: "mt-1 space-y-0.5", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("li", { className: "text-[10.5px]", style: { color: textBody }, children: [
                   "\u2014 ",
                   bullet
@@ -29732,10 +30009,10 @@ function CreativeEdgeTemplate({ resume }) {
               {
                 title: "Education",
                 accentColor,
-                headingColor,
                 headingFontStack,
                 uppercase: uppercaseHeadings,
-                divider: dividerStyle
+                divider: dividerStyle,
+                topGap: density.sectionGap
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: density.timelineGap }, children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("div", { children: [
@@ -29761,10 +30038,10 @@ function CreativeEdgeTemplate({ resume }) {
               {
                 title: "Skills",
                 accentColor,
-                headingColor,
                 headingFontStack,
                 uppercase: uppercaseHeadings,
-                divider: dividerStyle
+                divider: dividerStyle,
+                topGap: density.sectionGap
               }
             ),
             /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "flex flex-wrap gap-1.5", children: allSkills.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
@@ -29793,35 +30070,82 @@ function CreativeEdgeTemplate({ resume }) {
 
 // src/components/templates/TechnicalProTemplate.jsx
 var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
-function SectionHeading9({ title }) {
-  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-center gap-2 mt-4 mb-2", children: [
-    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[#059669] text-[11px]", children: "//" }),
-    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
-      "span",
-      {
-        className: "text-[10.5px] font-bold tracking-[0.1em] uppercase text-[#0a1628]",
-        children: title
-      }
-    )
+function hexToRgb9(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
+}
+function rgbToHex8({ r, g, b }) {
+  return "#" + [r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("");
+}
+function blendTowardBase9(hex, baseHex, ratio) {
+  const color = hexToRgb9(hex);
+  const base = hexToRgb9(baseHex);
+  return rgbToHex8(Object.fromEntries(
+    ["r", "g", "b"].map((channel) => [channel, Math.round(color[channel] * (1 - ratio) + base[channel] * ratio)])
+  ));
+}
+function accentAlpha9(hex, alpha) {
+  const { r, g, b } = hexToRgb9(hex);
+  return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+}
+var DENSITY_SCALE9 = {
+  "compact": {
+    "lineHeight": "1.35",
+    "padding": "22px 26px",
+    "sectionGap": "10px",
+    "itemGap": "8px",
+    "educationGap": "6px",
+    "bulletGap": "1px",
+    "skillGap": "4px",
+    "columnGap": "12px"
+  },
+  "balanced": {
+    "lineHeight": "1.5",
+    "padding": "30px 34px",
+    "sectionGap": "16px",
+    "itemGap": "12px",
+    "educationGap": "10px",
+    "bulletGap": "2px",
+    "skillGap": "6px",
+    "columnGap": "16px"
+  },
+  "spacious": {
+    "lineHeight": "1.7",
+    "padding": "38px 42px",
+    "sectionGap": "22px",
+    "itemGap": "18px",
+    "educationGap": "16px",
+    "bulletGap": "4px",
+    "skillGap": "8px",
+    "columnGap": "20px"
+  }
+};
+function SectionHeading9({ title, accentColor, headingColor, headingFontStack, headingStyle, dividerStyle, density }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-center gap-2 mb-2", style: { marginTop: density.sectionGap }, children: [
+    dividerStyle === "line" && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { "aria-hidden": "true", className: "text-[11px]", style: { color: accentColor }, children: "//" }),
+    /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[10.5px] font-bold tracking-[0.1em]", style: { fontFamily: headingFontStack, color: headingColor, textTransform: headingStyle === "uppercase" ? "uppercase" : "none" }, children: title }),
+    dividerStyle === "dots" && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { "aria-hidden": "true", className: "flex gap-1", children: [0, 1, 2].map((dot) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "w-1 h-1 rounded-full", style: { backgroundColor: accentColor } }, dot)) })
   ] });
 }
 function EmptyField9({ text }) {
   return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[#cbd5e1] italic", children: text });
 }
-function SkillCol({ label, items }) {
+function SkillCol({ label, items, surfaceColor, dividerColor, textSecondary, chipBg, chipText, density }) {
   if (!items.length) return null;
   return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
     "div",
     {
       className: "flex-1 rounded-lg p-2.5",
-      style: { backgroundColor: "#f8fafc", border: "1px solid #cbd5e1" },
+      style: { backgroundColor: surfaceColor, border: "1px solid " + dividerColor },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "text-[9px] font-bold uppercase tracking-wider text-[#4a6fa5] mb-1", children: label }),
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap gap-1", children: items.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "text-[9px] font-bold uppercase tracking-wider mb-1", style: { color: textSecondary }, children: label }),
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap", style: { gap: density.skillGap }, children: items.map((s, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
           "span",
           {
             className: "text-[9px] px-1.5 py-0.5 rounded",
-            style: { backgroundColor: "#0a1628", color: "#d1fae5" },
+            style: { backgroundColor: chipBg, color: chipText },
             children: s
           },
           i
@@ -29832,6 +30156,25 @@ function SkillCol({ label, items }) {
 }
 function TechnicalProTemplate({ resume }) {
   const { personal, education, experience, skills, projects } = resume;
+  const theme = resume.theme || {};
+  const accentColor = theme.accentColor || "#059669";
+  const backgroundColor = theme.backgroundColor || "#ffffff";
+  const textColor = theme.textColor || "#0a1628";
+  const headingColor = theme.headingColor || textColor;
+  const linkColor = theme.linkColor || accentColor;
+  const headingFontStack = getFontStack(theme.fontFamily || "arial");
+  const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
+  const headingStyle = theme.headingStyle || "uppercase";
+  const dividerStyle = theme.dividerStyle || "line";
+  const density = DENSITY_SCALE9[theme.density] || DENSITY_SCALE9.balanced;
+  const textBody = theme.textColor ? blendTowardBase9(textColor, backgroundColor, 0.15) : "#1e3a5f";
+  const textSecondary = theme.textColor ? blendTowardBase9(textColor, backgroundColor, 0.35) : "#4a6fa5";
+  const dividerColor = theme.accentColor ? accentAlpha9(accentColor, 0.35) : "#cbd5e1";
+  const surfaceColor = theme.backgroundColor || theme.accentColor ? blendTowardBase9(accentColor, backgroundColor, 0.96) : "#f8fafc";
+  const chipBg = theme.textColor ? blendTowardBase9(accentColor, backgroundColor, 0.9) : blendTowardBase9(accentColor, "#0a1628", 0.85);
+  const chipText = theme.textColor || "#d1fae5";
+  const skillTheme = { surfaceColor, dividerColor, textSecondary, chipBg, chipText, density };
+  const sectionTheme = { accentColor, dividerColor, headingColor, headingFontStack, headingStyle, dividerStyle, density };
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -29839,17 +30182,17 @@ function TechnicalProTemplate({ resume }) {
   return /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(
     "div",
     {
-      className: "bg-white shadow-md rounded-sm w-full",
-      style: { fontFamily: "'Inter', sans-serif", fontSize: "11px", lineHeight: "1.5", padding: "30px 34px", minHeight: "842px" },
+      className: "shadow-md rounded-sm w-full",
+      style: { fontFamily: bodyFontStack, backgroundColor, color: textColor, fontSize: "11px", lineHeight: density.lineHeight, padding: density.padding, minHeight: "842px" },
       children: [
-        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex items-start justify-between gap-4 pb-3", style: { borderBottom: "1px solid #cbd5e1" }, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h1", { className: "text-[22px] font-bold text-[#0a1628] tracking-tight", children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Your Name" }) }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px] text-[#4a6fa5]", children: [
+        /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex items-start justify-between gap-4 pb-3", style: { borderBottom: "1px solid " + dividerColor }, children: /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("h1", { className: "text-[22px] font-bold tracking-tight", style: { fontFamily: headingFontStack, color: headingColor }, children: personal.name || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Your Name" }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-1 text-[10px]", style: { color: textSecondary }, children: [
             personal.email && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.email }),
             personal.phone && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.phone }),
             personal.address && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: personal.address })
           ] }),
-          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-0.5 text-[10px]", style: { color: "#059669" }, children: [
+          (personal.linkedin || personal.github || personal.portfolio) && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex flex-wrap gap-x-3 mt-0.5 text-[10px]", style: { color: linkColor }, children: [
             personal.github && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { children: [
               "github.com/",
               personal.github
@@ -29862,56 +30205,56 @@ function TechnicalProTemplate({ resume }) {
           ] })
         ] }) }),
         hasSkills && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Stack" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Stack", ...sectionTheme }),
           /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Technical", items: skills.technical }),
-            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Tools", items: skills.tools }),
-            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Languages", items: skills.languages })
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Technical", items: skills.technical, ...skillTheme }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Tools", items: skills.tools, ...skillTheme }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SkillCol, { label: "Languages", items: skills.languages, ...skillTheme })
           ] })
         ] }),
         hasExperience && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Experience" }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "space-y-3", children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Experience", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-col", style: { gap: density.itemGap }, children: experience.map((exp) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
             /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "flex items-start justify-between gap-2", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "font-semibold text-[11.5px] text-[#0a1628]", children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "font-semibold text-[11.5px]", style: { color: textColor }, children: [
                 exp.role || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Role" }),
-                exp.company && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "text-[#4a6fa5] font-normal", children: [
+                exp.company && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "font-normal", style: { color: textSecondary }, children: [
                   " \xB7 ",
                   exp.company
                 ] })
               ] }),
-              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[#4a6fa5] text-[10px] flex-shrink-0", children: exp.duration })
+              exp.duration && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "text-[10px] flex-shrink-0", style: { color: textSecondary }, children: exp.duration })
             ] }),
-            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-shrink-0 text-[#059669]", children: "\u25B8" }),
+            exp.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("ul", { className: "mt-1 flex flex-col pl-3", style: { gap: density.bulletGap }, children: exp.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("li", { className: "flex gap-1.5", style: { color: textBody }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-shrink-0", style: { color: accentColor }, children: "\u25B8" }),
               /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: bullet })
             ] }, i)) })
           ] }, exp.id)) })
         ] }),
         hasProjects && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Projects" }),
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "space-y-2.5", children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
-            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex items-start justify-between gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "font-semibold text-[11px] text-[#0a1628]", children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Project Name" }) }) }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Projects", ...sectionTheme }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-col", style: { gap: density.educationGap }, children: projects.map((proj) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex items-start justify-between gap-2", children: /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "font-semibold text-[11px]", style: { color: textColor }, children: proj.name || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Project Name" }) }) }),
             proj.techStack.length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap gap-1 mt-1", children: proj.techStack.map((t, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(
               "span",
               {
                 className: "text-[9px] px-1.5 py-0.5 rounded",
-                style: { backgroundColor: "#f8fafc", border: "1px solid #cbd5e1", color: "#1e3a5f" },
+                style: { backgroundColor: surfaceColor, border: "1px solid " + dividerColor, color: textBody },
                 children: t
               },
               i
             )) }),
-            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("ul", { className: "mt-1 space-y-0.5 pl-3", children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("li", { className: "flex gap-1.5 text-[#1e3a5f]", children: [
-              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-shrink-0 text-[#059669]", children: "\u25B8" }),
+            proj.bullets.filter((b) => b.trim()).length > 0 && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("ul", { className: "mt-1 flex flex-col pl-3", style: { gap: density.bulletGap }, children: proj.bullets.filter((b) => b.trim()).map((bullet, i) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("li", { className: "flex gap-1.5", style: { color: textBody }, children: [
+              /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "flex-shrink-0", style: { color: accentColor }, children: "\u25B8" }),
               /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { children: bullet })
             ] }, i)) })
           ] }, proj.id)) })
         ] }),
         hasEducation && /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)(import_jsx_runtime9.Fragment, { children: [
-          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Education" }),
+          /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(SectionHeading9, { title: "Education", ...sectionTheme }),
           /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("div", { className: "flex flex-wrap gap-x-6 gap-y-1", children: education.map((edu) => /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("div", { className: "text-[10.5px]", children: [
-            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "font-semibold text-[#0a1628]", children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Degree" }) }),
-            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { className: "text-[#4a6fa5]", children: [
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsx)("span", { className: "font-semibold", style: { color: textColor }, children: edu.degree || /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(EmptyField9, { text: "Degree" }) }),
+            /* @__PURE__ */ (0, import_jsx_runtime9.jsxs)("span", { style: { color: textSecondary }, children: [
               " \xB7 ",
               edu.college,
               " ",
@@ -29933,31 +30276,31 @@ function TechnicalProTemplate({ resume }) {
 
 // src/components/templates/GridProfessionalTemplate.jsx
 var import_jsx_runtime10 = __toESM(require_jsx_runtime(), 1);
-function hexToRgb6(hex) {
+function hexToRgb10(hex) {
   if (!hex) return { r: 0, g: 0, b: 0 };
   let h = hex.replace("#", "");
   if (h.length === 3) h = h.split("").map((c) => c + c).join("");
   const num = parseInt(h, 16);
   return { r: num >> 16 & 255, g: num >> 8 & 255, b: num & 255 };
 }
-function rgbToHex5({ r, g, b }) {
+function rgbToHex9({ r, g, b }) {
   const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
-function blendTowardBase6(hex, baseHex, amount) {
-  const c1 = hexToRgb6(hex);
-  const c2 = hexToRgb6(baseHex);
-  return rgbToHex5({
+function blendTowardBase10(hex, baseHex, amount) {
+  const c1 = hexToRgb10(hex);
+  const c2 = hexToRgb10(baseHex);
+  return rgbToHex9({
     r: c1.r + (c2.r - c1.r) * amount,
     g: c1.g + (c2.g - c1.g) * amount,
     b: c1.b + (c2.b - c1.b) * amount
   });
 }
-function accentAlpha6(hex, alpha) {
-  const { r, g, b } = hexToRgb6(hex);
+function accentAlpha10(hex, alpha) {
+  const { r, g, b } = hexToRgb10(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-var DENSITY_SCALE6 = {
+var DENSITY_SCALE10 = {
   compact: {
     lineHeight: "1.35",
     padding: "22px 28px",
@@ -29996,12 +30339,12 @@ function SectionHeading10({ title, accentColor, headingColor, headingFontStack, 
         children: title
       }
     ),
-    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "h-px mt-1", style: { backgroundColor: accentAlpha6(accentColor, 0.3) } }),
+    divider === "line" && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "h-px mt-1", style: { backgroundColor: accentAlpha10(accentColor, 0.3) } }),
     divider === "dots" && /* @__PURE__ */ (0, import_jsx_runtime10.jsx)("div", { className: "flex gap-1 mt-1.5", children: [0, 1, 2].map((i) => /* @__PURE__ */ (0, import_jsx_runtime10.jsx)(
       "span",
       {
         className: "w-1 h-1 rounded-full",
-        style: { backgroundColor: accentAlpha6(accentColor, 0.4) }
+        style: { backgroundColor: accentAlpha10(accentColor, 0.4) }
       },
       i
     )) })
@@ -30020,11 +30363,11 @@ function GridProfessionalTemplate({ resume }) {
   const headingFontStack = getFontStack(theme.fontFamily || "georgia");
   const bodyFontStack = getFontStack(theme.bodyFontFamily || "arial");
   const uppercaseHeadings = theme.headingStyle !== "normal";
-  const density = DENSITY_SCALE6[theme.density] || DENSITY_SCALE6.balanced;
+  const density = DENSITY_SCALE10[theme.density] || DENSITY_SCALE10.balanced;
   const dividerStyle = theme.dividerStyle || "line";
-  const textSecondary = blendTowardBase6(textColor, "#ffffff", 0.4);
-  const textBody = blendTowardBase6(textColor, "#ffffff", 0.15);
-  const cardBorder = blendTowardBase6(textColor, "#ffffff", 0.78);
+  const textSecondary = blendTowardBase10(textColor, "#ffffff", 0.4);
+  const textBody = blendTowardBase10(textColor, "#ffffff", 0.15);
+  const cardBorder = blendTowardBase10(textColor, "#ffffff", 0.78);
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
   const hasSkills = skills.technical.length > 0 || skills.tools.length > 0 || skills.languages.length > 0;
@@ -30257,6 +30600,7 @@ var TEMPLATES = [
   },
   {
     id: "corporate-elite",
+    supportsBandColor: true,
     name: "Corporate Elite",
     description: "Dark sidebar layout. Consulting/MBA-focused.",
     isPremium: true,
@@ -30266,6 +30610,7 @@ var TEMPLATES = [
   },
   {
     id: "startup-bold",
+    supportsBandColor: true,
     name: "Startup Bold",
     description: "Emerald header band, chip-style skills.",
     isPremium: true,

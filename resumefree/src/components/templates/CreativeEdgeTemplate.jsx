@@ -58,9 +58,9 @@ const DENSITY_SCALE = {
   },
 };
 
-function SectionHeading({ title, accentColor, headingColor, headingFontStack, uppercase, divider }) {
+function SectionHeading({ title, accentColor, headingFontStack, uppercase, divider, topGap }) {
   return (
-    <div className="mt-4 mb-2.5">
+    <div className="mb-2.5" style={{ marginTop: topGap }}>
       <span
         className={`text-[11px] font-bold ${uppercase ? "uppercase" : ""} tracking-[0.12em]`}
         style={{ color: accentColor, fontFamily: headingFontStack }}
@@ -161,10 +161,10 @@ export default function CreativeEdgeTemplate({ resume }) {
           <SectionHeading
             title="Experience"
             accentColor={accentColor}
-            headingColor={headingColor}
             headingFontStack={headingFontStack}
             uppercase={uppercaseHeadings}
             divider={dividerStyle}
+            topGap={density.sectionGap}
           />
           <div style={{ display: "flex", flexDirection: "column", gap: density.timelineGap }}>
             {experience.map((exp, idx) => (
@@ -208,10 +208,10 @@ export default function CreativeEdgeTemplate({ resume }) {
           <SectionHeading
             title="Projects"
             accentColor={accentColor}
-            headingColor={headingColor}
             headingFontStack={headingFontStack}
             uppercase={uppercaseHeadings}
             divider={dividerStyle}
+            topGap={density.sectionGap}
           />
           <div className="grid grid-cols-2 gap-3">
             {projects.map((proj) => (
@@ -249,10 +249,10 @@ export default function CreativeEdgeTemplate({ resume }) {
             <SectionHeading
               title="Education"
               accentColor={accentColor}
-              headingColor={headingColor}
               headingFontStack={headingFontStack}
               uppercase={uppercaseHeadings}
               divider={dividerStyle}
+            topGap={density.sectionGap}
             />
             <div style={{ display: "flex", flexDirection: "column", gap: density.timelineGap }}>
               {education.map((edu) => (
@@ -274,10 +274,10 @@ export default function CreativeEdgeTemplate({ resume }) {
             <SectionHeading
               title="Skills"
               accentColor={accentColor}
-              headingColor={headingColor}
               headingFontStack={headingFontStack}
               uppercase={uppercaseHeadings}
               divider={dividerStyle}
+            topGap={density.sectionGap}
             />
             <div className="flex flex-wrap gap-1.5">
               {allSkills.map((s, i) => (

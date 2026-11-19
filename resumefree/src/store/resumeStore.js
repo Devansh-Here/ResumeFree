@@ -35,7 +35,7 @@ const DEFAULT_RESUME = {
     // { id, name, description, techStack: [], bullets: [""] }
   ],
   // ── Theme (premium feature — see CustomizationPanel.jsx) ──
-  // Nullable fields (linkColor, backgroundColor, headingColor) mean
+  // Nullable fields (linkColor, bandColor, backgroundColor, headingColor) mean
   // "inherit / use template default" — NOT a forced override. Concrete
   // fields (accentColor, textColor, fontFamily, bodyFontFamily,
   // headingStyle, density, dividerStyle) always hold a real value; Reset
@@ -43,6 +43,7 @@ const DEFAULT_RESUME = {
   theme: {
     accentColor: "#7451f2", // Obsidian Violet v2 default (was emerald #059669)
     linkColor: null, // null = same as accentColor
+    bandColor: null, // null = template's accent-derived strip/sidebar background
     backgroundColor: null, // null = template's own default background
     textColor: "#272727", // graphite-ink v2 default (was navy #0a1628)
     headingColor: null, // null = same as textColor

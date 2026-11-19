@@ -1,5 +1,6 @@
 // src/components/templates/StartupBoldTemplate.jsx
 import { getFontStack } from "../../utils/fontOptions";
+import { normalizeBandColor, getBandTextColor } from "../../utils/bandColors";
 
 // ── Theme-derived color helpers (same pattern as CorporateEliteTemplate.jsx) ──
 function hexToRgb(hex) {
@@ -85,8 +86,8 @@ function SectionHeading({ title, accentColor, headingColor, headingFontStack, up
   );
 }
 
-function EmptyField({ text }) {
-  return <span className="text-[#cbd5e1] italic">{text}</span>;
+function EmptyField({ text, color = "#cbd5e1" }) {
+  return <span className="italic" style={{ color }}>{text}</span>;
 }
 
 export default function StartupBoldTemplate({ resume }) {
@@ -94,6 +95,9 @@ export default function StartupBoldTemplate({ resume }) {
 
   // ── Resolve theme fields (with safe fallbacks matching resumeStore.js DEFAULT_RESUME.theme) ──
   const accentColor = theme.accentColor || "#7451f2";
+  const customBandColor = normalizeBandColor(theme.bandColor);
+  const headerBg = customBandColor || accentColor;
+  const headerText = customBandColor ? getBandTextColor(customBandColor) : "#ffffff";
   const backgroundColor = theme.backgroundColor || "#ffffff";
   const textColor = theme.textColor || "#272727";
   const headingColor = theme.headingColor || textColor;
@@ -103,16 +107,13 @@ export default function StartupBoldTemplate({ resume }) {
   const density = DENSITY_SCALE[theme.density] || DENSITY_SCALE.balanced;
   const dividerStyle = theme.dividerStyle || "line";
 
-  // NOTE (deliberate exception, see chat explanation): header band's own
-  // background IS accentColor, so a null linkColor cannot fall back to
-  // accentColor here (would be invisible). Falls back to a light/white
-  // contrast tone instead, matching the "colored header is a fixed
-  // contrast zone" rule already applied to the name text below.
-  const linkColorOnHeader = theme.linkColor || "rgba(255,255,255,0.92)";
+  // The header is its own contrast zone. Custom bands choose readable default
+  // text/links, while an explicit linkColor remains the user's override.
+  const linkColorOnHeader = theme.linkColor || (customBandColor ? headerText : "rgba(255,255,255,0.92)");
 
   const textSecondary = blendTowardBase(textColor, "#ffffff", 0.4); // meta labels (duration, year)
   const textBody = blendTowardBase(textColor, "#ffffff", 0.15); // bullet body text
-  const contactTint = blendTowardBase(accentColor, "#ffffff", 0.75); // header contact-info tint
+  const contactTint = customBandColor ? headerText : blendTowardBase(accentColor, "#ffffff", 0.75); // header contact-info tint
 
   const hasEducation = education.length > 0;
   const hasExperience = experience.length > 0;
@@ -141,12 +142,12 @@ export default function StartupBoldTemplate({ resume }) {
       }}
     >
       {/* ── Header band ── */}
-      <div style={{ backgroundColor: accentColor, padding: density.headerPadding }}>
+      <div style={{ backgroundColor: headerBg, padding: density.headerPadding }}>
         <h1
           className="text-[24px] font-bold tracking-tight"
-          style={{ fontFamily: headingFontStack, color: "#ffffff" }}
+          style={{ fontFamily: headingFontStack, color: headerText }}
         >
-          {personal.name || <EmptyField text="Your Name" />}
+          {personal.name || <EmptyField text="Your Name" color={customBandColor ? headerText : "#cbd5e1"} />}
         </h1>
         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px]" style={{ color: contactTint }}>
           {personal.email && <span>{personal.email}</span>}

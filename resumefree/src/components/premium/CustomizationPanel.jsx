@@ -17,10 +17,12 @@
 // on the other templates + entirely pending for every NEW field added
 // this session).
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useResumeStore } from "../../store/resumeStore";
 import { useAuthStore } from "../../store/authStore";
 import { FONT_OPTIONS, FONT_GROUPS } from "../../utils/fontOptions";
+import { getTemplate } from "../templates/templateRegistry";
+import { getCorporateSidebarColor, normalizeBandColor, getBandPalette, getBandTextColor } from "../../utils/bandColors";
 
 const LINK_COLOR_PRESETS = [
   { name: "Violet", value: "#7451f2" },
@@ -101,6 +103,7 @@ function isLightEnough(hex) {
 export default function CustomizationPanel() {
   const isPremium = useAuthStore((s) => s.isPremium());
   const resume = useResumeStore((s) => s.resume);
+  const selectedTemplateId = useResumeStore((s) => s.selectedTemplateId);
   const updateTheme = useResumeStore((s) => s.updateTheme);
   const resetThemeField = useResumeStore((s) => s.resetThemeField);
 
@@ -111,6 +114,12 @@ export default function CustomizationPanel() {
   }
 
   const theme = resume?.theme || {};
+  const customBandColor = normalizeBandColor(theme.bandColor);
+  const inheritedLinkColor = selectedTemplateId === "corporate-elite" && customBandColor
+    ? getBandPalette(customBandColor, theme.accentColor).link
+    : selectedTemplateId === "startup-bold"
+      ? customBandColor ? getBandTextColor(customBandColor) : "#ffffff"
+      : theme.accentColor;
   const setField = (field, value) => updateTheme({ [field]: value });
 
   return (
@@ -141,11 +150,24 @@ export default function CustomizationPanel() {
 
       {activeTab === "colors" && (
         <div className="space-y-6">
+          {getTemplate(selectedTemplateId).supportsBandColor && (
+            <div className="[&_button]:min-h-[44px] [&_button]:min-w-[44px] [&_input]:h-[44px] [&_input]:w-[44px]">
+              <ColorField
+                label="Strip / Sidebar Color"
+                description="Changes the colored band independently. Reset restores the template's accent-based colors."
+                presets={LINK_COLOR_PRESETS}
+                value={theme.bandColor}
+                placeholder={selectedTemplateId === "corporate-elite" ? getCorporateSidebarColor(theme.accentColor) : theme.accentColor || "#7451f2"}
+                onChange={(v) => setField("bandColor", v)}
+                onReset={() => resetThemeField("bandColor")}
+              />
+            </div>
+          )}
           <ColorField
             label="Link Color"
             presets={LINK_COLOR_PRESETS}
             value={theme.linkColor}
-            placeholder={theme.accentColor}
+            placeholder={inheritedLinkColor}
             onChange={(v) => setField("linkColor", v)}
             onReset={() => resetThemeField("linkColor")}
           />
@@ -299,15 +321,9 @@ function SegmentedControl({ label, options, value, onChange }) {
   );
 }
 
-function ColorField({ label, presets, value, placeholder, onChange, onReset }) {
-  const [customValue, setCustomValue] = useState(value || presets[0].value);
-
-  // Keep the native color-input swatch in sync when `value` changes from
-  // OUTSIDE this input (Reset button, or a preset click) — without this,
-  // <input type="color"> silently shows a stale color after Reset.
-  useEffect(() => {
-    setCustomValue(value || presets[0].value);
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+function ColorField({ label, description, presets, value, placeholder, onChange, onReset }) {
+  // Derive the swatch directly so presets, Reset and template switches stay in sync.
+  const customValue = value || placeholder || presets[0].value;
 
   return (
     <div>
@@ -325,6 +341,7 @@ function ColorField({ label, presets, value, placeholder, onChange, onReset }) {
         )}
       </div>
 
+      {description && <p className="text-xs font-body text-slate mb-3">{description}</p>}
       <div className="flex flex-wrap gap-2 mb-2.5">
         {presets.map((preset) => {
           const isActive = value?.toLowerCase() === preset.value.toLowerCase();
@@ -334,7 +351,8 @@ function ColorField({ label, presets, value, placeholder, onChange, onReset }) {
               onClick={() => onChange(preset.value)}
               title={preset.name}
               aria-label={preset.name}
-              className={`relative w-8 h-8 rounded-buttons border transition-transform duration-200 ${
+              aria-pressed={isActive}
+              className={`relative w-8 h-8 rounded-buttons border transition-transform duration-200 motion-reduce:transition-none ${
                 isActive ? "border-graphite-ink" : "border-mist"
               }`}
               style={{
@@ -364,9 +382,9 @@ function ColorField({ label, presets, value, placeholder, onChange, onReset }) {
       <div className="flex items-center gap-2.5 pt-2.5 border-t border-mist">
         <input
           type="color"
+          aria-label={`${label} custom color`}
           value={customValue}
           onChange={(e) => {
-            setCustomValue(e.target.value);
             onChange(e.target.value);
           }}
           className="w-7 h-7 rounded-buttons overflow-hidden cursor-pointer border border-mist p-0"
